@@ -1,3 +1,5 @@
+import { Headline } from 'app/components/ui/headline'
+
 export const metadata = {
   title: 'About me',
   description: 'About me.',
@@ -5,8 +7,8 @@ export const metadata = {
 
 export default function Page() {
   return (
-    <section>
-      <h1 className="font-semibold text-2xl mb-8 tracking-tighter">About me</h1>
-    </section>
+    <main>
+      <Headline>About me</Headline>
+    </main>
   )
 }

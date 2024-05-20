@@ -1,18 +1,31 @@
 import { BlogPosts } from 'app/components/posts'
+import Image from 'next/image'
+import beneImage from './about-me/bene.jpg'
 
 export default function Page() {
   return (
-    <main>
-      <h1 className="mb-8 text-2xl font-semibold tracking-tighter">
-        Hi, I'm Bene.
-      </h1>
-      <p className="mb-8">
-        Frontend Architect / Frontend Dev with a passion for web development, UX
-        design, accessibility, conversion optimization and digital strategy. I
-        believe in the power of a data driven approach with a test and learn,
-        hands-on mentality.
-      </p>
-      <section className="my-8 flex flex-col gap-4">
+    <main className="flex flex-col gap-8">
+      <section className="flex flex-col-reverse sm:flex-row gap-8">
+        <div>
+          <h1 className="mb-2 text-2xl font-semibold tracking-tighter">
+            Hi, I'm Benedikt.
+          </h1>
+          <p>
+            Frontend Architect / Frontend Dev with a passion for web
+            development, UX design, accessibility, performance optimization and
+            automation. I love building user interfaces and products people like
+            to interact with.
+          </p>
+        </div>
+        <Image
+          src={beneImage}
+          alt="Benedikt Sperl"
+          width={400}
+          height={400}
+          className="w-36 h-36 rounded-full"
+        />
+      </section>
+      <section className="flex flex-col gap-4">
         <h2 className="mb-1 text-xl font-semibold tracking-tighter">
           Articles
         </h2>

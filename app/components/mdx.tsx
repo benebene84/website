@@ -4,13 +4,13 @@ import { MDXRemote } from 'next-mdx-remote/rsc'
 import { highlight } from 'sugar-high'
 import React from 'react'
 
-function Table({ data }) {
+function Table({ data }: { data: { headers: string[]; rows: (string | React.ReactNode)[][] } }) {
   let headers = data.headers.map((header, index) => (
     <th key={index}>{header}</th>
   ))
   let rows = data.rows.map((row, index) => (
     <tr key={index}>
-      {row.map((cell, cellIndex) => (
+      {row.map((cell: string | React.ReactNode, cellIndex) => (
         <td key={cellIndex}>{cell}</td>
       ))}
     </tr>

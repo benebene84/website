@@ -11,7 +11,7 @@ export default function Page() {
             Hi, I'm Benedikt.
           </h1>
           <p>
-            Frontend Architect / Frontend Dev with a passion for web
+            Frontend Architect / Frontend Lead with a passion for web
             development, UX design, accessibility, performance optimization and
             automation. I love building user interfaces and products people like
             to interact with.
@@ -23,6 +23,8 @@ export default function Page() {
           width={400}
           height={400}
           className="w-36 h-36 rounded-full"
+          placeholder="blur"
+          priority
         />
       </section>
       <section className="flex flex-col gap-4">

@@ -1,0 +1,119 @@
+---
+title: 'Building reusable component libraries with React - Lessons learned'
+publishedAt: '2024-09-01'
+summary: 'Lessons learned from building component libraries with React'
+---
+
+I have been working with React for about 5 years now.
+At my last two jobs I had the chance to work on reusable multi brand component libraries that have been the base for multiple products at those companies.
+In this article I want to share some lessons learned and best practices for building reusable component libraries with React.
+
+## Design Systems and Design Tokens
+
+Something about design systems and design tokens.
+
+## Using a headless component library as a foundation
+
+Using a pre-built component library has a lot of benefits. It gives you a head start, because you can just use them and customize them to your need.
+On the contrary, if you create all of your components yourself, you have full control over every aspect you want to customize and how your components look like and behave like, without the need to overwrite stylings and logic and bloat from a 3rd party library you might not need.
+
+A headless UI library is a good compromise between completely custom components and a styled component library.
+Using a headless ui library gives you the advantage to have full control over the styling and the styling solution you want to use (vanilla CSS, CSS preprocessors, CSS-in-JS libraries), while the "heavy-lifting" - especially in regards to accessibility - is done for you already. Because handling focus, setting the appropriate aria attributes and similar things are a difficult task to do right.
+
+## Flexibility and Reusability over Standardization
+
+There is nothing more frustrating than been forced to use a company wide component library that constantly gets in the way of building new features.
+Not beeing able to add test-id's, adding classnames for styling or have access to set event handlers are extremly limiting when working with a component library.
+
+**_Spreading Standard HTML Attributes_**
+
+Most of the time when building basic components, the component should be a drop-in replacement for a standard HTML element.
+This means that the component should accept the same props as the HTML element it is replacing.
+
+```tsx
+const Button = ({ className, id, onClick, ...props }: ButtonProps) => {
+  return <button className={className} id={id} onClick={onClick} {...props} />
+}
+```
+
+Spreading standard HTML attributes like "className", "id" and event handlers like "onClick" is a great way to increase the flexibility of your components.
+It allows developers to easily customize the components to fit their needs without having to worry about the component library.
+
+**_Forwarding Refs_**
+
+Forwarding refs is a feature that allows developers to access the underlying DOM element of a component.
+This is useful if you need to be able to access the component's DOM element in JavaScript (for example to set focus or scrolling into view).
+
+```tsx
+const Button = forwardRef((props, ref) => {
+  return <button ref={ref} {...props} />
+})
+```
+
+**_Polymorphism_**
+
+Polymorphism is a feature that allows developers to change the HTML element that a component renders, or even another custom component.
+For most components, changing the html tag is never required, but can be useful for a handful of components.
+E.g. you might have a teaser with a button that should act as a Link.
+Or you have a link that should trigger a Modal and needs a button tag for accessibility reasons.
+
+```tsx
+const Button = ({
+  variant,
+  as: Component = 'button',
+  ...props
+}: ButtonProps) => {
+  return <button {...props} />
+}
+```
+
+The Button component is a generic component that can be used to render a button, but it can also be rendered as a anchor, when the button should not trigger any interactivity, but acts as a real link to another page.
+
+```tsx
+const LinkButton = ({ href, ...props }: LinkButtonProps) => {
+  return <Button as="a" href={href} {...props} />
+}
+```
+
+### Composable Components
+
+Composable components are a way to group multiple components together.
+This is useful if you have a component that has multiple parts that are used together.
+E.g. a Dropdown component that has a trigger and a menu.
+
+```tsx
+const Dropdown = ({ children, ...props }: DropdownProps) => {
+  return <div {...props}>{children}</div>
+}
+```
+
+```tsx
+const DropdownMenu = ({ children, ...props }: DropdownMenuProps) => {
+  return <div {...props}>{children}</div>
+}
+```
+
+```tsx
+const DropdownTrigger = ({ children, ...props }: DropdownTriggerProps) => {
+  return <div {...props}>{children}</div>
+}
+```
+
+```tsx
+const DropdownItem = ({ children, ...props }: DropdownItemProps) => {
+  return <div {...props}>{children}</div>
+}
+```
+
+## Documentation
+
+Something that is often neglected when building component libraries is documentation. Let's face it, no one likes reading documentation. No one wants to open the documentation to find out how to actually use your components.
+Hence, you have to make sure devs get the necessaary information while they are using your components.
+
+## Testing
+
+unit testing / interaction testing / visual regression testing
+
+## Versioning
+
+Something about versioning

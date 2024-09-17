@@ -9,7 +9,7 @@ export const metadata = {
 export default function Page() {
   return (
     <main className="flex flex-col gap-8">
-      <Headline>My Blog</Headline>
+      <Headline>My Blog Posts</Headline>
       <BlogPosts />
     </main>
   )

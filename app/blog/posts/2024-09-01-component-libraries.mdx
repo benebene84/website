@@ -1,16 +1,37 @@
 ---
-title: 'Building reusable component libraries with React - Lessons learned'
+title: 'Building reusable multi-brand component libraries with React - Lessons learned'
 publishedAt: '2024-09-01'
 summary: 'Lessons learned from building component libraries with React'
 ---
 
-I have been working with React for about 5 years now.
 At my last two jobs I had the chance to work on reusable multi brand component libraries that have been the base for multiple products at those companies.
 In this article I want to share some lessons learned and best practices for building reusable component libraries with React.
 
 ## Design Systems and Design Tokens
 
-Something about design systems and design tokens.
+If you have the requirement to support multiple brands with a similar look and feel, a design system and design tokens are a kind of mandatory thing. You can't really scale if you don't have a shared language and structured framework that guides teams through the complex process of creating digital products.
+
+At its core, a design system is a set of building blocks and standards that help keep the look and feel of products and experiences consistent. Think of it as a blueprint, offering a unified language and structured framework that guides teams through the complex process of creating digital products. A design system can assist in reducing the amount of time spent recreating elements and patterns while designing and building products and interfaces at scale.
+
+A component library is the practical implementation of a design system in code. While a design system defines the principles, guidelines, and visual language, a component library brings these concepts to life as reusable UI elements.
+
+Design tokens act as the bridge between the abstract design system and the concrete component library. They are named entities that store visual design attributes such as colors, typography, spacing, and more. Design tokens allow for a single source of truth for these values, making it easier to maintain consistency across different platforms and codebases.
+
+Here's how they work together:
+
+1. The design system defines the overall visual language and principles.
+2. Design tokens capture specific values from the design system (e.g., primary colors, font sizes, spacing units).
+3. The component library uses these design tokens to style and structure its components.
+
+This relationship allows for greater flexibility and easier maintenance:
+
+- Changes to the design system can be reflected across the entire component library by updating the design tokens.
+- The component library remains agnostic to the specific values, referencing tokens instead of hardcoded values.
+- Multiple brands or themes can be supported by swapping out sets of design tokens, while the component library's structure remains the same.
+
+By leveraging this relationship, teams can create more cohesive, scalable, and adaptable user interfaces across various products and platforms.
+
+With a solid understanding of design systems and tokens, let's explore how to build upon this foundation with reusable components.
 
 ## Using a headless component library as a foundation
 
@@ -20,10 +41,14 @@ On the contrary, if you create all of your components yourself, you have full co
 A headless UI library is a good compromise between completely custom components and a styled component library.
 Using a headless ui library gives you the advantage to have full control over the styling and the styling solution you want to use (vanilla CSS, CSS preprocessors, CSS-in-JS libraries), while the "heavy-lifting" - especially in regards to accessibility - is done for you already. Because handling focus, setting the appropriate aria attributes and similar things are a difficult task to do right.
 
+There are a lot of different headless component libraries out there, e.g. [Radix UI](https://www.radix-ui.com/), [Headless UI](https://headlessui.com/), [AriaKit](https://ariakit.org/), or [ArkUI](https://ark-ui.com/).
+
+While headless libraries provide a great starting point, it's crucial to ensure that your components remain flexible and reusable. Let's explore some strategies to achieve this.
+
 ## Flexibility and Reusability over Standardization
 
 There is nothing more frustrating than been forced to use a company wide component library that constantly gets in the way of building new features.
-Not beeing able to add test-id's, adding classnames for styling or have access to set event handlers are extremly limiting when working with a component library.
+Not being able to add test-id's, adding classes for styling or have access to event handlers are extremly limiting when working with a component library. To avoid these pitfalls, you should consider the following points when building your component library.
 
 **_Spreading Standard HTML Attributes_**
 
@@ -31,8 +56,13 @@ Most of the time when building basic components, the component should be a drop-
 This means that the component should accept the same props as the HTML element it is replacing.
 
 ```tsx
-const Button = ({ className, id, onClick, ...props }: ButtonProps) => {
-  return <button className={className} id={id} onClick={onClick} {...props} />
+type ButtonProps = {
+  size?: 'small' | 'medium' | 'large'
+  variant?: 'primary' | 'secondary' | 'tertiary'
+} & React.ButtonHTMLAttributes<HTMLButtonElement>
+
+const Button = ({ size, variant, className, ...props }: ButtonProps) => {
+  return <button className={cn(size, variant, className)} {...props} />
 }
 ```
 
@@ -42,7 +72,7 @@ It allows developers to easily customize the components to fit their needs witho
 **_Forwarding Refs_**
 
 Forwarding refs is a feature that allows developers to access the underlying DOM element of a component.
-This is useful if you need to be able to access the component's DOM element in JavaScript (for example to set focus or scrolling into view).
+This is useful if you need to be able to access the component's DOM element in JavaScript (for example to set focus or scrolling into view), also a lot of 3rd party libraries rely on refs to provide their functionality.
 
 ```tsx
 const Button = forwardRef((props, ref) => {
@@ -75,7 +105,7 @@ const LinkButton = ({ href, ...props }: LinkButtonProps) => {
 }
 ```
 
-### Composable Components
+**_Composable Components_**
 
 Composable components are a way to group multiple components together.
 This is useful if you have a component that has multiple parts that are used together.
@@ -105,15 +135,164 @@ const DropdownItem = ({ children, ...props }: DropdownItemProps) => {
 }
 ```
 
+By implementing these strategies, you can create components that are both flexible and reusable. However, even the best-designed components are only as good as their documentation. Let's look at how to effectively document your component library.
+
 ## Documentation
 
 Something that is often neglected when building component libraries is documentation. Let's face it, no one likes reading documentation. No one wants to open the documentation to find out how to actually use your components.
-Hence, you have to make sure devs get the necessaary information while they are using your components.
+Hence, you have to make sure devs get the necessary information while they are using your components.
+
+To create effective documentation for your component library, consider implementing the following:
+
+**_Component Playground_**
+
+A component playground is an interactive environment where developers can experiment with your components in real-time. It allows users to:
+
+- See the component in action
+- Modify props and see instant results
+- Copy and paste working examples
+
+Tools like Storybook or Docusaurus can help you create a robust component playground, making it easier for developers to understand and use your components.
+
+**_Component Props_**
+
+Clearly document all props for each component, including:
+
+- Prop names and types
+- Default values
+- Required vs optional props
+- Brief descriptions of what each prop does
+
+This information should be easily accessible, preferably right next to the component playground for quick reference.
+
+**_Commenting Code with JSDoc_**
+
+Use JSDoc comments in your component code to provide inline documentation. This approach offers several benefits:
+
+- IDEs can use JSDoc to provide intellisense and autocompletion
+- It generates documentation directly from your source code
+- It keeps documentation and code in sync
+
+Here's an example of using JSDoc for a React component:
+
+```tsx
+/**
+ * Button component
+ *
+ * @param {string} variant - The variant of the button
+ * @param {string} size - The size of the button
+ * @param {boolean} disabled - Whether the button is disabled
+ * @param {React.ReactNode} children - The content of the button
+ */
+
+const Button = ({
+  variant,
+  size,
+  disabled,
+  children,
+  ...props
+}: ButtonProps) => {
+  return <button {...props}>{children}</button>
+}
+```
+
+With well-documented components, developers can easily understand and use your library. But documentation alone isn't enough to ensure the reliability of your components. Let's explore the importance of testing in building a robust component library.
 
 ## Testing
 
-unit testing / interaction testing / visual regression testing
+When building a component library, it's crucial to implement a comprehensive testing strategy to ensure the reliability and consistency of your components. This typically involves three main types of testing: unit testing, interaction testing, and visual regression testing.
+
+**_Unit Testing_**
+
+Unit tests are essential for verifying the individual functionality of your components. They focus on testing the logic, props handling, and state management of each component in isolation. Unit tests help catch bugs early in the development process and provide a safety net for refactoring.
+
+**_Interaction Testing_**
+
+Interaction testing goes beyond unit tests by simulating user interactions with your components. This type of testing is crucial for ensuring that components behave correctly when users interact with them, such as clicking buttons, entering text, or navigating through a menu.
+
+Tools like React Testing Library or Enzyme can be used to write interaction tests. These tests typically involve rendering the component, simulating user actions, and asserting that the component responds correctly. For example:
+
+```javascript
+test('Button changes state when clicked', () => {
+  render(<Button>Click me</Button>)
+  const button = screen.getByRole('button', { name: 'Click me' })
+  fireEvent.click(button)
+  expect(button).toHaveClass('clicked')
+})
+```
+
+Interaction tests are particularly valuable for complex components with multiple states or those that rely on user input to function correctly.
+
+**_Visual Regression Testing_**
+
+Visual regression testing is a crucial step in ensuring the visual consistency of your components across different browsers, devices, and code changes. This type of testing involves capturing screenshots of your components and comparing them against a set of approved baseline images.
+
+Tools like Percy, Chromatic, or Storybook's visual testing can be used to automate this process. Here's how it typically works:
+
+1. Capture baseline screenshots of your components in various states and viewports.
+2. When changes are made, new screenshots are taken and automatically compared to the baselines.
+3. If differences are detected, the test fails, and developers can review the changes visually.
+
+Visual regression testing is particularly useful for catching unintended visual changes, such as:
+
+- Layout shifts due to CSS changes
+- Font or color inconsistencies
+- Responsive design issues across different screen sizes
+
+By implementing visual regression tests, you can confidently make changes to your component library without fear of introducing unexpected visual regressions.
+
+A comprehensive testing strategy ensures the reliability and consistency of your components. As your library evolves, it's important to manage these changes effectively. Let's discuss the importance of versioning in maintaining a component library.
 
 ## Versioning
 
-Something about versioning
+Versioning is a critical aspect of maintaining a component library, ensuring that changes are tracked, communicated, and integrated smoothly. Here are some key considerations for versioning your component library:
+
+**_Semantic Versioning (SemVer)_**
+
+Adopt semantic versioning to communicate the nature of changes in your library. SemVer uses a three-part version number (MAJOR.MINOR.PATCH) where:
+
+- MAJOR version increments indicate incompatible API changes
+- MINOR version increments add functionality in a backwards-compatible manner
+- PATCH version increments make backwards-compatible bug fixes
+
+This system helps consumers of your library understand the impact of updates and manage their dependencies effectively.
+
+**_Changelog_**
+
+Maintain a detailed changelog that documents all notable changes for each version. This should include:
+
+- New features
+- Bug fixes
+- Deprecations
+- Breaking changes
+
+A well-maintained changelog helps developers understand what has changed between versions and aids in planning upgrades.
+
+**_Breaking Changes_**
+
+When introducing breaking changes:
+
+1. Increment the MAJOR version number
+2. Clearly document the changes in the changelog
+3. If possible, provide a migration guide or codemods to help users upgrade
+4. Consider maintaining the previous major version for a period to allow gradual migration
+
+By following these versioning practices, you can effectively manage updates to your component library, ensuring clear communication with consumers and facilitating smooth integration of new features and changes.
+
+## Conclusion
+
+In conclusion, building a reusable multi-brand component library with React requires careful planning and execution. By focusing on several key aspects, you can create a robust and adaptable component library that meets the needs of your development team and your users:
+
+1. Design Systems: Establishing a comprehensive design system ensures consistency across components and brands, providing a solid foundation for your library.
+
+2. Headless Components: Implementing headless components separates logic from presentation, allowing for greater flexibility and customization across different brand styles.
+
+3. Flexibility: Designing components with adaptability in mind enables them to work seamlessly across various use cases and brand requirements.
+
+4. Documentation: Thorough documentation, including usage examples and API references, is crucial for developer adoption and efficient use of the component library.
+
+5. Testing: Implementing a comprehensive testing strategy, including unit tests, interaction tests, and visual regression tests, ensures the reliability and consistency of your components.
+
+6. Versioning: Proper versioning practices help manage updates and changes to the library, ensuring smooth integration and backwards compatibility for consuming applications.
+
+By carefully considering and implementing these aspects, you can create a component library that not only serves your current needs but also scales and adapts to future requirements across multiple brands and projects.

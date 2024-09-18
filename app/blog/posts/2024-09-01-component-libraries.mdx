@@ -80,12 +80,11 @@ const Button = forwardRef((props, ref) => {
 })
 ```
 
-**_Polymorphism_**
+**_Polymorphism or cloning props with asChild_**
 
-Polymorphism is a feature that allows developers to change the HTML element that a component renders, or even another custom component.
-For most components, changing the html tag is never required, but can be useful for a handful of components.
-E.g. you might have a teaser with a button that should act as a Link.
-Or you have a link that should trigger a Modal and needs a button tag for accessibility reasons.
+For most components, changing the html tag that the component is rendered as is never required, but can be useful for a handful of components.
+E.g. you might have a teaser with a button that should act as a Link. Or you have a link that should trigger a Modal and needs a button tag for accessibility reasons.
+Or you have a generic Link component that can then be used with framework specific components like Next.js' Link or React Router's Link.
 
 ```tsx
 const Button = ({
@@ -105,35 +104,31 @@ const LinkButton = ({ href, ...props }: LinkButtonProps) => {
 }
 ```
 
-**_Composable Components_**
+If a custom component is referenced with the as prop, you need to make sure that the custom component accepts all the props that are passed (e.g. the custom component needs to accept the className prop for the styles to work, etc.).
+You also need to consider that changing the HTML tag might have an impact on the default CSS applied by the browser if not reset properly and might overwrite or add styles.
 
-Composable components are a way to group multiple components together.
-This is useful if you have a component that has multiple parts that are used together.
-E.g. a Dropdown component that has a trigger and a menu.
+Another approach is to clone the props to the children. This is for example implemented in [Radix UI](https://www.radix-ui.com/primitives/docs/utilities/slot) via a Slot component.
 
 ```tsx
-const Dropdown = ({ children, ...props }: DropdownProps) => {
-  return <div {...props}>{children}</div>
+// your-button.jsx
+import React from 'react'
+import { Slot } from '@radix-ui/react-slot'
+
+function Button({ asChild, ...props }) {
+  const Comp = asChild ? Slot : 'button'
+  return <Comp {...props} />
 }
 ```
 
-```tsx
-const DropdownMenu = ({ children, ...props }: DropdownMenuProps) => {
-  return <div {...props}>{children}</div>
-}
-```
+Then you can use the button like this:
 
 ```tsx
-const DropdownTrigger = ({ children, ...props }: DropdownTriggerProps) => {
-  return <div {...props}>{children}</div>
-}
+<Button asChild>
+  <a href="/">Click me</a>
+</Button>
 ```
 
-```tsx
-const DropdownItem = ({ children, ...props }: DropdownItemProps) => {
-  return <div {...props}>{children}</div>
-}
-```
+The major downside to this approach is at the moment, that you can't pass more then one child to the component. This won't work for, e.g. a button with an icon and text.
 
 By implementing these strategies, you can create components that are both flexible and reusable. However, even the best-designed components are only as good as their documentation. Let's look at how to effectively document your component library.
 

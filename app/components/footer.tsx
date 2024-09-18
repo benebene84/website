@@ -20,16 +20,25 @@ const footerLinks = [
     href: '/rss',
     label: 'rss',
     target: '_blank',
+    icon: true
   },
   {
     href: 'https://github.com/benebene84',
     label: 'github',
     target: '_blank',
+    icon: true,
+  },
+  {
+    href: 'https://www.linkedin.com/in/benedikt-sperl/',
+    label: 'linkedin',
+    target: '_blank',
+    icon: true,
   },
   {
     href: '/imprint',
     label: 'imprint',
     target: '_self',
+    icon: false,
   },
 ]
 
@@ -45,15 +54,12 @@ export default function Footer() {
               target={link.target}
               href={link.href}
             >
-              <ArrowIcon />
+              {link.icon && <ArrowIcon />}
               <p className="ml-2 h-7">{link.label}</p>
             </a>
           </li>
         ))}
       </ul>
-      <p className="mt-8 text-neutral-600 dark:text-neutral-300">
-        © {new Date().getFullYear()} MIT Licensed
-      </p>
     </footer>
   )
 }

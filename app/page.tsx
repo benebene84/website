@@ -6,6 +6,7 @@ const professionalExperience = [
   {
     company: 'WOLF',
     role: 'Frontend Lead',
+    duration: '03-2022 - present',
     description: 'Managing and leading the development of the frontend',
     highlights: [
       'Technical Leadership: Define the architecture for the frontend, choosing frameworks, libraries, and best practices for scalability, performance, and maintainability.',
@@ -17,6 +18,7 @@ const professionalExperience = [
   {
     company: 'BSH Home Appliances',
     role: 'Frontend Architect',
+    duration: '01-2019 - 02-2022',
     description:
       'Managed the transformation of a monolith e-commerce architecture into a modern multi application frontend based on React and Next.Js',
     highlights: [
@@ -63,9 +65,16 @@ export default function Page() {
         <span className="flex flex-col gap-4">
           {professionalExperience.map((experience) => (
             <span className="flex flex-col gap-4" key={experience.company}>
-              <strong>
-                {experience.company} | {experience.role}
-              </strong>
+              <span className="flex flex-row gap-2">
+                <strong>
+                  {experience.company} 
+                </strong>
+                <span>|</span>
+                <strong>{experience.role}</strong>
+                <span>|</span>
+                <span>{experience.duration}</span>
+              </span>
+              
               <span>{experience.description}</span>
               <ul className="flex flex-col gap-2">
                 {experience.highlights.map((highlight) => (

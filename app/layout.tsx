@@ -5,6 +5,7 @@ import { GeistMono } from 'geist/font/mono'
 import { Navbar } from './components/nav'
 import Footer from './components/footer'
 import { baseUrl } from './sitemap'
+import { SkipLink } from './components/ui/skip-link'
 
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
@@ -51,6 +52,7 @@ export default function RootLayout({
       )}
     >
       <body className="mx-4 mt-8 max-w-3xl antialiased lg:mx-auto">
+        <SkipLink />
         <main className="flex min-w-0 flex-auto flex-col px-2 md:px-0">
           <Navbar />
           {children}

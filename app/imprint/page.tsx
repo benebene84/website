@@ -2,8 +2,8 @@ import { Headline } from "app/components/ui/headline";
 
 export default function Imprint() {
   return (
-    <>
-      <Headline>Impressum</Headline>
+    <section lang="de">
+      <Headline id="main">Impressum</Headline>
       <div className="prose prose-sm">
       <p>Angaben gemäß § 5 DDG</p>
       <p className="flex flex-col">
@@ -62,6 +62,6 @@ export default function Imprint() {
       </p>
       */}
       </div>
-    </>
+    </section>
   )
 }

@@ -57,7 +57,7 @@ export default function Blog({ params }) {
   }
 
   return (
-    <section>
+    <section id="main">
       <script
         type="application/ld+json"
         suppressHydrationWarning
@@ -85,7 +85,7 @@ export default function Blog({ params }) {
       </h1>
       <div className="mt-2 mb-8 flex items-center justify-between text-sm">
         <p className="text-sm text-neutral-600 dark:text-neutral-400">
-          {formatDate(post.metadata.publishedAt)}
+          {formatDate(post.metadata.publishedAt, true)}
         </p>
       </div>
       <article className="prose">

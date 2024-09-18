@@ -18,7 +18,7 @@ const professionalExperience = [
   {
     company: 'BSH Home Appliances',
     role: 'Frontend Architect',
-    duration: '01-2019 - 02-2022',
+    duration: '01-2019 - 02-2024',
     description:
       'Managed the transformation of a monolith e-commerce architecture into a modern multi application frontend based on React and Next.Js',
     highlights: [
@@ -31,7 +31,7 @@ const professionalExperience = [
 
 export default function Page() {
   return (
-    <main className="flex flex-col gap-8">
+    <main className="flex flex-col gap-8" id="main">
       <section className="flex flex-col-reverse gap-8 sm:flex-row">
         <div>
           <h1 className="mb-2 text-2xl font-semibold tracking-tighter">

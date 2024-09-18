@@ -1,6 +1,6 @@
 import { BlogPosts } from 'app/components/posts'
 import Image from 'next/image'
-import beneImage from "app/images/bene.jpg"
+import beneImage from 'app/images/bene.jpg'
 
 const professionalExperience = [
   {
@@ -17,7 +17,8 @@ const professionalExperience = [
   {
     company: 'BSH Home Appliances',
     role: 'Frontend Architect',
-    description: 'Managed the transformation of a monolith e-commerce architecture into a modern multi application frontend based on React and Next.Js',
+    description:
+      'Managed the transformation of a monolith e-commerce architecture into a modern multi application frontend based on React and Next.Js',
     highlights: [
       'Creating a new frontend architecture target picture to split up a monolith e-commerce system into microservices with different frontend applications',
       'Choosing the technology stack for the new frontend with special focus on performance optimizations',
@@ -29,7 +30,7 @@ const professionalExperience = [
 export default function Page() {
   return (
     <main className="flex flex-col gap-8">
-      <section className="flex flex-col-reverse sm:flex-row gap-8">
+      <section className="flex flex-col-reverse gap-8 sm:flex-row">
         <div>
           <h1 className="mb-2 text-2xl font-semibold tracking-tighter">
             Hi, I'm Benedikt.
@@ -38,13 +39,13 @@ export default function Page() {
             Frontend Architect / Frontend Lead with a passion for web
             development, UX design, accessibility, performance optimization and
             automation. I love building user interfaces and products people like
-            to interact with. 
+            to interact with.
           </p>
         </div>
         <Image
           src={beneImage}
           alt="Benedikt Sperl"
-          className="w-32 h-32 rounded-full"
+          className="h-32 w-32 rounded-full"
           placeholder="blur"
           priority
         />
@@ -62,11 +63,15 @@ export default function Page() {
         <span className="flex flex-col gap-4">
           {professionalExperience.map((experience) => (
             <span className="flex flex-col gap-4" key={experience.company}>
-              <strong>{experience.company} | {experience.role}</strong>
+              <strong>
+                {experience.company} | {experience.role}
+              </strong>
               <span>{experience.description}</span>
               <ul className="flex flex-col gap-2">
                 {experience.highlights.map((highlight) => (
-                  <li key={highlight} className="list-disc ml-4 pl-2">{highlight}</li>
+                  <li key={highlight} className="ml-4 list-disc pl-2">
+                    {highlight}
+                  </li>
                 ))}
               </ul>
             </span>

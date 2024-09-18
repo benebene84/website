@@ -6,24 +6,24 @@ const navItems = {
   },
   '/blog': {
     name: 'blog',
-  }
+  },
 }
 
 export function Navbar() {
   return (
-    <aside className="-ml-[8px] mb-12 tracking-tight">
+    <aside className="mb-12 -ml-[8px] tracking-tight">
       <div className="lg:sticky lg:top-20">
         <nav
-          className="flex flex-row items-start relative px-0 pb-0 fade md:overflow-auto scroll-pr-6 md:relative"
+          className="fade relative flex scroll-pr-6 flex-row items-start px-0 pb-0 md:relative md:overflow-auto"
           id="nav"
         >
-          <div className="flex flex-row space-x-0 gap-6 sm:gap-8">
+          <div className="flex flex-row gap-6 space-x-0 sm:gap-8">
             {Object.entries(navItems).map(([path, { name }]) => {
               return (
                 <Link
                   key={path}
                   href={path}
-                  className="transition-all hover:text-neutral-800 dark:hover:text-neutral-200 flex align-middle relative py-1 px-2 m-1 text-lg"
+                  className="relative m-1 flex py-1 px-2 align-middle text-lg transition-all hover:text-neutral-800 dark:hover:text-neutral-200"
                 >
                   {name}
                 </Link>

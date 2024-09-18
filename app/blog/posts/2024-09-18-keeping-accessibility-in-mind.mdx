@@ -1,0 +1,223 @@
+---
+title: 'Keeping accessibility in mind'
+publishedAt: '2024-09-18'
+summary: 'A short guide on how to keep accessibility in mind when building digital products'
+---
+
+## Introduction
+
+Web accessibility, often referred to as "a11y", is not a new concept, but it is now more relevant than ever. With more and more people using the web, it is important to make sure that digital products are accessible to everyone.
+16% of the world's population has some kind of disability. This translates to nearly 1.3 billion people who may need assistive tools and technologies to access online content.
+(Source: [World Health Organization](https://www.who.int/news-room/fact-sheets/detail/disability-and-health#:~:text=Key%20facts,1%20in%206%20of%20us.))
+
+And more and more countries are making it a legal requirement to make digital products accessible.
+For example, the EU is enforcing the [European Accessibility Act](https://ec.europa.eu/digital-single-market/en/european-accessibility-act) which requires all digital products have to follow certain accessibility guidelines (like WCAG 2.1 level AA).
+
+Besides the legal requirements, there are many other benefits to making your digital products accessible.
+Companies that prioritize accessibility and provide ADA-compliant internet access are four times as likely to outperform their competitors in total shareholder returns (Source: [Accenture](https://newsroom.accenture.com/news/2018/companies-leading-in-disability-inclusion-have-outperformed-peers-accenture-research-finds#:~:text=Furthermore%2C%20companies%20that%20have%20improved,those%20of%20their%20peer%20group.)).
+Also digital products that fully comply with WCAG 2.0 are expected to have a 50% higher market performance than their competitors. (Source: [Gartner](https://www.gartner.com/en/documents/3986300))
+
+With all these benefits in mind, let's take a look at some practical steps you can take to make your digital products more accessible.
+
+## Basics
+
+The very first step for building accessible user interfaces is to understand, that not every user is accessing your content with a desktop and a mouse, or a smartphone and a touchscreen.
+
+There will be users with visual, auditory, physical, cognitive and neurological disabilities accessing your site, that can't, or don't want to use a mouse or a touchscreen.
+Some users will also have to rely on assistive technologies like screen readers to navigate your site.
+
+### Use semantic HTML
+
+The good thing is, that if you write modern HTML with semantic elements, you are already on the right track. Examples of semantic elements include `<header>`, `<nav>`, `<main>`, `<article>`, `<footer>`, `<aside>` and `<section>`. These elements give both browsers and screen readers clear information about the structure and purpose of the content.
+
+By using semantic HTML, you help assistive technologies to understand and structure the content on a webpage. E.g. this allows screen reader users to navigate your site more easily and understand the context and function of various elements.
+
+On the flip side, not using semantic HTML correctly can create significant drawbacks. For instance, using a `<div>` element instead of a `<button>` means that this element will not be focusable, keyboard-navigable, or clickable by default. As a result, assistive technologies like screen readers or keyboard-only users won't be able to navigate to this element or interact with it.
+
+Let's look at two examples:
+
+```html
+<div>Click Me</div>
+<script>
+  const divElement = document.querySelector('div')
+  divElement.addEventListener('click', () => {
+    alert('Button clicked')
+  })
+</script>
+```
+
+While this example will work - when clicking on the div with a mouse or tapping on it with a touchscreen - it will not be announced by a screen reader and won't be focusable by a keyboard.
+There are ways to make this div focusable and keyboard-navigable, but it requires adding additional attributes and more javascript. You could use `role="button"` instead of the semantic `<button>` or `<input type="button">` elements, you will need to make the element focusable and define event handlers for click and keydown events. This includes handling the <kbd>Enter</kbd> and <kbd>Space</kbd> keypresses in order to process all forms of user input.
+You would end up with something like this:
+
+```html
+<div role="button" tabindex="0" aria-pressed="false">Click Me</div>
+<script>
+  const divElement = document.querySelector('div')
+  divElement.addEventListener('click', () => {
+    alert('Button clicked')
+    divElement.setAttribute('aria-pressed', 'true')
+  })
+  divElement.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      alert('Button clicked')
+      divElement.setAttribute('aria-pressed', 'true')
+    }
+  })
+</script>
+```
+
+Or you just use the semantic `<button>` element, which already makes the element focusable and keyboard-navigable and doesn't require any additional attributes or event handlers.
+
+```html
+<button type="button">Click Me</button>
+<script>
+  const button = document.querySelector('button')
+  button.addEventListener('click', () => {
+    alert('Button clicked')
+  })
+</script>
+```
+
+### Provide text alternatives for non-text content
+
+Text alternatives are essential for making digital products accessible. They provide the same information that visual content conveys, but in a format that can be understood by all users, including those with visual impairments.
+
+For instance, text alternatives for images, such as alt text for `<img>` elements, serve as a crucial bridge between visual and non-visual users. Alt text descriptions enable screen reader users to understand the content and purpose of images, while also benefiting users who are unable to see the screen at all.
+
+![A coffee shop table with two cups of coffee](https://picsum.photos/id/42/3456/2304.jpg)
+
+```html
+<img
+  src="https://picsum.photos/id/42/3456/2304.jpg"
+  alt="A coffee shop table with two cups of coffee"
+/>
+```
+
+Another example are icons and svg graphics. If they are purely decorative, you can use `aria-hidden="true"` to hide them from assistive technologies. If they are not purely decorative, you should provide a text alternative.
+If icons are used inside a button, you should also provide a text alternative inside the button.
+
+```html
+<button type="button" aria-label="Click me">
+  <svg
+    aria-hidden="true"
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path d="..." fill="currentColor" />
+  </svg>
+</button>
+```
+
+As a rule of thumb, if the non-text-content is important for understanding the content of the page, you should provide a text alternative.
+
+### Interactive elements
+
+When creating interactive elements like buttons, forms, and custom components, it's crucial to ensure they are accessible to all users, including those relying on assistive technologies. This is where WAI-ARIA (Web Accessibility Initiative - Accessible Rich Internet Applications) comes into play.
+
+WAI-ARIA provides a set of attributes that can be added to HTML elements to provide additional information about the structure, behavior, and state of user interface components. These attributes help bridge the gap between complex web applications and assistive technologies.
+
+Here are some key points to consider:
+
+1. **Use native HTML elements when possible**: As mentioned earlier, native HTML elements like `<button>`, `<input>`, and `<select>` already have built-in accessibility features.
+
+2. **Add ARIA attributes when necessary**: When creating custom components or modifying the behavior of native elements, use ARIA attributes to convey the component's role, state, and properties.
+
+3. **Manage focus**: Ensure that all interactive elements can be accessed and operated using a keyboard alone.
+
+4. **Provide feedback**: Use ARIA live regions to announce dynamic content changes to screen reader users.
+
+Here's an example of a custom dropdown menu using ARIA attributes:
+
+```html
+<div class="dropdown">
+  <button id="dropdownButton" aria-haspopup="true" aria-expanded="false">
+    Select an option
+  </button>
+  <ul id="dropdownMenu" role="menu" aria-labelledby="dropdownButton" hidden>
+    <li role="menuitem"><a href="#">Option 1</a></li>
+    <li role="menuitem"><a href="#">Option 2</a></li>
+    <li role="menuitem"><a href="#">Option 3</a></li>
+  </ul>
+</div>
+```
+
+In this example:
+
+- `aria-haspopup="true"` indicates that the button controls a popup (the dropdown menu).
+- `aria-expanded="false"` shows that the dropdown is currently closed.
+- `role="menu"` and `role="menuitem"` define the structure of the dropdown.
+- `aria-labelledby="dropdownButton"` associates the menu with its controlling button.
+
+If you think you are already done, remember to update these attributes dynamically with JavaScript as the state of your component changes.
+In this case, you would also need to manage the `aria-expanded` attribute on the dropdown menu based on the state of the dropdown.
+
+The WAI-ARIA specification is extensive and can be complex. It's important to use ARIA attributes judiciously and test thoroughly with assistive technologies to ensure they enhance rather than hinder accessibility.
+As you can see, this can quickly become quite complex fast and it is easy to make mistakes.
+Fortunately, you can rely on so called headless ui libraries, like [Headless UI](https://headlessui.com/) or [Radix UI](https://www.radix-ui.com/primitives/docs/overview/introduction), that provide accessible and customizable UI components without any styling, while handling focus and ARIA attributes for you.
+
+## Tools & Testing
+
+Testing for accessibility is crucial to ensure that your digital products are truly inclusive. There are two main approaches to accessibility testing: automated and manual. Both have their strengths and are essential for comprehensive accessibility evaluation.
+
+### Automated Testing
+
+Automated testing tools can quickly scan your website or application for common accessibility issues. While they can't catch everything, they're excellent for identifying basic problems and providing a good starting point for improvements.
+
+Some popular automated testing tools include:
+
+1. **Axe DevTools**: A browser extension that tests web pages for accessibility issues.
+2. **WAVE**: Web Accessibility Evaluation Tool, available as a web service and browser extension.
+3. **Lighthouse**: Built into Chrome DevTools, it includes accessibility audits.
+4. **Pa11y**: A command-line tool for running accessibility tests.
+
+These tools can help identify issues such as:
+
+- Missing alternative text for images
+- Insufficient color contrast
+- Improper heading structure
+- Missing form labels
+- Inaccessible ARIA attributes
+
+While automated tools are valuable, they typically catch only about 30-50% of accessibility issues. This is why manual testing is equally important.
+
+### Manual Testing
+
+Manual testing involves human evaluation and interaction with the product. It's essential for catching issues that automated tools might miss, especially those related to context and user experience.
+
+Key aspects of manual testing include:
+
+1. **Keyboard Navigation**: Ensure all interactive elements are accessible and operable using only a keyboard.
+
+2. **Screen Reader Testing**: Use screen readers like NVDA, JAWS, or VoiceOver to navigate your site and ensure content is properly announced.
+
+3. **Color and Contrast Checks**: While automated tools can check contrast ratios, manual review ensures color isn't the only means of conveying information.
+
+4. **Content Structure**: Verify that the logical structure of content makes sense when read aloud or navigated non-visually.
+
+5. **Interactive Element Testing**: Ensure custom widgets, forms, and dynamic content work correctly with assistive technologies.
+
+6. **Zoom and Magnification**: Test how your site behaves at different zoom levels (up to 400%).
+
+7. **Different Devices and Browsers**: Check accessibility across various devices, screen sizes, and browsers.
+
+### Combining Automated and Manual Testing
+
+For best results, use a combination of automated and manual testing:
+
+1. Start with automated tools to catch obvious issues quickly.
+2. Address the problems identified by automated tools.
+3. Conduct manual testing to catch more nuanced issues.
+4. Perform user testing with individuals who use assistive technologies.
+5. Regularly retest as you make changes to your product.
+
+Remember, accessibility is an ongoing process. Regular testing and updates are necessary to maintain and improve the accessibility of your digital products over time.
+
+## Resources
+
+- [Web Accessibility Initiative (WAI)](https://www.w3.org/WAI/)
+- [MDN Web Docs Accessibility Resources](https://developer.mozilla.org/en-US/docs/Web/Accessibility)
+- [The A11Y Project](https://a11yproject.com/)
+- [Inclusive Components](https://inclusive-components.design/)
+- [Accessibility Insights](https://accessibilityinsights.io/)

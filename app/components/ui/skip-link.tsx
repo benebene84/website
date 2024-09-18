@@ -1,7 +1,15 @@
-import { HTMLAttributes } from "react"
+import { HTMLAttributes } from 'react'
 
 type SkipLinkProps = HTMLAttributes<HTMLAnchorElement>
 
 export const SkipLink = ({ ...props }: SkipLinkProps) => {
-  return <a href="#main" className="absolute left-0 top-0 py-2 px-4 z-50 transform -translate-y-full focus:translate-y-0 transition" {...props}>Skip to main content</a>
+  return (
+    <a
+      href="#main"
+      className="absolute top-0 left-0 z-50 -translate-y-full transform py-2 px-4 transition focus:translate-y-0"
+      {...props}
+    >
+      Skip to main content
+    </a>
+  )
 }

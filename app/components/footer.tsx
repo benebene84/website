@@ -20,7 +20,7 @@ const footerLinks = [
     href: '/rss',
     label: 'rss',
     target: '_blank',
-    icon: true
+    icon: true,
   },
   {
     href: 'https://github.com/benebene84',

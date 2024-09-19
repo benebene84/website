@@ -6,6 +6,7 @@ import { Navbar } from './components/nav'
 import Footer from './components/footer'
 import { baseUrl } from './sitemap'
 import { SkipLink } from './components/ui/skip-link'
+import Script from 'next/script'
 
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
@@ -58,6 +59,7 @@ export default function RootLayout({
           {children}
           <Footer />
         </main>
+        <Script defer src="https://cloud.umami.is/script.js" data-website-id="e5a9dd7b-f9a8-41f0-82bd-8c7a5a911239" />
       </body>
     </html>
   )

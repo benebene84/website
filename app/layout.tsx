@@ -59,7 +59,11 @@ export default function RootLayout({
           {children}
           <Footer />
         </main>
-        <Script defer src="https://cloud.umami.is/script.js" data-website-id="e5a9dd7b-f9a8-41f0-82bd-8c7a5a911239" />
+        <Script
+          defer
+          src="https://cloud.umami.is/script.js"
+          data-website-id="e5a9dd7b-f9a8-41f0-82bd-8c7a5a911239"
+        />
       </body>
     </html>
   )

@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import { CustomMDX } from 'app/components/mdx'
 import { formatDate, getBlogPosts } from 'app/blog/utils'
 import { baseUrl } from 'app/sitemap'
+import { ShareButton } from '../../components/ui/share'
 
 export async function generateStaticParams() {
   const posts = getBlogPosts()
@@ -80,9 +81,18 @@ export default function Blog({ params }) {
           }),
         }}
       />
-      <h1 className="title text-2xl font-semibold tracking-tighter">
-        {post.metadata.title}
-      </h1>
+      <div className="flex justify-between">
+        <h1 className="title text-2xl font-semibold tracking-tighter">
+          {post.metadata.title}
+        </h1>
+        <ShareButton
+          data={{
+            title: post.metadata.title,
+            text: post.metadata.summary,
+            url: `${baseUrl}/blog/${post.slug}`,
+          }}
+        />
+      </div>
       <div className="mt-2 mb-8 flex items-center justify-between text-sm">
         <p className="text-sm text-neutral-600 dark:text-neutral-400">
           {formatDate(post.metadata.publishedAt, true)}

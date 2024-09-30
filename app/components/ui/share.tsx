@@ -1,5 +1,6 @@
 'use client'
 
+import { cx } from 'app/utils/utils'
 import { Arrow } from '../icons/Arrow'
 
 const share = async (data: ShareData) => {
@@ -10,10 +11,16 @@ const share = async (data: ShareData) => {
   }
 }
 
-export const ShareButton = ({ data }: { data: ShareData }) => {
+export const ShareButton = ({
+  data,
+  className,
+}: {
+  data: ShareData
+  className?: string
+}) => {
   return (
     <button
-      className="flex cursor-pointer items-center gap-2"
+      className={cx('flex cursor-pointer items-center gap-2', className)}
       onClick={() => share(data)}
     >
       <Arrow />

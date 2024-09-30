@@ -7,6 +7,7 @@ import Footer from './components/footer'
 import { baseUrl } from './sitemap'
 import { SkipLink } from './components/ui/skip-link'
 import Script from 'next/script'
+import { cx } from './utils/utils'
 
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
@@ -36,8 +37,6 @@ export const metadata: Metadata = {
   },
 }
 
-const cx = (...classes) => classes.filter(Boolean).join(' ')
-
 export default function RootLayout({
   children,
 }: {
@@ -59,11 +58,13 @@ export default function RootLayout({
           {children}
           <Footer />
         </main>
-        <Script
-          defer
+        {process.env.NODE_ENV === 'production' && (
+          <Script
+            defer
           src="https://cloud.umami.is/script.js"
-          data-website-id="e5a9dd7b-f9a8-41f0-82bd-8c7a5a911239"
-        />
+            data-website-id="e5a9dd7b-f9a8-41f0-82bd-8c7a5a911239"
+          />
+        )}
       </body>
     </html>
   )

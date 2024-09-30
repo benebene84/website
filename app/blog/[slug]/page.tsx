@@ -81,7 +81,7 @@ export default function Blog({ params }) {
           }),
         }}
       />
-      <div className="flex justify-between">
+      <div className="flex flex-col-reverse justify-between gap-1 md:flex-row">
         <h1 className="title text-2xl font-semibold tracking-tighter">
           {post.metadata.title}
         </h1>
@@ -101,6 +101,14 @@ export default function Blog({ params }) {
       <article className="prose">
         <CustomMDX source={post.content} />
       </article>
+      <ShareButton
+        data={{
+          title: post.metadata.title,
+          text: post.metadata.summary,
+          url: `${baseUrl}/blog/${post.slug}`,
+        }}
+        className="mt-8"
+      />
     </section>
   )
 }

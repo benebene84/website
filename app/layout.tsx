@@ -46,7 +46,7 @@ export default function RootLayout({
     <html
       lang="en"
       className={cx(
-        'bg-white text-black dark:bg-black dark:text-white',
+        'scroll-smooth bg-white text-black dark:bg-black dark:text-white',
         GeistSans.variable,
         GeistMono.variable,
       )}
@@ -61,7 +61,7 @@ export default function RootLayout({
         {process.env.NODE_ENV === 'production' && (
           <Script
             defer
-          src="https://cloud.umami.is/script.js"
+            src="https://cloud.umami.is/script.js"
             data-website-id="e5a9dd7b-f9a8-41f0-82bd-8c7a5a911239"
           />
         )}

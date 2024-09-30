@@ -1,6 +1,6 @@
 'use client'
 
-import { cx } from 'app/utils/utils'
+import { cx } from 'app/utils/cx'
 import { Arrow } from '../icons/Arrow'
 
 const share = async (data: ShareData) => {

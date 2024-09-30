@@ -1,4 +1,4 @@
-import { getBlogPosts } from 'app/blog/utils'
+import { getBlogPosts } from 'app/utils/mdx'
 
 export const baseUrl = 'https://www.benedikt-sperl.de'
 

@@ -7,7 +7,7 @@ import Footer from './components/footer'
 import { baseUrl } from './sitemap'
 import { SkipLink } from './components/ui/skip-link'
 import Script from 'next/script'
-import { cx } from './utils/utils'
+import { cx } from './utils/cx'
 
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),

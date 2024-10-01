@@ -1,0 +1,82 @@
+---
+title: 'Don't use JavaScript for that - Part 1 - Inpage Transitions'
+publishedAt: '2024-09-30'
+summary: 'Don't use JavaScript for smooth scrolling and in page transitions.'
+---
+
+## Introduction
+
+In the past HTML and CSS have lacked features, that made it necessary to use JavaScript to implement functionality that is now implemented in modern web APIs. However as off-loading JavaScript to the browser has become more and more powerful, many things that were previously implemented in JavaScript can now also be implemented in native HTML, CSS and web APIs.
+For performance and accessibility reasons it is always better to use native web APIs instead of JavaScript.
+
+In the following articles I will give some examples of things that are (or were) implemented in JavaScript, but can now also be implemented in native HTML, CSS and web APIs.
+In the first part I will start with Inpage transisitions.
+
+## In page transitions
+
+One common use case for JavaScript in web development has been implementing smooth scrolling to specific sections of a page. Traditionally, developers might have used JavaScript methods like `scrollTop` or `scrollIntoView` to achieve this effect. However, modern CSS and HTML provide a simpler, more performant solution using anchor links and the `scroll-behavior` property.
+
+### The old way: JavaScript scrolling
+
+In the past, you might have seen code like this:
+
+```javascript
+document
+  .querySelector('.scroll-to-section')
+  .addEventListener('click', function (e) {
+    e.preventDefault()
+    const targetId = this.getAttribute('href')
+    const targetElement = document.querySelector(targetId)
+    targetElement.scrollIntoView({ behavior: 'smooth' })
+  })
+```
+
+This JavaScript code intercepts clicks on links, prevents the default behavior, and then uses the `scrollIntoView` method to smoothly scroll to the target element.
+
+### The modern way: CSS smooth scrolling
+
+Now, we can achieve the same effect with much less code and better performance using CSS:
+
+First, add the `scroll-behavior` property to your CSS:
+
+```html
+<style>
+  html {
+    scroll-behavior: smooth;
+  }
+</style>
+```
+
+Then, use standard anchor links in your HTML:
+
+```html
+<a href="#section-1">Go to Section 1</a>
+<!-- ... other content ... -->
+<section id="section-1">
+  <h2>Section 1</h2>
+  <!-- Section content -->
+</section>
+```
+
+That's it! The browser will now automatically handle smooth scrolling to the target section when the link is clicked.
+
+### Benefits of the CSS approach
+
+1. **Simplicity**: No JavaScript required, reducing complexity and potential bugs.
+2. **Performance**: The browser can optimize the scrolling animation, potentially leading to smoother performance.
+3. **Accessibility**: Screen readers and keyboard navigation work out of the box, without needing to replicate this functionality in JavaScript.
+4. **User preference respect**: Some users prefer or need reduced motion. Browsers can automatically respect this preference with the CSS solution.
+
+### Enhancing the experience
+
+To further improve the user experience, you can use the `scroll-margin-top` property to ensure that your target sections aren't obscured by fixed headers:
+
+```css
+section {
+  scroll-margin-top: 2rem; / Adjust based on your header height /
+}
+```
+
+This ensures that when scrolling to a section, it doesn't end up partially hidden behind a fixed header.
+
+By embracing these modern CSS features, we can create smooth, accessible in-page transitions without relying on JavaScript. This approach not only simplifies our code but also improves performance and user experience across a wide range of devices and browsers.

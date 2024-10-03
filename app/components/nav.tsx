@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { Switch } from './ui/switch'
 
 const navItems = {
   '/': {
@@ -17,7 +18,7 @@ export function Navbar() {
           className="fade relative flex scroll-pr-6 flex-row items-start px-0 pb-0 md:relative md:overflow-auto"
           id="nav"
         >
-          <div className="flex flex-row gap-6 space-x-0 sm:gap-8">
+          <div className="flex flex-row items-center gap-6 space-x-0 sm:gap-8">
             {Object.entries(navItems).map(([path, { name }]) => {
               return (
                 <Link

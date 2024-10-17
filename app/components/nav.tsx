@@ -1,5 +1,4 @@
 import Link from 'next/link'
-import { Switch } from './ui/switch'
 
 const navItems = {
   '/': {

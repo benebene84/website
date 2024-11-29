@@ -1,0 +1,344 @@
+---
+title: 'The power of responsive variants in components'
+publishedAt: '2024-12-22'
+summary: 'How to use responsive variants in components to create a more dynamic and flexible design system.'
+---
+
+## The problem with responsive design in components
+
+When you want to create components that can be applied with a maximum of flexibility, you often end up with a lot of different variants.
+For example, if you want to create a button component, you might end up with a lot of different props, depending on the color, size, shape, etc.
+
+While this already allows a lot of flexibility, it all goes down the drain very fast, when you want to apply different variants for different screen sizes.
+One way would be to hardcode different media queries into the component and define the behavior for each screen size centrally. However, this approach has the downside, that you remove the flexibility for the consumer to choose the variant they need.
+
+Another way to handle this is to use some kind of media query hook, that can be used to dynamically change the props of the component based on the screen size.
+But this comes with certain drawbacks:
+
+- First, you need an additional dependecy, that might not be available in the project.
+- Second, you need to make sure, that the hook is used in all places, where the component is rendered, otherwise, it might not behave as expected.
+- Third, you need to make sure, that the hook is not causing unnecessary re-renders, as this can lead to performance issues.
+- Fourth, it does not work in an environment, where you can't access the window object, like in server rendering. In this scenario, you would need to define a fallback szenario and the props could change again after the initial hydration, causing large layout shifts.
+
+So it is obvious, that we need a solution that allows us to define the variants centrally, but let the consumer decide on which variant to use for each breakpoint using media queries.
+
+## The solution: Responsive variants
+
+### Where and how to start?
+
+First we need to define a type, that allows us to define a value for each breakpoint or just a value for all breakpoints. This way, we can define the variants centrally and let the consumer decide on which variant to use for each breakpoint.
+
+```ts
+type Breakpoint = 'initial' | 'sm' | 'md' | 'lg' | 'xl'
+
+type BreakpointsMap<V> = Partial<{
+  [breakpoint in Breakpoint]: V
+}>
+
+export type ResponsiveValue<T> = T | BreakpointsMap<T>
+```
+
+We define a set of breakpoints that we want to support. As we will use min-width for the media queries, we need to define the breakpoints in ascending order and start with the initial version.
+With the `ResponsiveValue` utility type, we can now wrap existing types and make them responsive.
+
+```ts
+type ButtonSize = ResponsiveValue<'sm' | 'md' | 'lg'>
+type ButtonColor = ResponsiveValue<'primary' | 'secondary' | 'danger'>
+
+type ButtonProps = {
+  size: ButtonSize
+  color: ButtonColor
+} & HTMLAttributes<HTMLButtonElement>
+```
+
+With this, we have our component API ready. Let's have a look at how this will look like for the consumer.
+
+```tsx
+<Button
+  size={{ initial: 'sm', sm: 'md', md: 'lg' }}
+  color={{ initial: 'primary', md: 'secondary' }}
+>
+  Hello Responsive World
+</Button>
+```
+
+We are now able to specify exactly what we need for each breakpoint and variant. In this case, the initial breakpoint the button will be `sm` and the color will be `primary`. On `md` and wider screens, the button will be `md` and the color will be `secondary`, and on the `lg` breakpoint and wider, the button will be `lg` and the color will still be `primary`.
+
+### Handling the responsive variants in the component
+
+Handling the responsive variants in the component is not that different from handling the normal variants.
+We just need to check if there are different values for each breakpoint and add a media query for each breakpoint and map the correct classes to the props.
+
+The actual implementation also depends a bit on the styling solution. If you are using a CSS-in-JS solution, you can just use the `css` helper to create the media queries and map the correct classes to the props.
+If you are using a traditional CSS solution, you can just use a class name helper to map the correct classes and create the styles with the media queries based on the breakpoint prefix. If you are using tailwind you might want to have a look at solutions like [tailwinds-variants](https://github.com/astagi/tailwinds-variants) that have a built-in logic for handling those.
+
+In this example I will stick with a traditional CSS approach. Let's have a look at an example implementation for a button component.
+
+First, we need to create a helper function, that will be used to transfer the responsive variants to the correct classes.
+In case a responsive value is just used a normal variant, it will pass through the value.
+In case a responsive value is used, it will map the value to the correct classes based on the breakpoint.
+
+```ts
+const handleResponsiveValue = (value: ResponsiveValue<string>) => {
+  if (typeof value === 'string') {
+    return value
+  }
+  return Object.entries(value)
+    .map(([breakpoint, value]) => {
+      if (breakpoint === 'initial') {
+        return value
+      }
+      return `${breakpoint}:${value}`
+    })
+    .join(' ')
+}
+```
+
+For example, if we have a button with a responsive value for color of `{ initial: 'primary', md: 'secondary', lg: 'danger' }`, the function will return `primary md:secondary lg:danger`.
+With this, we would need to call this helper function for every responsive value in the component.
+
+```tsx
+const Button = ({ size, color, children, ...props }: ButtonProps) => {
+  return (
+    <button
+      className={clsx(
+        'btn',
+        handleResponsiveValue(size),
+        handleResponsiveValue(color),
+      )}
+    >
+      {children}
+    </button>
+  )
+}
+```
+
+Let's create another helper function, that we can pass all responsive values to and it will return the correct classes for each breakpoint.
+It checks if the value is an array and then maps over the array and calls the `handleResponsiveValue` function for each value.
+If the value is not an array, it will just call the `handleResponsiveValue` function for the value. If the value is an array, it will join the classes with a space.
+
+```ts
+const createResponsiveClasses = (
+  values: ResponsiveValue<string>[] | ResponsiveValue<string>,
+) => {
+  const classes: string[] = []
+  if (Array.isArray(values)) {
+    for (const value of values) {
+      classes.push(handleResponsiveValue(value))
+    }
+  } else {
+    classes.push(handleResponsiveValue(values))
+  }
+  return classes.join(' ')
+}
+```
+
+With this, we can now pass all responsive values to the function and it will return the correct classes for each breakpoint.
+
+```tsx
+const Button = ({ size, color, children, ...props }: ButtonProps) => {
+  return (
+    <button className={clsx('btn', createResponsiveClasses([size, color]))}>
+      {children}
+    </button>
+  )
+}
+```
+
+Now we can use the Button component, specify the responsive variants and classnames will be generated correctly.
+
+```tsx
+<Button
+  size={{ initial: 'sm', md: 'md', lg: 'lg' }}
+  color={{ initial: 'primary', md: 'secondary', lg: 'danger' }}
+>
+  Hello Responsive World
+</Button>
+```
+
+<br />
+```html
+<button class="btn sm md:md lg:lg primary md:secondary lg:danger">
+  Hello Responsive World
+</button>
+```
+
+Now what is left to do is to create the styles for the button component. We will make use of css nesting and the `@media` to create the styles for each breakpoint.
+
+```css
+.btn {
+  border-radius: 5px;
+  cursor: pointer;
+
+  &.sm {
+    padding: 5px 10px;
+    font-size: 0.8rem;
+  }
+  &.md {
+    padding: 10px 20px;
+    font-size: 1rem;
+  }
+  &.lg {
+    padding: 15px 30px;
+    font-size: 1.2rem;
+  }
+
+  &.sm\:sm {
+    @media (min-width: 640px) {
+      padding: 5px 10px;
+      font-size: 0.8rem;
+    }
+  }
+  &.sm\:md {
+    @media (min-width: 640px) {
+      padding: 10px 20px;
+      font-size: 1rem;
+    }
+  }
+  &.sm\:lg {
+    @media (min-width: 640px) {
+      padding: 15px 30px;
+      font-size: 1.2rem;
+    }
+  }
+  &.md\:sm {
+    @media (min-width: 768px) {
+      padding: 5px 10px;
+      font-size: 0.8rem;
+    }
+  }
+  &.md\:md {
+    @media (min-width: 768px) {
+      padding: 10px 20px;
+      font-size: 1rem;
+    }
+  }
+  &.md\:lg {
+    @media (min-width: 768px) {
+      padding: 15px 30px;
+      font-size: 1.2rem;
+    }
+  }
+  &.lg\:sm {
+    @media (min-width: 1024px) {
+      padding: 5px 10px;
+      font-size: 0.8rem;
+    }
+  }
+  &.lg\:md {
+    @media (min-width: 1024px) {
+      padding: 10px 20px;
+      font-size: 1rem;
+    }
+  }
+
+  &.lg\:lg {
+    @media (min-width: 1024px) {
+      padding: 15px 30px;
+      font-size: 1.2rem;
+    }
+  }
+
+  &.primary {
+    background-color: #007bff;
+    color: #fff;
+  }
+
+  &.secondary {
+    background-color: #6c757d;
+    color: #fff;
+  }
+
+  &.danger {
+    background-color: #dc3545;
+    color: #fff;
+  }
+
+  &.sm\:primary {
+    @media (min-width: 640px) {
+      background-color: #007bff;
+      color: #fff;
+    }
+  }
+
+  &.sm\:secondary {
+    @media (min-width: 640px) {
+      background-color: #6c757d;
+      color: #fff;
+    }
+  }
+
+  &.sm\:danger {
+    @media (min-width: 640px) {
+      background-color: #dc3545;
+      color: #fff;
+    }
+  }
+
+  &.md\:primary {
+    @media (min-width: 768px) {
+      background-color: #007bff;
+      color: #fff;
+    }
+  }
+
+  &.md\:secondary {
+    @media (min-width: 768px) {
+      background-color: #6c757d;
+      color: #fff;
+    }
+  }
+
+  &.md\:danger {
+    @media (min-width: 768px) {
+      background-color: #dc3545;
+      color: #fff;
+    }
+  }
+
+  &.lg\:primary {
+    @media (min-width: 1024px) {
+      background-color: #007bff;
+      color: #fff;
+    }
+  }
+
+  &.lg\:secondary {
+    @media (min-width: 1024px) {
+      background-color: #6c757d;
+      color: #fff;
+    }
+  }
+
+  &.lg\:danger {
+    @media (min-width: 1024px) {
+      background-color: #dc3545;
+      color: #fff;
+    }
+  }
+}
+```
+
+What is important here is, that we need to nest all breakpoints for each variant. First we start with the initial breakpoint and then we nest the breakpoints for each variant.
+This will ensure, that the styles for each breakpoint are generated correctly and that css rules are not overridden and applied correctly because of the order of the css rules.
+
+You can see the full implementation here in this code sandbox:
+
+<iframe
+  src="https://codesandbox.io/embed/6x3zhn?view=editor+%2B+preview&module=%2Fsrc%2FApp.tsx"
+  style={{
+    width: '100%',
+    height: '500px',
+    border: 0,
+    borderRadius: '4px',
+    overflow: 'hidden',
+  }}
+  title="Responsive Variants"
+  allow="accelerometer; ambient-light-sensor; camera; encrypted-media; geolocation; gyroscope; hid; microphone; midi; payment; usb; vr; xr-spatial-tracking"
+  sandbox="allow-forms allow-modals allow-popups allow-presentation allow-same-origin allow-scripts"
+></iframe>
+
+## Conclusion
+
+With this approach, we can now create components, that are fully responsive and can be used with a maximum of flexibility. We can define the variants centrally and let the consumer decide on which variant to use for each breakpoint.
+The implementation is not that different from the normal variants, but it adds a lot of flexibility and allows us to create more dynamic and flexible design systems.

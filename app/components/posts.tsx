@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import React from 'react'
 import { formatDate, getBlogPosts } from 'app/utils/mdx'
 
 export function BlogPosts() {
@@ -13,15 +14,11 @@ export function BlogPosts() {
             new Date(a.metadata.publishedAt).getTime(),
         )
         .map((post, index) => (
-          <>
+          <React.Fragment key={post.slug + index}>
             {index !== 0 && (
               <hr className="mb-2 mt-2 border-neutral-100 dark:border-neutral-800" />
             )}
-            <Link
-              key={post.slug + index}
-              className="flex flex-col"
-              href={`/blog/${post.slug}`}
-            >
+            <Link className="flex flex-col" href={`/blog/${post.slug}`}>
               <div className="flex w-full flex-col gap-1">
                 <p className="tabular-nums text-neutral-600 dark:text-neutral-400">
                   {formatDate(post.metadata.publishedAt, false)}
@@ -31,7 +28,7 @@ export function BlogPosts() {
                 </p>
               </div>
             </Link>
-          </>
+          </React.Fragment>
         ))}
     </div>
   )

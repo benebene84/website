@@ -60,16 +60,17 @@ export function formatDate(date: string, includeRelative = false) {
   }
   let targetDate = new Date(date)
 
-  let yearsAgo = currentDate.getFullYear() - targetDate.getFullYear()
-  let monthsAgo = currentDate.getMonth() - targetDate.getMonth()
+  let monthsDiff =
+    (currentDate.getFullYear() - targetDate.getFullYear()) * 12 +
+    (currentDate.getMonth() - targetDate.getMonth())
   let daysAgo = currentDate.getDate() - targetDate.getDate()
 
   let formattedDate = ''
 
-  if (yearsAgo > 0) {
-    formattedDate = `${yearsAgo}y ago`
-  } else if (monthsAgo > 0) {
-    formattedDate = `${monthsAgo}mo ago`
+  if (monthsDiff >= 12) {
+    formattedDate = `${Math.floor(monthsDiff / 12)}y ago`
+  } else if (monthsDiff > 0) {
+    formattedDate = `${monthsDiff}mo ago`
   } else if (daysAgo > 0) {
     formattedDate = `${daysAgo}d ago`
   } else {

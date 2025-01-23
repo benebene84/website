@@ -1,5 +1,7 @@
 {
   "private": true,
+  "type": "module",
+  "name": "benedikt-sperl",
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",

@@ -7,7 +7,7 @@ const share = async (data: ShareData) => {
   try {
     await navigator.share(data)
   } catch (err) {
-    console.error(err)
+    return
   }
 }
 

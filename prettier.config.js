@@ -1,5 +1,9 @@
-/* eslint-env node */
-module.exports = {
+/**
+ * @see https://prettier.io/docs/en/configuration.html
+ * @type {import("prettier").Config}
+ */
+
+export default {
   semi: false,
   useTabs: false,
   singleQuote: true,

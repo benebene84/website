@@ -46,6 +46,8 @@ export default function Page() {
         </div>
         <Image
           src={beneImage}
+          width={128}
+          height={128}
           alt="Benedikt Sperl"
           className="h-32 w-32 rounded-full"
           placeholder="blur"

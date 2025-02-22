@@ -2,6 +2,7 @@
   "private": true,
   "type": "module",
   "name": "benedikt-sperl",
+  "packageManager": "pnpm@10.4.1",
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",

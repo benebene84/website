@@ -15,10 +15,12 @@ export const metadata: Metadata = {
     default: 'Benedikt Sperl',
     template: '%s | Benedikt Sperl',
   },
-  description: 'This is my portfolio.',
+  description:
+    'Frontend Architect / Frontend Lead with a passion for web development, UX design, accessibility, performance optimization and automation. I love building user interfaces and products people like to interact with.',
   openGraph: {
     title: 'Benedikt Sperl',
-    description: 'This is my portfolio.',
+    description:
+      'Frontend Architect / Frontend Lead with a passion for web development, UX design, accessibility, performance optimization and automation. I love building user interfaces and products people like to interact with.',
     url: baseUrl,
     siteName: 'Benedikt Sperl',
     locale: 'de_DE',
@@ -53,11 +55,11 @@ export default function RootLayout({
     >
       <body className="mx-4 mt-8 max-w-3xl antialiased lg:mx-auto">
         <SkipLink />
-        <main className="flex min-w-0 flex-auto flex-col px-2 md:px-0">
+        <div className="flex min-w-0 flex-auto flex-col px-2 md:px-0">
           <Navbar />
           {children}
           <Footer />
-        </main>
+        </div>
         {process.env.NODE_ENV === 'production' && (
           <Script
             defer

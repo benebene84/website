@@ -3,7 +3,8 @@ import { Headline } from 'app/components/ui/headline'
 
 export const metadata = {
   title: 'Blog',
-  description: 'I blog about my experiences and thoughts on software development.',
+  description:
+    'I blog about my experiences and thoughts on software development.',
 }
 
 export default function Page() {

@@ -64,7 +64,7 @@ export default async function Blog(props: {
   }
 
   return (
-    <section id="main">
+    <main id="main">
       <script
         type="application/ld+json"
         suppressHydrationWarning
@@ -115,6 +115,6 @@ export default async function Blog(props: {
         }}
         className="mt-8"
       />
-    </section>
+    </main>
   )
 }

@@ -3,7 +3,7 @@ import React from 'react'
 import { formatDate, getBlogPosts } from 'app/utils/mdx'
 
 export function BlogPosts() {
-  let allBlogs = getBlogPosts()
+  const allBlogs = getBlogPosts()
 
   return (
     <div className="flex flex-col gap-2">

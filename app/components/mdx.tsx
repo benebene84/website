@@ -10,10 +10,10 @@ function Table({
 }: {
   data: { headers: string[]; rows: (string | React.ReactNode)[][] }
 }) {
-  let headers = data.headers.map((header, index) => (
+  const headers = data.headers.map((header, index) => (
     <th key={index}>{header}</th>
   ))
-  let rows = data.rows.map((row, index) => (
+  const rows = data.rows.map((row, index) => (
     <tr key={index}>
       {row.map((cell: string | React.ReactNode, cellIndex) => (
         <td key={cellIndex}>{cell}</td>
@@ -51,7 +51,11 @@ function CustomLink({
     return <a {...props} />
   }
 
-  return <a target="_blank" rel="noopener noreferrer" {...props} />
+  return (
+    <a target="_blank" rel="noopener noreferrer" href={href} {...props}>
+      {children}
+    </a>
+  )
 }
 
 function RoundedImage({ alt, ...props }: { alt: string } & ImageProps) {
@@ -79,7 +83,7 @@ function slugify(str: string) {
 
 function createHeading(level: number) {
   const Heading = ({ children }: { children: string }) => {
-    let slug = slugify(children)
+    const slug = slugify(children)
     return React.createElement(
       `h${level}`,
       { id: slug },
@@ -99,6 +103,18 @@ function createHeading(level: number) {
   return Heading
 }
 
+function CustomList({ children }: { children: React.ReactNode }) {
+  return <ul className="my-4 list-disc pl-6">{children}</ul>
+}
+
+function CustomListItem({ children }: { children: React.ReactNode }) {
+  return <li className="mb-1">{children}</li>
+}
+
+function CustomOrderedList({ children }: { children: React.ReactNode }) {
+  return <ol className="my-4 list-decimal pl-6">{children}</ol>
+}
+
 const components = {
   h1: createHeading(1),
   h2: createHeading(2),
@@ -111,6 +127,9 @@ const components = {
   code: Code,
   Table,
   Switch,
+  ul: CustomList,
+  ol: CustomOrderedList,
+  li: CustomListItem,
 }
 
 export function CustomMDX({ ...props }: MDXRemoteProps) {

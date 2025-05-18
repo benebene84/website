@@ -48,7 +48,11 @@ function CustomLink({
   }
 
   if (href.startsWith('#')) {
-    return <a {...props} />
+    return (
+      <a href={href} {...props}>
+        {children}
+      </a>
+    )
   }
 
   return (

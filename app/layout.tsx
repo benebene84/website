@@ -58,38 +58,37 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "Person",
-              "@id": "https://www.benedikt-sperl.de/#person",
-              "name": "Benedikt Sperl",
-              "jobTitle": "Frontend Architect / Frontend Lead",
-              "description": "Frontend Architect / Frontend Lead with a passion for web development, UX design, accessibility, performance optimization and automation.",
-              "url": baseUrl,
-              "image": `${baseUrl}/images/bene.jpg`,
-              "sameAs": [
-                "https://github.com/benebene84",
-                "https://www.linkedin.com/in/benedikt-sperl/"
+              '@context': 'https://schema.org',
+              '@type': 'Person',
+              '@id': 'https://www.benedikt-sperl.de/#person',
+              name: 'Benedikt Sperl',
+              jobTitle: 'Frontend Architect / Frontend Lead',
+              description:
+                'Frontend Architect / Frontend Lead with a passion for web development, UX design, accessibility, performance optimization and automation.',
+              url: baseUrl,
+              image: `${baseUrl}/images/bene.jpg`,
+              sameAs: [
+                'https://github.com/benebene84',
+                'https://www.linkedin.com/in/benedikt-sperl/',
               ],
-              "contactPoint": 
-                {
-                  "@type": "ContactPoint",
-                  "email": "benedikt.sperl@gmail.com",
-                  "contactType": "personal",
-                  "availableLanguage": ["en", "de"]
-                }
-              ,
-              "knowsAbout": [
-                "Web Development",
-                "Frontend Architecture", 
-                "React",
-                "Next.js",
-                "UX Design",
-                "Accessibility",
-                "Performance Optimization",
-                "Automation"
+              contactPoint: {
+                '@type': 'ContactPoint',
+                email: 'benedikt.sperl@gmail.com',
+                contactType: 'personal',
+                availableLanguage: ['en', 'de'],
+              },
+              knowsAbout: [
+                'Web Development',
+                'Frontend Architecture',
+                'React',
+                'Next.js',
+                'UX Design',
+                'Accessibility',
+                'Performance Optimization',
+                'Automation',
               ],
-              "knowsLanguage": ["en", "de"]
-            })
+              knowsLanguage: ['en', 'de'],
+            }),
           }}
         />
       </head>

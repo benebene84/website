@@ -31,6 +31,13 @@ export default function Footer() {
   return (
     <footer className="mb-16">
       <ul className="font-sm mt-8 flex flex-col space-y-2 space-x-0 text-neutral-600 md:flex-row md:space-y-0 md:space-x-4 dark:text-neutral-300">
+        <li>
+          <a href="https://www.benedikt-sperl.de/" className="self-end">
+            <p className="ml-2 h-7">
+              {new Date().getFullYear()} | Benedikt Sperl
+            </p>
+          </a>
+        </li>
         {footerLinks.map((link, index) => (
           <li key={link.href + index}>
             <a

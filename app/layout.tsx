@@ -53,6 +53,44 @@ export default function RootLayout({
         GeistMono.variable,
       )}
     >
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Person",
+              "name": "Benedikt Sperl",
+              "jobTitle": "Frontend Architect / Frontend Lead",
+              "description": "Frontend Architect / Frontend Lead with a passion for web development, UX design, accessibility, performance optimization and automation.",
+              "url": baseUrl,
+              "image": `${baseUrl}/images/bene.jpg`,
+              "sameAs": [
+                "https://github.com/benebene84",
+                "https://www.linkedin.com/in/benedikt-sperl/"
+              ],
+              "contactPoint": [
+                {
+                  "@type": "ContactPoint",
+                  "email": "benedikt.sperl@gmail.com",
+                  "contactType": "personal",
+                  "availableLanguage": "en"
+                }
+              ],
+              "knowsAbout": [
+                "Web Development",
+                "Frontend Architecture", 
+                "React",
+                "Next.js",
+                "UX Design",
+                "Accessibility",
+                "Performance Optimization",
+                "Automation"
+              ]
+            })
+          }}
+        />
+      </head>
       <body className="mx-4 mt-8 max-w-3xl antialiased lg:mx-auto">
         <SkipLink />
         <div className="flex min-w-0 flex-auto flex-col px-2 md:px-0">

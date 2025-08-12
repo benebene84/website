@@ -60,6 +60,7 @@ export default function RootLayout({
             __html: JSON.stringify({
               "@context": "https://schema.org",
               "@type": "Person",
+              "@id": "https://www.benedikt-sperl.de/#person",
               "name": "Benedikt Sperl",
               "jobTitle": "Frontend Architect / Frontend Lead",
               "description": "Frontend Architect / Frontend Lead with a passion for web development, UX design, accessibility, performance optimization and automation.",
@@ -69,14 +70,14 @@ export default function RootLayout({
                 "https://github.com/benebene84",
                 "https://www.linkedin.com/in/benedikt-sperl/"
               ],
-              "contactPoint": [
+              "contactPoint": 
                 {
                   "@type": "ContactPoint",
                   "email": "benedikt.sperl@gmail.com",
                   "contactType": "personal",
-                  "availableLanguage": "en"
+                  "availableLanguage": ["en", "de"]
                 }
-              ],
+              ,
               "knowsAbout": [
                 "Web Development",
                 "Frontend Architecture", 
@@ -86,7 +87,8 @@ export default function RootLayout({
                 "Accessibility",
                 "Performance Optimization",
                 "Automation"
-              ]
+              ],
+              "knowsLanguage": ["en", "de"]
             })
           }}
         />

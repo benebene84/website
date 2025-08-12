@@ -77,21 +77,6 @@ export default function RootLayout({
                   "availableLanguage": "en"
                 }
               ],
-              "worksFor": [
-                {
-                  "@type": "Organization",
-                  "name": "WOLF",
-                  "jobTitle": "Frontend Lead",
-                  "startDate": "2024-03"
-                },
-                {
-                  "@type": "Organization", 
-                  "name": "BSH Home Appliances",
-                  "jobTitle": "Frontend Architect",
-                  "startDate": "2019-01",
-                  "endDate": "2024-02"
-                }
-              ],
               "knowsAbout": [
                 "Web Development",
                 "Frontend Architecture", 

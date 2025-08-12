@@ -34,14 +34,14 @@ export default function Page() {
     <main className="flex flex-col gap-8" id="main">
       <section className="flex flex-col-reverse gap-8 text-left sm:flex-row sm:py-14 sm:text-center">
         <div>
-          <h1 className="mb-2 inline-block bg-gradient-to-r from-blue-700 to-cyan-400 bg-clip-text text-4xl font-semibold tracking-tighter text-transparent sm:mb-6 sm:text-6xl dark:from-purple-800 dark:to-pink-600">
-            Hi, I'm Benedikt!
-          </h1>
-          <p className="sm: text-lg">
-            Frontend Architect / Frontend Lead with a passion for web
-            development, UX design, accessibility, performance optimization and
-            automation. I love building user interfaces and products people like
-            to interact with.
+          <div className="mb-2 inline-block bg-gradient-to-r from-blue-700 to-cyan-400 bg-clip-text text-4xl font-semibold tracking-tighter text-transparent sm:mb-6 sm:text-6xl dark:from-purple-800 dark:to-pink-600">
+            Hi, I'm <h1 className="inline-block">Benedikt Sperl</h1>!
+          </div>
+          <p className="sm:text-lg">
+            Frontend Architect / Frontend Lead from Munich, Germany, with a
+            passion for web development, UX design, accessibility, performance
+            optimization and automation. I love building user interfaces and
+            products people like to interact with.
           </p>
         </div>
         <Image

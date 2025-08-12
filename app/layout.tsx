@@ -77,6 +77,25 @@ export default function RootLayout({
                 contactType: 'personal',
                 availableLanguage: ['en', 'de'],
               },
+              worksFor: [
+                {
+                  '@type': 'Organization',
+                  name: 'WOLF',
+                  jobTitle: 'Frontend Lead',
+                  startDate: '2024-03',
+                  description:
+                    'Managing and leading the development of the frontend',
+                },
+                {
+                  '@type': 'Organization',
+                  name: 'BSH Home Appliances',
+                  jobTitle: 'Frontend Architect',
+                  startDate: '2019-01',
+                  endDate: '2024-02',
+                  description:
+                    'Managed the transformation of a monolith e-commerce architecture into a modern multi application frontend based on React and Next.Js',
+                },
+              ],
               knowsAbout: [
                 'Web Development',
                 'Frontend Architecture',

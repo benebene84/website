@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Benedikt Sperl',
     description:
-      'Frontend Architect / Frontend Lead with a passion for web development, UX design, accessibility, performance optimization and automation. I love building user interfaces and products people like to interact with.',
+      'Benedikt Sperl is a Frontend Architect / Frontend Lead with a passion for web development, UX design, accessibility, performance optimization and automation. He loves building user interfaces and products people like to interact with.',
     url: baseUrl,
     siteName: 'Benedikt Sperl',
     locale: 'de_DE',
@@ -70,6 +70,7 @@ export default function RootLayout({
               sameAs: [
                 'https://github.com/benebene84',
                 'https://www.linkedin.com/in/benedikt-sperl/',
+                'https://www.npmjs.com/~benebene84',
               ],
               contactPoint: {
                 '@type': 'ContactPoint',

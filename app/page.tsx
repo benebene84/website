@@ -38,17 +38,20 @@ export default function Page() {
             Hi, I'm <h1 className="inline-block">Benedikt Sperl</h1>!
           </div>
           <p className="sm:text-lg">
-            Frontend Architect / Frontend Lead from Munich, Germany, with a
-            passion for web development, UX design, accessibility, performance
-            optimization and automation. I love building user interfaces and
-            products people like to interact with.
+            <strong>Frontend Architect</strong> and <strong>Frontend Lead</strong> based in Munich, Germany. I
+            specialize in crafting high-performance web applications with a
+            strong focus on <strong>UX design</strong>, <strong>accessibility</strong>, and <strong>automation</strong>. My passion
+            lies in building user interfaces and products that people truly
+            enjoy interacting with. If you're looking for expert frontend
+            leadership with a user-centered approach, you're in the right
+            place.
           </p>
         </div>
         <Image
           src={beneImage}
           width={128}
           height={128}
-          alt="Benedikt Sperl"
+          alt="Benedikt Sperl - Frontend Architect and Frontend Lead"
           className="h-32 w-32 rounded-full"
           placeholder="blur"
           priority

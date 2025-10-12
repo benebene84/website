@@ -121,6 +121,10 @@ html {
   margin-bottom: 1.25em !important;
 }
 
+.prose blockquote {
+  @apply border-l-4 border-neutral-900 pl-4 italic dark:border-neutral-200;
+}
+
 pre::-webkit-scrollbar {
   display: none;
 }

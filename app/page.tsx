@@ -1,6 +1,5 @@
 import { BlogPosts } from 'app/components/posts'
-import Image from 'next/image'
-import beneImage from 'app/images/bene.jpg'
+import { ViewTransition } from 'react'
 
 const professionalExperience = [
   {
@@ -31,56 +30,58 @@ const professionalExperience = [
 
 export default function Page() {
   return (
-    <main className="flex flex-col gap-8" id="main">
-      <section className="flex flex-col-reverse gap-8 text-left sm:flex-row sm:py-14 sm:text-center">
-        <div>
-          <div className="mb-2 inline-block bg-gradient-to-r from-blue-700 to-cyan-400 bg-clip-text text-4xl font-semibold tracking-tighter text-transparent sm:mb-6 sm:text-6xl dark:from-purple-800 dark:to-pink-600">
-            Hi, I'm <h1 className="inline-block">Benedikt Sperl</h1>!
+    <ViewTransition>
+      <main className="flex flex-col gap-8" id="main">
+        <section className="flex flex-col-reverse gap-8 text-left sm:flex-row sm:py-14 sm:text-center">
+          <div>
+            <div className="mb-2 inline-block bg-gradient-to-r from-blue-700 to-cyan-400 bg-clip-text text-4xl font-semibold tracking-tighter text-transparent sm:mb-6 sm:text-6xl dark:from-purple-800 dark:to-pink-600">
+              Hi, I'm <h1 className="inline-block">Benedikt Sperl</h1>!
+            </div>
+            <p className="sm:text-lg">
+              <strong>Frontend Architect</strong> and{' '}
+              <strong>Frontend Lead</strong> based in Munich, Germany. I
+              specialize in crafting high-performance web applications with a
+              strong focus on <strong>UX design</strong>,{' '}
+              <strong>accessibility</strong>, and <strong>automation</strong>.
+              My passion lies in building user interfaces and products that
+              people truly enjoy interacting with.
+            </p>
           </div>
-          <p className="sm:text-lg">
-            <strong>Frontend Architect</strong> and{' '}
-            <strong>Frontend Lead</strong> based in Munich, Germany. I
-            specialize in crafting high-performance web applications with a
-            strong focus on <strong>UX design</strong>,{' '}
-            <strong>accessibility</strong>, and <strong>automation</strong>. My
-            passion lies in building user interfaces and products that people
-            truly enjoy interacting with.
-          </p>
-        </div>
-      </section>
-      <section className="flex flex-col gap-4">
-        <h2 className="mb-1 text-xl font-semibold tracking-tighter">
-          Articles
-        </h2>
-        <BlogPosts />
-      </section>
-      <section className="flex flex-col gap-4">
-        <h2 className="mb-1 text-xl font-semibold tracking-tighter">
-          Professional Experience
-        </h2>
-        <span className="flex flex-col gap-4">
-          {professionalExperience.map((experience) => (
-            <span className="flex flex-col gap-4" key={experience.company}>
-              <span className="flex flex-col gap-1 md:flex-row md:gap-2">
-                <strong>{experience.company}</strong>
-                <span className="hidden md:block">|</span>
-                <strong>{experience.role}</strong>
-                <span className="hidden md:block">|</span>
-                <span>{experience.duration}</span>
-              </span>
+        </section>
+        <section className="flex flex-col gap-4">
+          <h2 className="mb-1 text-xl font-semibold tracking-tighter">
+            Articles
+          </h2>
+          <BlogPosts />
+        </section>
+        <section className="flex flex-col gap-4">
+          <h2 className="mb-1 text-xl font-semibold tracking-tighter">
+            Professional Experience
+          </h2>
+          <span className="flex flex-col gap-4">
+            {professionalExperience.map((experience) => (
+              <span className="flex flex-col gap-4" key={experience.company}>
+                <span className="flex flex-col gap-1 md:flex-row md:gap-2">
+                  <strong>{experience.company}</strong>
+                  <span className="hidden md:block">|</span>
+                  <strong>{experience.role}</strong>
+                  <span className="hidden md:block">|</span>
+                  <span>{experience.duration}</span>
+                </span>
 
-              <span>{experience.description}</span>
-              <ul className="flex flex-col gap-2">
-                {experience.highlights.map((highlight) => (
-                  <li key={highlight} className="ml-4 list-disc pl-2">
-                    {highlight}
-                  </li>
-                ))}
-              </ul>
-            </span>
-          ))}
-        </span>
-      </section>
-    </main>
+                <span>{experience.description}</span>
+                <ul className="flex flex-col gap-2">
+                  {experience.highlights.map((highlight) => (
+                    <li key={highlight} className="ml-4 list-disc pl-2">
+                      {highlight}
+                    </li>
+                  ))}
+                </ul>
+              </span>
+            ))}
+          </span>
+        </section>
+      </main>
+    </ViewTransition>
   )
 }

@@ -4,9 +4,9 @@
   "name": "benedikt-sperl",
   "packageManager": "pnpm@10.4.1",
   "scripts": {
-    "dev": "next dev --turbopack",
-    "build": "next build",
-    "start": "next start",
+    "dev": "bun --bun next dev",
+    "build": "bun --bun next build",
+    "start": "bun --bun next start",
     "format": "prettier --write ."
   },
   "dependencies": {
@@ -34,10 +34,8 @@
     "supports es6-module",
     "not dead"
   ],
-  "pnpm": {
-    "overrides": {
-      "@types/react": "19.2.2",
-      "@types/react-dom": "19.2.1"
-    }
+  "overrides": {
+    "@types/react": "19.2.2",
+    "@types/react-dom": "19.2.1"
   }
 }

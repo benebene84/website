@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
   experimental: {
     inlineCss: true,
   },
+  serverExternalPackages: ['next-mdx-remote'],
 }
 
 export default nextConfig

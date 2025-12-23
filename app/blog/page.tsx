@@ -1,7 +1,8 @@
 import { BlogPosts } from 'app/components/posts'
+import { Metadata } from 'next'
 import { ViewTransition } from 'react'
 
-export const metadata = {
+export const metadata: Metadata = {
   title: 'Blog',
   description:
     'I blog about my experiences and thoughts on software development.',

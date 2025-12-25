@@ -20,10 +20,10 @@ export function Navbar() {
         id="nav"
       >
         <div className="flex flex-row items-center gap-6 space-x-0 sm:gap-8">
-          {Object.entries(navItems).map(([path, { name }], index) => {
+          {Object.entries(navItems).map(([path, { name }]) => {
             return (
               <Link
-                key={path + index}
+                key={path}
                 href={path}
                 className="relative flex py-1 align-middle text-lg transition-all hover:text-neutral-800 dark:hover:text-neutral-200"
               >

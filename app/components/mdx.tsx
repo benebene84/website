@@ -1,8 +1,8 @@
+import Image, { type ImageProps } from 'next/image'
 import Link from 'next/link'
-import Image, { ImageProps } from 'next/image'
-import { MDXRemote, MDXRemoteProps } from 'next-mdx-remote/rsc'
-import { highlight } from 'sugar-high'
+import { MDXRemote, type MDXRemoteProps } from 'next-mdx-remote/rsc'
 import React from 'react'
+import { highlight } from 'sugar-high'
 import { Switch } from './ui/switch'
 
 function Table({
@@ -11,12 +11,15 @@ function Table({
   data: { headers: string[]; rows: (string | React.ReactNode)[][] }
 }) {
   const headers = data.headers.map((header, index) => (
-    <th key={index}>{header}</th>
+    // biome-ignore lint/suspicious/noArrayIndexKey: <i only have static data here>
+<th key={index}>{header}</th>
   ))
   const rows = data.rows.map((row, index) => (
-    <tr key={index}>
+    // biome-ignore lint/suspicious/noArrayIndexKey: <i only have static data here>
+<tr key={index}>
       {row.map((cell: string | React.ReactNode, cellIndex) => (
-        <td key={cellIndex}>{cell}</td>
+        // biome-ignore lint/suspicious/noArrayIndexKey: <i only have static data here>
+<td key={cellIndex}>{cell}</td>
       ))}
     </tr>
   ))
@@ -71,6 +74,7 @@ function Code({
   ...props
 }: { children: string } & React.HTMLAttributes<HTMLDivElement>) {
   const codeHTML = highlight(children)
+  // biome-ignore lint/security/noDangerouslySetInnerHtml: <i am passing the code>
   return <code dangerouslySetInnerHTML={{ __html: codeHTML }} {...props} />
 }
 
@@ -81,8 +85,8 @@ function slugify(str: string) {
     .trim() // Remove whitespace from both ends of a string
     .replace(/\s+/g, '-') // Replace spaces with -
     .replace(/&/g, '-and-') // Replace & with 'and'
-    .replace(/[^\w\-]+/g, '') // Remove all non-word characters except for -
-    .replace(/\-\-+/g, '-') // Replace multiple - with single -
+    .replace(/[^\w-]+/g, '') // Remove all non-word characters except for -
+    .replace(/--+/g, '-') // Replace multiple - with single -
 }
 
 function createHeading(level: number) {

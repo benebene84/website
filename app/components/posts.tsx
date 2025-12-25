@@ -14,7 +14,7 @@ export function BlogPosts() {
             new Date(a.metadata.publishedAt).getTime(),
         )
         .map((post, index) => (
-          <React.Fragment key={post.slug + index}>
+          <React.Fragment key={post.slug}>
             {index !== 0 && (
               <hr className="mt-2 mb-2 border-neutral-100 dark:border-neutral-800" />
             )}
@@ -23,7 +23,7 @@ export function BlogPosts() {
                 <p className="text-neutral-600 tabular-nums dark:text-neutral-400">
                   {formatDate(post.metadata.publishedAt, false)}
                 </p>
-                <p className="tracking-tight text-neutral-900 dark:text-neutral-100">
+                <p className="text-neutral-900 tracking-tight dark:text-neutral-100">
                   {post.metadata.title}
                 </p>
               </div>

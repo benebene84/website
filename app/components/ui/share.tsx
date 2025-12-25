@@ -6,7 +6,7 @@ import { Arrow } from '../icons/Arrow'
 const share = async (data: ShareData) => {
   try {
     await navigator.share(data)
-  } catch (err) {
+  } catch (_err) {
     return
   }
 }
@@ -20,6 +20,7 @@ export const ShareButton = ({
 }) => {
   return (
     <button
+      type="button"
       className={cx('flex cursor-pointer items-center gap-2', className)}
       onClick={() => share(data)}
     >

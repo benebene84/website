@@ -70,6 +70,7 @@ export default async function Blog(props: {
         <script
           type="application/ld+json"
           suppressHydrationWarning
+          // biome-ignore lint/security/noDangerouslySetInnerHtml: <needed for structured data>
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
               '@context': 'https://schema.org',
@@ -90,7 +91,7 @@ export default async function Blog(props: {
           }}
         />
         <div className="flex flex-col-reverse justify-between gap-1 md:flex-row">
-          <h1 className="title text-2xl font-semibold tracking-tighter">
+          <h1 className="title font-semibold text-2xl tracking-tighter">
             {post.metadata.title}
           </h1>
           <ShareButton
@@ -102,7 +103,7 @@ export default async function Blog(props: {
           />
         </div>
         <div className="mt-2 mb-8 flex items-center justify-between text-sm">
-          <p className="text-sm text-neutral-600 dark:text-neutral-400">
+          <p className="text-neutral-600 text-sm dark:text-neutral-400">
             {formatDate(post.metadata.publishedAt, true)}
           </p>
         </div>

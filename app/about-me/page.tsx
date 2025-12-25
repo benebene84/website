@@ -14,7 +14,7 @@ export default function AboutMe() {
       <main className="flex flex-col gap-8" id="main">
         <section className="flex flex-col-reverse gap-8 text-left sm:flex-row sm:pb-14">
           <div className="flex flex-col gap-4">
-            <h1 className="mb-2 inline-block bg-gradient-to-r from-blue-700 to-cyan-400 bg-clip-text text-4xl font-semibold tracking-tighter text-transparent sm:mb-6 sm:text-6xl dark:from-purple-800 dark:to-pink-600">
+            <h1 className="mb-2 inline-block bg-gradient-to-r from-blue-700 to-cyan-400 bg-clip-text font-semibold text-4xl text-transparent tracking-tighter sm:mb-6 sm:text-6xl dark:from-purple-800 dark:to-pink-600">
               About Me
             </h1>
             <p className="sm:text-lg">
@@ -41,7 +41,7 @@ export default function AboutMe() {
         </section>
 
         <section className="flex flex-col gap-4">
-          <h2 className="mb-1 text-xl font-semibold tracking-tighter">
+          <h2 className="mb-1 font-semibold text-xl tracking-tighter">
             From Social Sciences to Frontend Architecture
           </h2>
           <p>
@@ -63,7 +63,7 @@ export default function AboutMe() {
         </section>
 
         <section className="flex flex-col gap-4">
-          <h2 className="mb-1 text-xl font-semibold tracking-tighter">
+          <h2 className="mb-1 font-semibold text-xl tracking-tighter">
             My Path into Development
           </h2>
           <p>
@@ -82,7 +82,7 @@ export default function AboutMe() {
         </section>
 
         <section className="flex flex-col gap-4">
-          <h2 className="mb-1 text-xl font-semibold tracking-tighter">
+          <h2 className="mb-1 font-semibold text-xl tracking-tighter">
             What Sets Me Apart
           </h2>
           <ul className="flex flex-col gap-2">
@@ -101,7 +101,7 @@ export default function AboutMe() {
         </section>
 
         <section className="flex flex-col gap-4">
-          <h2 className="mb-1 text-xl font-semibold tracking-tighter">
+          <h2 className="mb-1 font-semibold text-xl tracking-tighter">
             Key Roles & Achievements
           </h2>
           <div className="flex flex-col gap-6">

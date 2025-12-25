@@ -1,6 +1,6 @@
+import { formatDate, getBlogPosts } from 'app/utils/mdx'
 import Link from 'next/link'
 import React from 'react'
-import { formatDate, getBlogPosts } from 'app/utils/mdx'
 
 export function BlogPosts() {
   const allBlogs = getBlogPosts()

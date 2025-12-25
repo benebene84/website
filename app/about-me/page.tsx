@@ -1,5 +1,5 @@
-import Image from 'next/image'
 import beneImage from 'app/images/bene.jpg'
+import Image from 'next/image'
 import { ViewTransition } from 'react'
 
 export const metadata = {

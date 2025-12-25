@@ -1,9 +1,10 @@
-import { notFound } from 'next/navigation'
 import { CustomMDX } from 'app/components/mdx'
-import { formatDate, getBlogPosts } from 'app/utils/mdx'
 import { baseUrl } from 'app/sitemap'
-import { ShareButton } from '../../components/ui/share'
+import { formatDate, getBlogPosts } from 'app/utils/mdx'
+import type { Metadata } from 'next'
+import { notFound } from 'next/navigation'
 import { ViewTransition } from 'react'
+import { ShareButton } from '../../components/ui/share'
 
 export async function generateStaticParams() {
   const posts = getBlogPosts()
@@ -15,11 +16,11 @@ export async function generateStaticParams() {
 
 export async function generateMetadata(props: {
   params: Promise<{ slug: string }>
-}) {
+}): Promise<Metadata> {
   const params = await props.params
   const post = getBlogPosts().find((post) => post.slug === params.slug)
   if (!post) {
-    return
+    return { title: 'Not Found' }
   }
 
   const {

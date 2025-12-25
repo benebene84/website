@@ -40,7 +40,7 @@ export default function Footer() {
         </li>
         {footerLinks.map((link, index) => (
           // biome-ignore lint/suspicious/noArrayIndexKey: <might be needed for some href>
-<li key={link.href + index}>
+          <li key={link.href + index}>
             <a
               className="flex items-center transition-all hover:text-neutral-800 dark:hover:text-neutral-100"
               rel="noopener noreferrer"

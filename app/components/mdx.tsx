@@ -12,14 +12,14 @@ function Table({
 }) {
   const headers = data.headers.map((header, index) => (
     // biome-ignore lint/suspicious/noArrayIndexKey: <i only have static data here>
-<th key={index}>{header}</th>
+    <th key={index}>{header}</th>
   ))
   const rows = data.rows.map((row, index) => (
     // biome-ignore lint/suspicious/noArrayIndexKey: <i only have static data here>
-<tr key={index}>
+    <tr key={index}>
       {row.map((cell: string | React.ReactNode, cellIndex) => (
         // biome-ignore lint/suspicious/noArrayIndexKey: <i only have static data here>
-<td key={cellIndex}>{cell}</td>
+        <td key={cellIndex}>{cell}</td>
       ))}
     </tr>
   ))

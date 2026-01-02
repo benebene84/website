@@ -1,8 +1,9 @@
 import beneImage from 'app/images/bene.jpg'
+import type { Metadata } from 'next'
 import Image from 'next/image'
 import { ViewTransition } from 'react'
 
-export const metadata = {
+export const metadata: Metadata = {
   title: 'About Me | Benedikt Sperl',
   description:
     "Hi, I'm Benedikt Sperl – Frontend Architect and Frontend Lead based in Munich, Germany.",
@@ -14,7 +15,7 @@ export default function AboutMe() {
       <main className="flex flex-col gap-8" id="main">
         <section className="flex flex-col-reverse gap-8 text-left sm:flex-row sm:pb-14">
           <div className="flex flex-col gap-4">
-            <h1 className="mb-2 inline-block bg-gradient-to-r from-blue-700 to-cyan-400 bg-clip-text font-semibold text-4xl text-transparent tracking-tighter sm:mb-6 sm:text-6xl dark:from-purple-800 dark:to-pink-600">
+            <h1 className="mb-2 inline-block bg-linear-to-r from-blue-700 to-cyan-400 bg-clip-text font-semibold text-4xl text-transparent tracking-tighter sm:mb-6 sm:text-6xl dark:from-purple-800 dark:to-pink-600">
               About Me
             </h1>
             <p className="sm:text-lg">

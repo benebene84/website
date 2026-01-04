@@ -1,10 +1,5 @@
 @import "tailwindcss";
 
-::selection {
-  background-color: #47a3f3;
-  color: #fefefe;
-}
-
 :root {
   --sh-class: #2d5e9d;
   --sh-identifier: #354150;
@@ -17,21 +12,375 @@
   --sh-entity: #e25a1c;
 }
 
+/* Configure Tailwind v4 to use class-based dark mode */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ==========================================
+   Theme Variables - Light Mode (Default)
+   ==========================================
+   Using @theme to define semantic design tokens
+   that generate proper Tailwind utility classes
+   ========================================== */
+
+@theme {
+  /* Selection Colors */
+  --color-selection: #47a3f3;
+  --color-selection-text: #fefefe;
+
+  /* Semantic Text Colors - Light Mode */
+  --color-text-primary: #1d1d1f;
+  --color-text-secondary: #525252;
+  --color-text-tertiary: #737373;
+  --color-text-muted: #a3a3a3;
+  --color-text-inverse: #ffffff;
+
+  /* Semantic Background Colors - Light Mode */
+  --color-bg-primary: #ffffff;
+  --color-bg-secondary: #fafafa;
+  --color-bg-tertiary: #f5f5f5;
+  --color-bg-hover: #f0f0f0;
+  --color-bg-active: #e5e5e5;
+
+  /* Semantic Border Colors - Light Mode */
+  --color-border-default: #e5e5e5;
+  --color-border-subtle: #f0f0f0;
+  --color-border-strong: #d4d4d4;
+
+  /* Accent Colors - Light Mode (Blue/Cyan gradient) */
+  --color-accent: #2563eb;
+  --color-accent-hover: #1d4ed8;
+  --color-accent-secondary: #06b6d4;
+  --color-accent-from: #2563eb;
+  --color-accent-to: #06b6d4;
+
+  /* Status Colors */
+  --color-status-success: #22c55e;
+  --color-status-warning: #f59e0b;
+  --color-status-error: #ef4444;
+  --color-status-info: #3b82f6;
+
+  /* Window Chrome - Light Mode */
+  --color-window-bg: #ffffff;
+  --color-window-bg-secondary: #fafafa;
+  --color-window-border: #e5e5e5;
+
+  /* Window Controls (traffic lights) */
+  --color-control-close: #ff5f57;
+  --color-control-minimize: #febc2e;
+  --color-control-maximize: #28c840;
+
+  /* Title Bar - Light Mode */
+  --color-titlebar-bg: #f5f5f5;
+  --color-titlebar-text: #4a4a4a;
+
+  /* Desktop - Light Mode */
+  --color-desktop-bg: #f0f0f5;
+  --color-desktop-dot: #d1d1d6;
+
+  /* Dock - Light Mode */
+  --color-dock-bg: rgba(255, 255, 255, 0.75);
+  --color-dock-border: rgba(0, 0, 0, 0.1);
+  --color-dock-item-bg: rgba(255, 255, 255, 0.9);
+  --color-dock-item-border: rgba(0, 0, 0, 0.08);
+
+  /* Menu Bar - Light Mode */
+  --color-menubar-bg: rgba(255, 255, 255, 0.8);
+  --color-menubar-text: #1d1d1f;
+  --color-menubar-border: rgba(0, 0, 0, 0.1);
+  --color-menubar-hover: rgba(0, 0, 0, 0.05);
+  --color-menubar-active: rgba(0, 0, 0, 0.1);
+
+  /* Terminal - Light Mode */
+  --color-terminal-bg: #1e1e1e;
+  --color-terminal-text: #4ade80;
+  --color-terminal-prompt: #4ade80;
+  --color-terminal-path: #22d3ee;
+  --color-terminal-muted: #737373;
+
+  /* Toolbar/Status Bar - Light Mode */
+  --color-toolbar-bg: #fafafa;
+  --color-toolbar-border: #e5e5e5;
+  --color-toolbar-text: #737373;
+
+  /* Badge Colors - Light Mode */
+  --color-badge-bg: #f5f5f5;
+  --color-badge-text: #525252;
+  --color-badge-accent-bg: #dbeafe;
+  --color-badge-accent-text: #1d4ed8;
+
+  /* Focus Ring */
+  --color-focus-ring: #3b82f6;
+
+  /* Shadows */
+  --shadow-window: 0 25px 50px -12px rgb(0 0 0 / 0.15);
+  --shadow-dock: 0 4px 30px rgba(0, 0, 0, 0.1);
+}
+
+/* ==========================================
+   Dark Mode Theme Variables
+   Using Tokyo Night color palette
+   ==========================================
+   Background:     #1a1b26 (deep blue-black)
+   Background Alt: #24283b (slightly lighter)
+   Background HL:  #292e42 (highlight/hover)
+   Foreground:     #a9b1d6 (soft blue-gray)
+   Foreground Br:  #c0caf5 (bright text)
+   Comment:        #565f89 (muted)
+   Selection:      #33467c (selection bg)
+   Border:         #3b4261 (subtle borders)
+
+   Accent Colors:
+   Purple:         #bb9af7 (keywords, primary)
+   Blue:           #7aa2f7 (functions)
+   Cyan:           #7dcfff (variables)
+   Green:          #9ece6a (strings)
+   Orange:         #ff9e64 (constants)
+   Red:            #f7768e (errors)
+   ========================================== */
+
+/* Dark mode via media query (system preference) */
 @media (prefers-color-scheme: dark) {
-  :root {
-    --sh-class: #4c97f8;
-    --sh-identifier: white;
-    --sh-keyword: #f47067;
-    --sh-string: #0fa295;
+  :root:not(.light) {
+    /* Selection - Tokyo Night */
+    --color-selection: #33467c;
+    --color-selection-text: #c0caf5;
+
+    /* Semantic Text Colors - Tokyo Night */
+    --color-text-primary: #c0caf5;
+    --color-text-secondary: #a9b1d6;
+    --color-text-tertiary: #787c99;
+    --color-text-muted: #565f89;
+    --color-text-inverse: #1a1b26;
+
+    /* Semantic Background Colors - Tokyo Night */
+    --color-bg-primary: #1a1b26;
+    --color-bg-secondary: #24283b;
+    --color-bg-tertiary: #292e42;
+    --color-bg-hover: #33394d;
+    --color-bg-active: #3b4261;
+
+    /* Semantic Border Colors - Tokyo Night */
+    --color-border-default: #3b4261;
+    --color-border-subtle: #292e42;
+    --color-border-strong: #565f89;
+
+    /* Accent Colors - Tokyo Night (Purple/Pink gradient) */
+    --color-accent: #bb9af7;
+    --color-accent-hover: #9d7cd8;
+    --color-accent-secondary: #7dcfff;
+    --color-accent-from: #bb9af7;
+    --color-accent-to: #f7768e;
+
+    /* Status Colors - Tokyo Night */
+    --color-status-success: #9ece6a;
+    --color-status-warning: #e0af68;
+    --color-status-error: #f7768e;
+    --color-status-info: #7aa2f7;
+
+    /* Window Chrome - Tokyo Night */
+    --color-window-bg: #1a1b26;
+    --color-window-bg-secondary: #24283b;
+    --color-window-border: #3b4261;
+
+    /* Title Bar - Tokyo Night */
+    --color-titlebar-bg: #24283b;
+    --color-titlebar-text: #a9b1d6;
+
+    /* Desktop - Tokyo Night */
+    --color-desktop-bg: #1a1b26;
+    --color-desktop-dot: #24283b;
+
+    /* Dock - Tokyo Night */
+    --color-dock-bg: rgba(36, 40, 59, 0.85);
+    --color-dock-border: rgba(59, 66, 97, 0.6);
+    --color-dock-item-bg: rgba(41, 46, 66, 0.9);
+    --color-dock-item-border: rgba(59, 66, 97, 0.5);
+
+    /* Menu Bar - Tokyo Night */
+    --color-menubar-bg: rgba(26, 27, 38, 0.85);
+    --color-menubar-text: #c0caf5;
+    --color-menubar-border: rgba(59, 66, 97, 0.5);
+    --color-menubar-hover: rgba(255, 255, 255, 0.08);
+    --color-menubar-active: rgba(255, 255, 255, 0.12);
+
+    /* Terminal - Tokyo Night */
+    --color-terminal-bg: #1a1b26;
+    --color-terminal-text: #9ece6a;
+    --color-terminal-prompt: #9ece6a;
+    --color-terminal-path: #7dcfff;
+    --color-terminal-muted: #565f89;
+
+    /* Toolbar/Status Bar - Tokyo Night */
+    --color-toolbar-bg: #24283b;
+    --color-toolbar-border: #3b4261;
+    --color-toolbar-text: #787c99;
+
+    /* Badge Colors - Tokyo Night */
+    --color-badge-bg: #292e42;
+    --color-badge-text: #a9b1d6;
+    --color-badge-accent-bg: rgba(122, 162, 247, 0.2);
+    --color-badge-accent-text: #7aa2f7;
+
+    /* Focus Ring - Tokyo Night */
+    --color-focus-ring: #bb9af7;
+
+    /* Syntax Highlighting - Tokyo Night */
+    --sh-class: #7aa2f7;
+    --sh-identifier: #c0caf5;
+    --sh-sign: #89ddff;
+    --sh-string: #9ece6a;
+    --sh-keyword: #bb9af7;
+    --sh-comment: #565f89;
+    --sh-jsxliterals: #7dcfff;
+    --sh-property: #ff9e64;
+    --sh-entity: #ff9e64;
+
+    /* Shadows - Dark */
+    --shadow-window: 0 25px 50px -12px rgb(0 0 0 / 0.5);
+    --shadow-dock: 0 4px 30px rgba(0, 0, 0, 0.4);
   }
-  html {
+
+  html:not(.light) {
     color-scheme: dark;
   }
 }
 
+/* Dark mode via .dark class (manual toggle) */
+:root.dark {
+  /* Selection - Tokyo Night */
+  --color-selection: #33467c;
+  --color-selection-text: #c0caf5;
+
+  /* Semantic Text Colors - Tokyo Night */
+  --color-text-primary: #c0caf5;
+  --color-text-secondary: #a9b1d6;
+  --color-text-tertiary: #787c99;
+  --color-text-muted: #565f89;
+  --color-text-inverse: #1a1b26;
+
+  /* Semantic Background Colors - Tokyo Night */
+  --color-bg-primary: #1a1b26;
+  --color-bg-secondary: #24283b;
+  --color-bg-tertiary: #292e42;
+  --color-bg-hover: #33394d;
+  --color-bg-active: #3b4261;
+
+  /* Semantic Border Colors - Tokyo Night */
+  --color-border-default: #3b4261;
+  --color-border-subtle: #292e42;
+  --color-border-strong: #565f89;
+
+  /* Accent Colors - Tokyo Night (Purple/Pink gradient) */
+  --color-accent: #bb9af7;
+  --color-accent-hover: #9d7cd8;
+  --color-accent-secondary: #7dcfff;
+  --color-accent-from: #bb9af7;
+  --color-accent-to: #f7768e;
+
+  /* Status Colors - Tokyo Night */
+  --color-status-success: #9ece6a;
+  --color-status-warning: #e0af68;
+  --color-status-error: #f7768e;
+  --color-status-info: #7aa2f7;
+
+  /* Window Chrome - Tokyo Night */
+  --color-window-bg: #1a1b26;
+  --color-window-bg-secondary: #24283b;
+  --color-window-border: #3b4261;
+
+  /* Title Bar - Tokyo Night */
+  --color-titlebar-bg: #24283b;
+  --color-titlebar-text: #a9b1d6;
+
+  /* Desktop - Tokyo Night */
+  --color-desktop-bg: #1a1b26;
+  --color-desktop-dot: #24283b;
+
+  /* Dock - Tokyo Night */
+  --color-dock-bg: rgba(36, 40, 59, 0.85);
+  --color-dock-border: rgba(59, 66, 97, 0.6);
+  --color-dock-item-bg: rgba(41, 46, 66, 0.9);
+  --color-dock-item-border: rgba(59, 66, 97, 0.5);
+
+  /* Menu Bar - Tokyo Night */
+  --color-menubar-bg: rgba(26, 27, 38, 0.85);
+  --color-menubar-text: #c0caf5;
+  --color-menubar-border: rgba(59, 66, 97, 0.5);
+  --color-menubar-hover: rgba(255, 255, 255, 0.08);
+  --color-menubar-active: rgba(255, 255, 255, 0.12);
+
+  /* Terminal - Tokyo Night */
+  --color-terminal-bg: #1a1b26;
+  --color-terminal-text: #9ece6a;
+  --color-terminal-prompt: #9ece6a;
+  --color-terminal-path: #7dcfff;
+  --color-terminal-muted: #565f89;
+
+  /* Toolbar/Status Bar - Tokyo Night */
+  --color-toolbar-bg: #24283b;
+  --color-toolbar-border: #3b4261;
+  --color-toolbar-text: #787c99;
+
+  /* Badge Colors - Tokyo Night */
+  --color-badge-bg: #292e42;
+  --color-badge-text: #a9b1d6;
+  --color-badge-accent-bg: rgba(122, 162, 247, 0.2);
+  --color-badge-accent-text: #7aa2f7;
+
+  /* Focus Ring - Tokyo Night */
+  --color-focus-ring: #bb9af7;
+
+  /* Syntax Highlighting - Tokyo Night */
+  --sh-class: #7aa2f7;
+  --sh-identifier: #c0caf5;
+  --sh-sign: #89ddff;
+  --sh-string: #9ece6a;
+  --sh-keyword: #bb9af7;
+  --sh-comment: #565f89;
+  --sh-jsxliterals: #7dcfff;
+  --sh-property: #ff9e64;
+  --sh-entity: #ff9e64;
+
+  /* Shadows - Dark */
+  --shadow-window: 0 25px 50px -12px rgb(0 0 0 / 0.5);
+  --shadow-dock: 0 4px 30px rgba(0, 0, 0, 0.4);
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
+/* Explicit light mode via .light class (overrides system dark preference) */
+:root.light {
+  /* All light mode values are already defined in @theme as defaults */
+  color-scheme: light;
+}
+
+html.light {
+  color-scheme: light;
+}
+
+/* ==========================================
+   Base Styles
+   ========================================== */
+
 html {
   min-width: 360px;
 }
+
+::selection {
+  background-color: var(--color-selection);
+  color: var(--color-selection-text);
+}
+
+body {
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-primary);
+}
+
+/* ==========================================
+   Prose / Typography Styles
+   ========================================== */
 
 .prose .anchor {
   @apply invisible absolute no-underline;
@@ -48,11 +397,12 @@ html {
 }
 
 .prose a {
-  @apply underline decoration-neutral-400 decoration-[0.1em] underline-offset-2 transition-all dark:decoration-neutral-600;
+  @apply underline underline-offset-2 transition-all;
+  text-decoration-color: var(--color-text-muted);
 }
 
 .prose .anchor:after {
-  @apply text-neutral-300 dark:text-neutral-700;
+  color: var(--color-text-muted);
   content: "#";
 }
 
@@ -61,7 +411,9 @@ html {
 }
 
 .prose pre {
-  @apply overflow-x-auto rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm dark:border-neutral-900 dark:bg-neutral-900;
+  @apply overflow-x-auto rounded-lg px-3 py-2 text-sm;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-default);
 }
 
 .prose code {
@@ -84,7 +436,8 @@ html {
 }
 
 .prose p {
-  @apply my-4 text-neutral-800 dark:text-neutral-200;
+  @apply my-4;
+  color: var(--color-text-secondary);
 }
 
 .prose h1 {
@@ -105,6 +458,7 @@ html {
 
 .prose strong {
   @apply font-medium;
+  color: var(--color-text-primary);
 }
 
 .prose ul {
@@ -122,7 +476,8 @@ html {
 }
 
 .prose blockquote {
-  @apply border-l-4 border-neutral-900 pl-4 italic dark:border-neutral-200;
+  @apply border-l-4 pl-4 italic;
+  border-color: var(--color-border-strong);
 }
 
 pre::-webkit-scrollbar {
@@ -149,6 +504,236 @@ table {
   white-space: nowrap;
 }
 
-.title {
-  text-wrap: balance;
+/* ==========================================
+   OS Design System - Windows, Dock, MenuBar
+   ========================================== */
+
+/* OS Window Styles */
+.window {
+  background: var(--color-window-bg);
+  border: 1px solid var(--color-window-border);
+  border-radius: 12px;
+  box-shadow: var(--shadow-window);
+  overflow: hidden;
+}
+
+.window-titlebar {
+  background: var(--color-titlebar-bg);
+  color: var(--color-titlebar-text);
+  border-bottom: 1px solid var(--color-window-border);
+}
+
+/* Dock Styles */
+.dock {
+  background: var(--color-dock-bg);
+  border: 1px solid var(--color-dock-border);
+  box-shadow: var(--shadow-dock);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+/* Menu Bar Styles */
+.menubar {
+  background: var(--color-menubar-bg);
+  color: var(--color-menubar-text);
+  border-bottom: 1px solid var(--color-menubar-border);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+/* Desktop Background */
+.desktop {
+  background-color: var(--color-desktop-bg);
+  background-image: radial-gradient(
+    var(--color-desktop-dot) 1px,
+    transparent 1px
+  );
+  background-size: 24px 24px;
+}
+
+/* Badge Styles */
+.badge {
+  background: var(--color-badge-bg);
+  color: var(--color-badge-text);
+}
+
+.badge-accent {
+  background: var(--color-badge-accent-bg);
+  color: var(--color-badge-accent-text);
+}
+
+/* ==========================================
+   Window Animations & Transitions
+   ========================================== */
+
+@keyframes window-open {
+  0% {
+    opacity: 0;
+    transform: scale(0.96) translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes window-bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Base window animation */
+.window-animate-in {
+  animation: window-open 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Staggered animations for multiple windows */
+.window-animate-in:nth-child(1) {
+  animation-delay: 0ms;
+}
+.window-animate-in:nth-child(2) {
+  animation-delay: 75ms;
+}
+.window-animate-in:nth-child(3) {
+  animation-delay: 150ms;
+}
+.window-animate-in:nth-child(4) {
+  animation-delay: 225ms;
+}
+.window-animate-in:nth-child(5) {
+  animation-delay: 300ms;
+}
+
+/* Grid children stagger (for 2-column layouts) */
+.grid > .window-animate-in:nth-child(1) {
+  animation-delay: 75ms;
+}
+.grid > .window-animate-in:nth-child(2) {
+  animation-delay: 150ms;
+}
+
+/* ==========================================
+   Dark Mode Transitions
+   ========================================== */
+
+html {
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease;
+}
+
+/* Smooth theme transitions for key elements */
+.window,
+.dock,
+.menubar,
+[class*="bg-"],
+[class*="border-"],
+[class*="text-"] {
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+/* ==========================================
+   Interactive States
+   ========================================== */
+
+/* Focus visible styles for accessibility */
+:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+/* Active/pressed state for buttons */
+button:active,
+a:active {
+  transform: scale(0.98);
+}
+
+/* ==========================================
+   Reduced Motion Support
+   ========================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms;
+    animation-iteration-count: 1;
+    transition-duration: 0.01ms;
+  }
+
+  .window-animate-in {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ==========================================
+   Selection & Scrollbar Styles
+   ========================================== */
+
+/* Custom scrollbar for webkit browsers */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border-default);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-border-strong);
+}
+
+/* Firefox scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border-default) transparent;
+}
+
+/* ==========================================
+   Accent Gradient Utility
+   ========================================== */
+
+.accent-gradient {
+  background: linear-gradient(
+    to right,
+    var(--color-accent-from),
+    var(--color-accent-to)
+  );
 }

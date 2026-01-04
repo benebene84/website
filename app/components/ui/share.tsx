@@ -1,7 +1,7 @@
 'use client'
 
 import { cx } from 'app/utils/cx'
-import { Arrow } from '../icons/Arrow'
+import { Share2 } from 'lucide-react'
 
 const share = async (data: ShareData) => {
   try {
@@ -24,7 +24,7 @@ export const ShareButton = ({
       className={cx('flex cursor-pointer items-center gap-2', className)}
       onClick={() => share(data)}
     >
-      <Arrow />
+      <Share2 size={12} aria-hidden="true" />
       Share
     </button>
   )

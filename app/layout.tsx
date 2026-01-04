@@ -3,8 +3,9 @@ import { GeistMono } from 'geist/font/mono'
 import { GeistSans } from 'geist/font/sans'
 import type { Metadata } from 'next'
 import Script from 'next/script'
-import Footer from './components/footer'
-import { Navbar } from './components/nav'
+import { Desktop } from './components/ui/desktop'
+import { Dock } from './components/ui/dock'
+import { MenuBar } from './components/ui/menu-bar'
 import { SkipLink } from './components/ui/skip-link'
 import { baseUrl } from './sitemap'
 import { cx } from './utils/cx'
@@ -47,11 +48,8 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={cx(
-        'scroll-smooth bg-white text-black dark:bg-black dark:text-white',
-        GeistSans.variable,
-        GeistMono.variable,
-      )}
+      className={cx('scroll-smooth', GeistSans.variable, GeistMono.variable)}
+      suppressHydrationWarning
     >
       <head>
         <script
@@ -112,14 +110,41 @@ export default function RootLayout({
             }),
           }}
         />
+        {/* Theme initialization script - runs before React hydration to prevent flash */}
+        <script
+          // biome-ignore lint/security/noDangerouslySetInnerHtml: <needed for script tag>
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  const theme = localStorage.getItem('theme');
+                  const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+                  if (theme === 'dark') {
+                    document.documentElement.classList.add('dark');
+                  } else if (theme === 'light') {
+                    document.documentElement.classList.add('light');
+                  } else if (systemDark) {
+                    document.documentElement.classList.add('dark');
+                  }
+                } catch (e) {}
+              })();
+            `,
+          }}
+        />
       </head>
-      <body className="mx-4 mt-8 max-w-3xl antialiased lg:mx-auto">
+      <body className="min-h-screen antialiased">
         <SkipLink />
-        <div className="flex min-w-0 flex-auto flex-col px-2 md:px-0">
-          <Navbar />
-          {children}
-          <Footer />
-        </div>
+
+        {/* OS Menu Bar - fixed at top */}
+        <MenuBar />
+
+        {/* Desktop Environment */}
+        <Desktop>{children}</Desktop>
+
+        {/* OS Dock - fixed at bottom */}
+        <Dock />
+
         {process.env.NODE_ENV === 'production' && (
           <Script
             defer

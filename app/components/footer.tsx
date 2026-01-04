@@ -1,58 +1,66 @@
-import { Arrow } from './icons/Arrow'
+import { cx } from 'app/utils/cx'
 
-const footerLinks = [
-  {
-    href: '/rss',
-    label: 'rss',
-    target: '_blank',
-    icon: true,
-  },
-  {
-    href: 'https://github.com/benebene84',
-    label: 'github',
-    target: '_blank',
-    icon: true,
-  },
-  {
-    href: 'https://www.linkedin.com/in/benedikt-sperl/',
-    label: 'linkedin',
-    target: '_blank',
-    icon: true,
-  },
-  {
-    href: '/imprint',
-    label: 'imprint',
-    target: '_self',
-    icon: false,
-  },
-]
+interface StatusBarProps {
+  className?: string
+  showCopyright?: boolean
+  showYear?: boolean
+  items?: Array<{
+    label: string
+    href?: string
+    external?: boolean
+  }>
+}
 
-export default function Footer() {
+/**
+ * StatusBar component - minimal footer/status display for use inside windows
+ * Server Component - no 'use client' needed
+ */
+export function StatusBar({
+  className,
+  showCopyright = true,
+  showYear = true,
+  items = [],
+}: StatusBarProps) {
   return (
-    <footer className="mb-16">
-      <ul className="mt-8 flex flex-col space-x-0 space-y-2 font-sm text-neutral-600 md:flex-row md:space-x-4 md:space-y-0 dark:text-neutral-300">
-        <li>
-          <a href="https://www.benedikt-sperl.de/" className="self-end">
-            <p className="ml-2 h-7">
-              {new Date().getFullYear()} | Benedikt Sperl
-            </p>
-          </a>
-        </li>
-        {footerLinks.map((link, index) => (
-          // biome-ignore lint/suspicious/noArrayIndexKey: <might be needed for some href>
-          <li key={link.href + index}>
-            <a
-              className="flex items-center transition-all hover:text-neutral-800 dark:hover:text-neutral-100"
-              rel="noopener noreferrer"
-              target={link.target}
-              href={link.href}
-            >
-              {link.icon && <Arrow />}
-              <p className="ml-2 h-7">{link.label}</p>
-            </a>
-          </li>
-        ))}
-      </ul>
+    <footer
+      className={cx(
+        'toolbar flex flex-wrap items-center justify-between gap-2',
+        'border-t px-4 py-2',
+        'text-xs',
+        className,
+      )}
+    >
+      {/* Left side - Copyright */}
+      {showCopyright && (
+        <div className="flex items-center gap-2">
+          {showYear && <span>{new Date().getFullYear()}</span>}
+          <span>Benedikt Sperl</span>
+        </div>
+      )}
+
+      {/* Right side - Status items */}
+      {items.length > 0 && (
+        <div className="flex items-center gap-3">
+          {items.map((item) =>
+            item.href ? (
+              <a
+                key={item.label}
+                href={item.href}
+                target={item.external ? '_blank' : undefined}
+                rel={item.external ? 'noopener noreferrer' : undefined}
+                className="transition-colors hover:text-text-primary"
+              >
+                {item.label}
+              </a>
+            ) : (
+              <span key={item.label}>{item.label}</span>
+            ),
+          )}
+        </div>
+      )}
     </footer>
   )
 }
+
+// Keep default export for backwards compatibility during transition
+export default StatusBar

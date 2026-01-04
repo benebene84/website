@@ -1,5 +1,7 @@
 import { BlogPosts } from 'app/components/posts'
+import { Window } from 'app/components/ui/window'
 import { ViewTransition } from 'react'
+import { Headline } from './components/ui'
 
 const professionalExperience = [
   {
@@ -10,7 +12,7 @@ const professionalExperience = [
     highlights: [
       'Technical Leadership: Define the architecture for the frontend, choosing frameworks, libraries, and best practices for scalability, performance, and maintainability.',
       'Collaboration with UX/UI: Work closely with UX/UI designers to ensure that the frontend is aligned with the design vision and user experience and that the design system is followed.',
-      'Accessibility: Ensure that the frontend is accessible and compliant with accessibility guidelines, such as WCAG 2.1 AA. This includes implementing proper color contrast, providing alt text for images, and ensuring that the website is navigable using only a keyboard, or a screen reader.',
+      'Accessibility: Ensure that the frontend is accessible and compliant with accessibility guidelines, such as WCAG 2.1 AA.',
       'Performance Optimization: Optimize the frontend for performance, using tools like Lighthouse, WebPageTest, and utilise proper caching.',
     ],
   },
@@ -28,59 +30,132 @@ const professionalExperience = [
   },
 ]
 
+const skills = [
+  'React',
+  'Next.js',
+  'TypeScript',
+  'Node.js',
+  'Tailwind CSS',
+  'Performance',
+  'Accessibility',
+  'UX Design',
+]
+
 export default function Page() {
   return (
     <ViewTransition>
-      <main className="flex flex-col gap-8" id="main">
-        <section className="flex flex-col-reverse gap-8 text-left sm:flex-row sm:py-14 sm:text-center">
-          <div>
-            <div className="mb-2 inline-block bg-gradient-to-r from-blue-700 to-cyan-400 bg-clip-text font-semibold text-4xl text-transparent tracking-tighter sm:mb-6 sm:text-6xl dark:from-purple-800 dark:to-pink-600">
-              Hi, I'm <h1 className="inline-block">Benedikt Sperl</h1>!
-            </div>
-            <p className="sm:text-lg">
-              <strong>Frontend Architect</strong> and{' '}
-              <strong>Frontend Lead</strong> based in Munich, Germany. I
-              specialize in crafting high-performance web applications with a
-              strong focus on <strong>UX design</strong>,{' '}
-              <strong>accessibility</strong>, and <strong>automation</strong>.
-              My passion lies in building user interfaces and products that
-              people truly enjoy interacting with.
+      <main className="flex flex-col gap-6" id="main">
+        {/* Hero Window */}
+        <Window
+          title="Welcome.app"
+          as="section"
+          className="window-animate-in"
+          hover
+        >
+          <div className="flex flex-col gap-4 py-2">
+            <Headline as="div">
+              Hi, I'm <h1 className="inline">Benedikt Sperl</h1>!
+            </Headline>
+            <p className="text-text-secondary sm:text-lg">
+              <strong className="text-text-primary">Frontend Architect</strong>{' '}
+              and <strong className="text-text-primary">Frontend Lead</strong>{' '}
+              based in Munich, Germany. I specialize in crafting
+              high-performance web applications with a strong focus on{' '}
+              <strong className="text-text-primary">UX design</strong>,{' '}
+              <strong className="text-text-primary">accessibility</strong>, and{' '}
+              <strong className="text-text-primary">automation</strong>.
             </p>
           </div>
-        </section>
-        <section className="flex flex-col gap-4">
-          <h2 className="mb-1 font-semibold text-xl tracking-tighter">
-            Articles
-          </h2>
-          <BlogPosts />
-        </section>
-        <section className="flex flex-col gap-4">
-          <h2 className="mb-1 font-semibold text-xl tracking-tighter">
-            Professional Experience
-          </h2>
-          <span className="flex flex-col gap-4">
-            {professionalExperience.map((experience) => (
-              <span className="flex flex-col gap-4" key={experience.company}>
-                <span className="flex flex-col gap-1 md:flex-row md:gap-2">
-                  <strong>{experience.company}</strong>
-                  <span className="hidden md:block">|</span>
-                  <strong>{experience.role}</strong>
-                  <span className="hidden md:block">|</span>
-                  <span>{experience.duration}</span>
-                </span>
+        </Window>
 
-                <span>{experience.description}</span>
-                <ul className="flex flex-col gap-2">
+        {/* Two column layout for Terminal and Blog */}
+        <div className="grid gap-6 md:grid-cols-2">
+          {/* Terminal Window - Skills */}
+          <Window
+            title="skills.sh"
+            variant="terminal"
+            as="aside"
+            className="window-animate-in"
+            hover
+          >
+            <div className="flex flex-col gap-2">
+              <p className="text-terminal-muted">
+                <span className="text-terminal-prompt">➜</span>{' '}
+                <span className="text-terminal-path">~</span> cat skills.txt
+              </p>
+              <div className="flex flex-wrap gap-2 pt-2">
+                {skills.map((skill) => (
+                  <span
+                    key={skill}
+                    className="rounded border border-terminal-text/30 bg-terminal-text/10 px-2 py-1 text-terminal-text"
+                  >
+                    {skill}
+                  </span>
+                ))}
+              </div>
+              <p className="mt-2 text-terminal-muted">
+                <span className="text-terminal-prompt">➜</span>{' '}
+                <span className="text-terminal-path">~</span>{' '}
+                <span className="animate-pulse">▊</span>
+              </p>
+            </div>
+          </Window>
+
+          {/* Blog Posts Window */}
+          <Window
+            title="Articles"
+            variant="finder"
+            as="section"
+            className="window-animate-in"
+            hover
+          >
+            <BlogPosts limit={5} />
+          </Window>
+        </div>
+
+        {/* Experience Window */}
+        <Window
+          title="experience.md"
+          as="section"
+          className="window-animate-in"
+          hover
+        >
+          <div className="flex flex-col gap-6">
+            <h2 className="font-semibold text-xl tracking-tighter">
+              Professional Experience
+            </h2>
+            {professionalExperience.map((experience) => (
+              <div
+                className="flex flex-col gap-3 border-accent border-l-2 pl-4"
+                key={experience.company}
+              >
+                <div className="flex flex-col gap-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <strong className="text-lg">{experience.company}</strong>
+                    <span className="badge rounded-full px-2 py-0.5 text-xs">
+                      {experience.role}
+                    </span>
+                  </div>
+                  <span className="text-sm text-text-tertiary">
+                    {experience.duration}
+                  </span>
+                </div>
+                <p className="text-text-secondary">{experience.description}</p>
+                <ul className="flex flex-col gap-1.5">
                   {experience.highlights.map((highlight) => (
-                    <li key={highlight} className="ml-4 list-disc pl-2">
-                      {highlight}
+                    <li
+                      key={highlight}
+                      className="flex gap-2 text-sm text-text-tertiary"
+                    >
+                      <span className="text-accent">•</span>
+                      <span>{highlight}</span>
                     </li>
                   ))}
                 </ul>
-              </span>
+              </div>
             ))}
-          </span>
-        </section>
+          </div>
+        </Window>
       </main>
     </ViewTransition>
   )

@@ -2,11 +2,18 @@ import type { HTMLAttributes, PropsWithChildren } from 'react'
 
 export const Headline = ({
   children,
+  as: Component = 'h1',
   ...props
-}: PropsWithChildren & HTMLAttributes<HTMLHeadingElement>) => {
+}: PropsWithChildren &
+  HTMLAttributes<HTMLHeadingElement> & {
+    as?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'div'
+  }) => {
   return (
-    <h1 className="mb-2 font-semibold text-2xl tracking-tighter" {...props}>
+    <Component
+      className="inline-block bg-linear-to-r from-accent-from to-accent-to bg-clip-text font-semibold text-3xl text-transparent tracking-tighter sm:text-4xl"
+      {...props}
+    >
       {children}
-    </h1>
+    </Component>
   )
 }

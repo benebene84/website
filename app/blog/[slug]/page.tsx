@@ -1,4 +1,5 @@
 import { CustomMDX } from 'app/components/mdx'
+import { Window } from 'app/components/ui/window'
 import { baseUrl } from 'app/sitemap'
 import { formatDate, getBlogPosts } from 'app/utils/mdx'
 import type { Metadata } from 'next'
@@ -67,7 +68,7 @@ export default async function Blog(props: {
 
   return (
     <ViewTransition>
-      <main id="main">
+      <main className="flex flex-col gap-6" id="main">
         <script
           type="application/ld+json"
           suppressHydrationWarning
@@ -91,34 +92,69 @@ export default async function Blog(props: {
             }),
           }}
         />
-        <div className="flex flex-col-reverse justify-between gap-1 md:flex-row">
-          <h1 className="title font-semibold text-2xl tracking-tighter">
-            {post.metadata.title}
-          </h1>
-          <ShareButton
-            data={{
-              title: post.metadata.title,
-              text: post.metadata.summary,
-              url: `${baseUrl}/blog/${post.slug}`,
-            }}
-          />
-        </div>
-        <div className="mt-2 mb-8 flex items-center justify-between text-sm">
-          <p className="text-neutral-600 text-sm dark:text-neutral-400">
-            {formatDate(post.metadata.publishedAt, true)}
-          </p>
-        </div>
-        <article className="prose">
-          <CustomMDX source={post.content} />
-        </article>
-        <ShareButton
-          data={{
-            title: post.metadata.title,
-            text: post.metadata.summary,
-            url: `${baseUrl}/blog/${post.slug}`,
-          }}
-          className="mt-8"
-        />
+
+        {/* Article Window - TextEdit style */}
+        <Window
+          title={`${post.metadata.title}.md`}
+          as="article"
+          className="window-animate-in"
+          hover
+        >
+          {/* Document toolbar */}
+          <div className="toolbar -mx-4 -mt-4 mb-6 flex flex-wrap items-center justify-between gap-3 border-border-subtle border-b px-4 py-2">
+            <div className="flex items-center gap-3">
+              {/* File type badge */}
+              <span className="badge-accent rounded px-2 py-0.5 font-mono text-xs">
+                .mdx
+              </span>
+              {/* Date */}
+              <span className="text-sm">
+                {formatDate(post.metadata.publishedAt, true)}
+              </span>
+            </div>
+            <ShareButton
+              data={{
+                title: post.metadata.title,
+                text: post.metadata.summary,
+                url: `${baseUrl}/blog/${post.slug}`,
+              }}
+            />
+          </div>
+
+          {/* Document header */}
+          <header className="mb-8">
+            <h1 className="mb-3 text-balance font-semibold text-2xl tracking-tight sm:text-3xl">
+              {post.metadata.title}
+            </h1>
+            {post.metadata.summary && (
+              <p className="text-lg text-text-tertiary">
+                {post.metadata.summary}
+              </p>
+            )}
+          </header>
+
+          {/* Document content */}
+          <div className="prose max-w-none">
+            <CustomMDX source={post.content} />
+          </div>
+
+          {/* Document footer */}
+          <footer className="toolbar -mx-4 mt-8 -mb-4 flex flex-wrap items-center justify-between gap-3 border-border-subtle border-t px-4 py-3">
+            <div className="flex items-center gap-2 text-sm">
+              <span>Written by</span>
+              <span className="font-medium text-text-primary">
+                Benedikt Sperl
+              </span>
+            </div>
+            <ShareButton
+              data={{
+                title: post.metadata.title,
+                text: post.metadata.summary,
+                url: `${baseUrl}/blog/${post.slug}`,
+              }}
+            />
+          </footer>
+        </Window>
       </main>
     </ViewTransition>
   )

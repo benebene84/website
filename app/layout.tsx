@@ -3,6 +3,7 @@ import { GeistMono } from 'geist/font/mono'
 import { GeistSans } from 'geist/font/sans'
 import type { Metadata } from 'next'
 import Script from 'next/script'
+import { ThemeProvider } from './components/theme-provider'
 import { Desktop } from './components/ui/desktop'
 import { Dock } from './components/ui/dock'
 import { MenuBar } from './components/ui/menu-bar'
@@ -134,24 +135,26 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-screen antialiased">
-        <SkipLink />
+        <ThemeProvider>
+          <SkipLink />
 
-        {/* OS Menu Bar - fixed at top */}
-        <MenuBar />
+          {/* OS Menu Bar - fixed at top */}
+          <MenuBar />
 
-        {/* Desktop Environment */}
-        <Desktop>{children}</Desktop>
+          {/* Desktop Environment */}
+          <Desktop>{children}</Desktop>
 
-        {/* OS Dock - fixed at bottom */}
-        <Dock />
+          {/* OS Dock - fixed at bottom */}
+          <Dock />
 
-        {process.env.NODE_ENV === 'production' && (
-          <Script
-            defer
-            src="https://cloud.umami.is/script.js"
-            data-website-id="e5a9dd7b-f9a8-41f0-82bd-8c7a5a911239"
-          />
-        )}
+          {process.env.NODE_ENV === 'production' && (
+            <Script
+              defer
+              src="https://cloud.umami.is/script.js"
+              data-website-id="e5a9dd7b-f9a8-41f0-82bd-8c7a5a911239"
+            />
+          )}
+        </ThemeProvider>
       </body>
     </html>
   )

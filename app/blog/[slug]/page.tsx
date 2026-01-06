@@ -6,6 +6,7 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { ViewTransition } from 'react'
 import { ShareButton } from '../../components/ui/share'
+import { Comments } from './comments'
 
 export async function generateStaticParams() {
   const posts = getBlogPosts()
@@ -155,6 +156,7 @@ export default async function Blog(props: {
             />
           </footer>
         </Window>
+        <Comments />
       </main>
     </ViewTransition>
   )

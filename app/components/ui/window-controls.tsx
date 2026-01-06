@@ -1,5 +1,3 @@
-'use client'
-
 import { cx } from 'app/utils/cx'
 
 interface WindowControlsProps {

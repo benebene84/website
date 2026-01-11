@@ -43,7 +43,9 @@ export function MenuBar({ className }: MenuBarProps) {
   return (
     <nav
       className={cx(
-        'menubar sticky top-0 z-50 w-full',
+        'sticky top-0 z-50 w-full',
+        'bg-menubar-bg text-menubar-text',
+        'border-menubar-border border-b',
         'backdrop-blur-xl',
         className,
       )}

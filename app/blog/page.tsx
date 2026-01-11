@@ -46,7 +46,7 @@ export default function Page() {
           <div className="toolbar -mx-4 -mt-4 mb-4 flex items-center gap-4 border-border-subtle border-b px-4 py-2">
             <div className="flex items-center gap-2 text-xs">
               <span>Sort by:</span>
-              <span className="badge rounded px-2 py-0.5 font-medium">
+              <span className="rounded bg-badge-bg px-2 py-0.5 font-medium text-badge-text">
                 Date
               </span>
             </div>

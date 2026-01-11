@@ -219,7 +219,7 @@ export default function AboutMe() {
               >
                 <div className="flex flex-wrap items-center gap-2">
                   <strong className="text-lg">{role.company}</strong>
-                  <span className="badge rounded-full px-2 py-0.5 text-xs">
+                  <span className="rounded-full bg-badge-bg px-2 py-0.5 text-badge-text text-xs">
                     {role.period}
                   </span>
                 </div>

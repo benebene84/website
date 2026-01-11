@@ -54,9 +54,10 @@ export function Dock({ className }: DockProps) {
     <Tooltip.Provider>
       <nav
         className={cx(
-          'dock fixed bottom-6 left-1/2 z-50 -translate-x-1/2',
+          'fixed bottom-6 left-1/2 z-50 -translate-x-1/2',
           'flex items-center gap-1.5 px-2.5 py-2',
           'rounded-2xl',
+          'border border-dock-border bg-dock-bg shadow-dock',
           'backdrop-blur-2xl',
           'transition-transform duration-300 hover:scale-[1.02]',
           className,

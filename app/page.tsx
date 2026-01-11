@@ -132,7 +132,7 @@ export default function Page() {
                 <div className="flex flex-col gap-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <strong className="text-lg">{experience.company}</strong>
-                    <span className="badge rounded-full px-2 py-0.5 text-xs">
+                    <span className="rounded-full bg-badge-bg px-2 py-0.5 text-badge-text text-xs">
                       {experience.role}
                     </span>
                   </div>

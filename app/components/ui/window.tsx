@@ -62,7 +62,7 @@ export function Window({
   return (
     <Element
       className={cx(
-        'window overflow-hidden rounded-xl',
+        'overflow-hidden rounded-xl border border-window-border bg-window-bg shadow-window',
         hover ? 'group' : undefined,
         isTerminal ? 'flex flex-col' : undefined,
         className,
@@ -72,7 +72,7 @@ export function Window({
       {/* Title Bar */}
       <div
         className={cx(
-          'window-titlebar flex items-center gap-4 px-4 py-3',
+          'flex items-center gap-4 border-window-border border-b bg-titlebar-bg px-4 py-3 text-titlebar-text',
           variant === 'finder'
             ? 'bg-linear-to-b from-titlebar-bg to-window-border'
             : undefined,

@@ -17,7 +17,7 @@ export default function Imprint() {
       >
         {/* Document toolbar */}
         <div className="toolbar -mx-4 -mt-4 mb-6 flex items-center gap-3 border-b px-4 py-2">
-          <span className="badge rounded px-2 py-0.5 font-mono text-xs">
+          <span className="rounded bg-badge-bg px-2 py-0.5 font-mono text-badge-text text-xs">
             .txt
           </span>
           <span className="text-sm">Rechtliche Informationen</span>

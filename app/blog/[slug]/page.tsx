@@ -105,7 +105,7 @@ export default async function Blog(props: {
           <div className="toolbar -mx-4 -mt-4 mb-6 flex flex-wrap items-center justify-between gap-3 border-border-subtle border-b px-4 py-2">
             <div className="flex items-center gap-3">
               {/* File type badge */}
-              <span className="badge-accent rounded px-2 py-0.5 font-mono text-xs">
+              <span className="rounded bg-badge-accent-bg px-2 py-0.5 font-mono text-badge-accent-text text-xs">
                 .mdx
               </span>
               {/* Date */}

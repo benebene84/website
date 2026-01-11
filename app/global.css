@@ -505,64 +505,6 @@ table {
 }
 
 /* ==========================================
-   OS Design System - Windows, Dock, MenuBar
-   ========================================== */
-
-/* OS Window Styles */
-.window {
-  background: var(--color-window-bg);
-  border: 1px solid var(--color-window-border);
-  border-radius: 12px;
-  box-shadow: var(--shadow-window);
-  overflow: hidden;
-}
-
-.window-titlebar {
-  background: var(--color-titlebar-bg);
-  color: var(--color-titlebar-text);
-  border-bottom: 1px solid var(--color-window-border);
-}
-
-/* Dock Styles */
-.dock {
-  background: var(--color-dock-bg);
-  border: 1px solid var(--color-dock-border);
-  box-shadow: var(--shadow-dock);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-}
-
-/* Menu Bar Styles */
-.menubar {
-  background: var(--color-menubar-bg);
-  color: var(--color-menubar-text);
-  border-bottom: 1px solid var(--color-menubar-border);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-}
-
-/* Desktop Background */
-.desktop {
-  background-color: var(--color-desktop-bg);
-  background-image: radial-gradient(
-    var(--color-desktop-dot) 1px,
-    transparent 1px
-  );
-  background-size: 24px 24px;
-}
-
-/* Badge Styles */
-.badge {
-  background: var(--color-badge-bg);
-  color: var(--color-badge-text);
-}
-
-.badge-accent {
-  background: var(--color-badge-accent-bg);
-  color: var(--color-badge-accent-text);
-}
-
-/* ==========================================
    Window Animations & Transitions
    ========================================== */
 
@@ -648,9 +590,6 @@ html {
 }
 
 /* Smooth theme transitions for key elements */
-.window,
-.dock,
-.menubar,
 [class*="bg-"],
 [class*="border-"],
 [class*="text-"] {
@@ -669,12 +608,6 @@ html {
 :focus-visible {
   outline: 2px solid var(--color-focus-ring);
   outline-offset: 2px;
-}
-
-/* Active/pressed state for buttons */
-button:active,
-a:active {
-  transform: scale(0.98);
 }
 
 /* ==========================================
@@ -724,16 +657,4 @@ a:active {
 * {
   scrollbar-width: thin;
   scrollbar-color: var(--color-border-default) transparent;
-}
-
-/* ==========================================
-   Accent Gradient Utility
-   ========================================== */
-
-.accent-gradient {
-  background: linear-gradient(
-    to right,
-    var(--color-accent-from),
-    var(--color-accent-to)
-  );
 }

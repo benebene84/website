@@ -43,7 +43,7 @@ export function Comments() {
       reactionsEnabled="1"
       emitMetadata="0"
       inputPosition="top"
-      theme={resolvedTheme}
+      theme={resolvedTheme === 'dark' ? 'transparent_dark' : 'light_tritanopia'}
       lang="en"
       loading="lazy"
     />

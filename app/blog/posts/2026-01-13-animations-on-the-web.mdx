@@ -1,0 +1,315 @@
+---
+title: 'Animations on the Web: CSS, requestAnimationFrame, Web Animations API, and View Transitions'
+publishedAt: '2026-01-13'
+summary: 'A practical guide to modern web animation: when CSS is enough, when to reach for requestAnimationFrame, Web Animations API, and how View Transitions make UI changes feel continuous.'
+---
+
+> TL;DR
+> - CSS transitions/keyframes are the best default for UI motion: simple, readable, and often compositor-friendly.
+> - `requestAnimationFrame` is for per-frame control. Animate with **time** (delta time), not "pixels per frame".
+> - Web Animations API is for more complex animations. It gives you more control over the animation, and it's more performant than `requestAnimationFrame`.
+> - View Transitions are for **continuity across UI state changes** (and sometimes navigation).
+
+## Introduction
+
+Animation is a language. Used well, it communicates feedback ("your click worked"), hierarchy ("this is the primary element"), and continuity ("this is the same thing, just in a new state"). Used poorly, it becomes noise: jittery transitions, layout shifts, and motion that ignores user preferences.
+
+This post focuses on **platform primitives** — CSS animations, JavaScript animation loops with `requestAnimationFrame`, Web Animations API, and the View Transitions API. It intentionally does **not** cover animation libraries, so we can stay close to what the browser is actually doing and why some animations are smooth while others feel janky.
+
+We'll start with a small rendering mental model (so performance advice makes sense), then move from the simplest tool (CSS) to the most "structural" kind of animation (View Transitions).
+
+## A mental model: frame budget and the rendering pipeline
+
+Smooth motion is mostly about one thing: can the browser produce frames consistently on time?
+At 60Hz that's ~16.7ms per frame. Within that budget, the browser has to (simplified) run JavaScript, recalculate styles, do layout, paint pixels, and finally composite layers.
+
+The important consequence is that **not all properties cost the same to animate**. Animating `transform` and `opacity` often lets the browser skip expensive layout/paint work and mostly rely on compositing. Animating layout-affecting properties like `top`, `left`, `width`, or `height` often forces layout and paint on each frame, which is where jank tends to come from.
+
+## CSS animations: transitions, keyframes, and modern patterns
+
+### Transitions (the best default)
+
+CSS transitions are ideal when you have a clear "before" and "after" state: hover, pressed, expanded, selected, error. You express state in markup (a class or attribute), and let CSS interpolate the visual difference.
+
+```css
+.card {
+  transform: translateY(0);
+  opacity: 1;
+  transition:
+    transform 180ms ease-out,
+    opacity 180ms ease-out;
+}
+
+.card[data-state='inactive'] {
+  transform: translateY(6px);
+  opacity: 0.5;
+}
+```
+
+<TransitionDemo />
+
+### Keyframes (when motion has phases)
+
+Sometimes a transition feels "flat" because the motion has more than one phase. That's where keyframes shine: overshoot, settle, and a little bit of personality—without reaching for JavaScript.
+
+```css
+@keyframes pop {
+  0% {
+    transform: scale(0.90);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.08);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.toast {
+  animation: pop 220ms ease-out both;
+}
+```
+
+<KeyframeDemo />
+
+### Getting the "feel" right
+
+Most UI animation comes down to small decisions that add up. For quick feedback, short durations are your friend—roughly 100–250ms is a good starting point for many interactions. For easing, `ease-out` tends to feel natural for things that come to rest (menus opening, cards lifting), while `ease-in` often works for things that leave.
+
+If you're unsure what to animate, start with the boring-but-effective combo: **opacity + a small translate**. Large distance travel is much more likely to feel distracting than a subtle nudge.
+
+### Common pitfalls (the stuff that causes jank)
+
+There are three common footguns:
+
+First, animating layout (`top`, `left`, `width`, `height`, etc.) tends to be expensive because it forces layout + paint work. When in doubt, move things with `transform` instead.
+
+Second, `will-change` is a hint, not a fix. It tells the browser "this property is about to change, optimize for it"—which can help by creating a compositing layer ahead of time. But it's not free: each element with `will-change` consumes extra memory, and the browser has to maintain that optimization. 
+
+Use it when you know an animation is about to happen (like on `:hover` before a transition fires), and remove it after the animation completes. Leaving it on many elements "just in case" can actually make performance worse by consuming memory and forcing unnecessary layer management.
+
+Third, you can't transition to/from `height: auto`. If you need that "accordion" feel, you typically either animate a measured height with JavaScript/WAAPI, or accept an imperfect `max-height` workaround. (This is finally changing: `interpolate-size: allow-keywords` is landing in browsers and may eventually make this a non-issue.)
+
+### Respect reduced motion
+
+Motion is an accessibility issue, not just a preference. A simple and effective baseline to respect this:
+
+```css
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+```
+
+## JavaScript animations: requestAnimationFrame, time, and FPS
+
+### Why JS (and why it's easy to do it wrong)
+
+JavaScript is the right tool when motion is **interactive** or **dynamic**: dragging, inertia, physics-based motion, or targets that change every frame.
+The classic mistake is animating "per frame" instead of "per time". This breaks on 120Hz displays and stutters when frames drop.
+
+The `requestAnimationFrame()` method tells the browser you wish to perform an animation. It requests the browser to call a user-supplied callback function before the next repaint.
+The frequency of calls to the callback function will generally match the display refresh rate.
+
+### A minimal, time-based rAF loop
+
+```ts
+const element = document.querySelector<HTMLElement>('[data-box]')
+if (!element) throw new Error('Missing element')
+
+let rafId: number | null = null
+let last = 0
+
+// Position in pixels
+let x = 0
+const speed = 240 // px per second
+
+function frame(now: number) {
+  if (last === 0) last = now
+
+  // Delta time in seconds
+  const dt = Math.min((now - last) / 1000, 0.05) // clamp big jumps (tab switch)
+  last = now
+
+  x += speed * dt
+
+  // Write-only: keep your "render" phase simple
+  element.style.transform = `translateX(${x}px)`
+
+  rafId = requestAnimationFrame(frame)
+}
+
+rafId = requestAnimationFrame(frame)
+```
+
+<RafDemo />
+
+If you take only one thing from rAF animation: **use delta time** and **clamp it**.
+
+### FPS: a useful signal, a bad goal
+
+Chasing 60fps as a number is tempting, but what you really want is **consistency**. A stable 55–60fps that responds to input will feel better than a UI that hits 60 most of the time but occasionally freezes.
+
+If you're debugging jank, the Performance panel is your best friend. Look for long tasks that block the main thread, forced layout/reflow events, and expensive paints that show up repeatedly during the animation.
+
+### Avoid layout thrash (read → compute → write)
+
+If your animation needs measurements (sizes, positions), keep a clean separation: read the DOM, do your math, then write styles. The reason is subtle: interleaving reads and writes can force the browser to synchronously flush layout, which is an easy way to accidentally make an animation expensive.
+
+## WAAPI (Web Animations API) as a bridge between CSS and JS
+
+Sometimes you want "CSS animations", but with timeline control and promises. WAAPI gives you that without building your own rAF engine.
+
+```ts
+// Animate an element in, then do something when it finishes
+const animation = element.animate(
+  [{ transform: 'translateY(6px)', opacity: 0 }, { transform: 'translateY(0)', opacity: 1 }],
+  { duration: 180, easing: 'ease-out', fill: 'both' },
+)
+
+await animation.finished
+// Element is now fully visible — safe to focus or continue
+```
+
+<WaapiDemo />
+
+WAAPI really shines when you need to orchestrate sequences. You can pause, reverse, or cancel animations at any point, and `animation.finished` gives you a promise to coordinate follow-up logic—all while the browser handles the actual timing and frame scheduling.
+
+```ts
+// Example: sequential entrance animation
+async function animateEntrance(items: HTMLElement[]) {
+  for (const item of items) {
+    const anim = item.animate(
+      [{ opacity: 0, transform: 'translateY(8px)' }, { opacity: 1, transform: 'translateY(0)' }],
+      { duration: 150, easing: 'ease-out', fill: 'forwards' },
+    )
+    await anim.finished
+  }
+}
+```
+
+## View Transitions: animating UI changes (and navigation) as one story
+
+View Transitions are different from "animate this div from A to B". They treat animation as a **before/after** problem: you tell the browser "I'm about to change the UI", and it animates between a snapshot of the old state and a snapshot of the new state.
+
+That makes them a great fit for transitions that would otherwise require a lot of coordination—route changes, expanding a card into a detail view, swapping between list and grid, theme toggles that shouldn't feel like a flash.
+
+### Same-document transitions (progressive enhancement)
+
+The key is progressive enhancement: the UI should still update instantly if the API isn't available, and only animate when it is.
+
+```ts
+function updateUI() {
+  // Update DOM / React state / router navigation here
+}
+
+if (!document.startViewTransition) updateUI()
+else document.startViewTransition(updateUI)
+```
+
+### Customizing the animation with CSS pseudo-elements
+
+By default you'll get a fade. You can customize it by styling the generated pseudo-elements.
+
+```css
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 220ms;
+  animation-timing-function: ease-out;
+}
+
+::view-transition-old(root) {
+  opacity: 0.9;
+}
+
+::view-transition-new(root) {
+  opacity: 1;
+}
+```
+
+### Shared element transitions
+
+The most powerful part is "shared element" continuity. If the same element concept exists in both states (a card image becomes the detail hero), give both versions the same `view-transition-name` and the browser can morph between them.
+
+```css
+.cardImage {
+  view-transition-name: card-image;
+}
+```
+
+In practice: ensure the "before" and "after" DOM both contain an element with that same name during the transition.
+
+### Reduced motion for View Transitions
+
+View Transitions are still motion, so they should respect reduced motion too.
+
+```css
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 1ms;
+  }
+}
+```
+
+## Choosing the right tool
+
+Most of the time, you'll get the best result by starting with the simplest tool and only moving "down the stack" when you need more control.
+
+<Table
+  data={{
+    headers: ['Need', 'Tool'],
+    rows: [
+      ['Simple state change (hover, expanded, error)', 'CSS transitions'],
+      ['Multi-phase motion (overshoot, settle)', 'CSS keyframes'],
+      ['Per-frame control (drag, physics, scrubbing)', <code>requestAnimationFrame</code>],
+      ['CSS feel + runtime control (pause, reverse, await)', 'WAAPI'],
+      ['UI state continuity (route change, expand-to-detail)', 'View Transitions'],
+    ],
+  }}
+/>
+
+When in doubt, start with CSS. Reach for JavaScript only when you need interactivity or dynamic targets, and consider View Transitions when the change spans more than a single component.
+
+## Patterns, pitfalls, and a quick checklist
+
+### Patterns that age well
+
+Micro-interactions (hover/press) are the highest ROI: they're small, they communicate instantly, and they rarely need complex choreography. For enter/exit motion, "fade + small translate" tends to age better than large movements. And when the user needs to feel continuity ("this card became this page"), shared-element transitions are worth the effort.
+
+### Pitfalls to watch for
+
+The usual failures are predictable: animating layout, moving things too far for too long, forgetting reduced motion, or measuring layout repeatedly inside a hot animation loop. If an animation feels "mysteriously" slow, it's often one of those.
+
+### Checklist (before you ship)
+
+Before shipping, sanity-check the intent and the ergonomics:
+
+- Does the motion **communicate something** (feedback, hierarchy, continuity)?
+- Are you mostly animating **transform/opacity** (or is layout getting involved)?
+- Did you test with **prefers-reduced-motion** enabled?
+- Does it stay responsive under load (use the Performance panel)?
+
+## Conclusion
+
+If you want a simple rule of thumb: start with CSS, reach for `requestAnimationFrame` only when you need per-frame control, and use View Transitions when the change you're animating is bigger than any single component.
+
+Good animation isn't about "more motion". It's about making change easier to understand, without making the interface harder to use.
+
+## Further reading
+
+- [MDN: CSS transitions](https://developer.mozilla.org/en-US/docs/Web/CSS/transition)
+- [MDN: CSS animations](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_animations)
+- [MDN: requestAnimationFrame](https://developer.mozilla.org/en-US/docs/Web/API/window/requestAnimationFrame)
+- [MDN: Web Animations API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Animations_API)
+- [Chrome Developers: View Transitions](https://developer.chrome.com/docs/web-platform/view-transitions/)
+- [MDN: Scroll-driven animations](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_scroll-driven_animations) (not covered here, but increasingly useful)
+- [web.dev: Rendering performance](https://web.dev/articles/rendering-performance)

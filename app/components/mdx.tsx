@@ -3,6 +3,10 @@ import Link from 'next/link'
 import { MDXRemote, type MDXRemoteProps } from 'next-mdx-remote/rsc'
 import React from 'react'
 import { highlight } from 'sugar-high'
+import { KeyframeDemo } from '../blog/demos/keyframe-demo'
+import { RafDemo } from '../blog/demos/raf-demo'
+import { TransitionDemo } from '../blog/demos/transition-demo'
+import { WaapiDemo } from '../blog/demos/waapi-demo'
 import { Switch } from './ui/switch'
 
 function Table({
@@ -10,22 +14,31 @@ function Table({
 }: {
   data: { headers: string[]; rows: (string | React.ReactNode)[][] }
 }) {
-  const headers = data.headers.map((header, index) => (
-    // biome-ignore lint/suspicious/noArrayIndexKey: <i only have static data here>
-    <th key={index}>{header}</th>
+  const headers = data.headers.map((header) => (
+    <th
+      key={header}
+      className="border-border-default border-b px-4 py-3 text-left font-semibold text-text-primary"
+    >
+      {header}
+    </th>
   ))
   const rows = data.rows.map((row, index) => (
-    // biome-ignore lint/suspicious/noArrayIndexKey: <i only have static data here>
-    <tr key={index}>
-      {row.map((cell: string | React.ReactNode, cellIndex) => (
-        // biome-ignore lint/suspicious/noArrayIndexKey: <i only have static data here>
-        <td key={cellIndex}>{cell}</td>
+    <tr key={row.toString()}>
+      {row.map((cell: string | React.ReactNode) => (
+        <td
+          key={cell?.toString()}
+          className={`border-border-subtle border-b px-4 py-3 text-text-secondary ${
+            index === data.rows.length - 1 ? 'border-b-0' : ''
+          }`}
+        >
+          {cell}
+        </td>
       ))}
     </tr>
   ))
 
   return (
-    <table>
+    <table className="my-6 w-full border-collapse">
       <thead>
         <tr>{headers}</tr>
       </thead>
@@ -138,6 +151,10 @@ const components = {
   ul: CustomList,
   ol: CustomOrderedList,
   li: CustomListItem,
+  TransitionDemo,
+  KeyframeDemo,
+  RafDemo,
+  WaapiDemo,
 }
 
 export function CustomMDX({ ...props }: MDXRemoteProps) {

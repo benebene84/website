@@ -31,14 +31,15 @@ const professionalExperience = [
 ]
 
 const skills = [
+  'TypeScript',
   'React',
   'Next.js',
-  'TypeScript',
   'Node.js',
-  'Tailwind CSS',
   'Performance',
   'Accessibility',
   'UX Design',
+  'Architecture',
+  'CI/CD',
 ]
 
 export default function Page() {

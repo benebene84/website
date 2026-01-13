@@ -441,19 +441,19 @@ body {
 }
 
 .prose h1 {
-  @apply mt-6 mb-2 text-4xl font-medium tracking-tight;
+  @apply mt-6 mb-2 text-4xl font-medium tracking-tight scroll-mt-14;
 }
 
 .prose h2 {
-  @apply mt-6 mb-2 text-xl font-medium tracking-tight;
+  @apply mt-6 mb-2 text-xl font-medium tracking-tight scroll-mt-14;
 }
 
 .prose h3 {
-  @apply mt-6 mb-2 text-xl font-medium tracking-tight;
+  @apply mt-6 mb-2 text-xl font-medium tracking-tight scroll-mt-14;
 }
 
 .prose h4 {
-  @apply mt-6 mb-2 text-lg font-medium tracking-tight;
+  @apply mt-6 mb-2 text-lg font-medium tracking-tight scroll-mt-14;
 }
 
 .prose strong {

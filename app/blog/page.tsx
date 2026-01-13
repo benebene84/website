@@ -73,11 +73,17 @@ export default function Page() {
 
                 {/* File info */}
                 <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                  <span className="truncate font-medium text-text-primary">
+                  <span
+                    className="truncate font-medium text-text-primary"
+                    style={{ viewTransitionName: `title-${post.slug}` }}
+                  >
                     {post.metadata.title}
                   </span>
                   {post.metadata.summary && (
-                    <span className="line-clamp-1 text-sm text-text-tertiary">
+                    <span
+                      className="line-clamp-1 text-sm text-text-tertiary"
+                      style={{ viewTransitionName: `summary-${post.slug}` }}
+                    >
                       {post.metadata.summary}
                     </span>
                   )}

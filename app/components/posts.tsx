@@ -28,7 +28,10 @@ export function BlogPosts({ limit }: { limit?: number }) {
 
           {/* Content */}
           <div className="flex min-w-0 flex-1 flex-col gap-0.5 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-            <span className="truncate font-medium text-text-primary transition-colors">
+            <span
+              className="truncate font-medium text-text-primary transition-colors"
+              style={{ viewTransitionName: `title-${post.slug}` }}
+            >
               {post.metadata.title}
             </span>
             <span className="shrink-0 text-text-muted text-xs tabular-nums">

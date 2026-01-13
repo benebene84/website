@@ -124,11 +124,17 @@ export default async function Blog(props: {
 
           {/* Document header */}
           <header className="mb-8">
-            <h1 className="mb-3 text-balance font-semibold text-2xl tracking-tight sm:text-3xl">
+            <h1
+              className="mb-3 text-balance font-semibold text-2xl tracking-tight sm:text-3xl"
+              style={{ viewTransitionName: `title-${post.slug}` }}
+            >
               {post.metadata.title}
             </h1>
             {post.metadata.summary && (
-              <p className="text-lg text-text-tertiary">
+              <p
+                className="text-lg text-text-tertiary"
+                style={{ viewTransitionName: `summary-${post.slug}` }}
+              >
                 {post.metadata.summary}
               </p>
             )}

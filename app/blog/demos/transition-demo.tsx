@@ -16,7 +16,7 @@ export function TransitionDemo() {
       </button>
       <div
         data-state={isActive ? 'active' : 'inactive'}
-        className="h-24 w-32 rounded-lg border border-border-default bg-bg-secondary transition-transform duration-180 ease-out data-[state=inactive]:translate-y-1.5 data-[state=inactive]:opacity-50"
+        className="h-24 w-32 rounded-lg border border-border-default bg-bg-secondary transition-all duration-180 ease-out data-[state=active]:translate-y-0 data-[state=inactive]:translate-y-1.5 data-[state=active]:opacity-100 data-[state=inactive]:opacity-50"
       />
       <p className="text-sm text-text-tertiary">
         {isActive ? 'Active state' : 'Inactive state'}

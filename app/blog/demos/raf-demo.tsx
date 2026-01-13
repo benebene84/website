@@ -60,12 +60,16 @@ export function RafDemo() {
     if (isRunning) {
       setIsRunning(false)
     } else {
-      xRef.current = 0
-      lastRef.current = 0
-      if (boxRef.current) {
-        boxRef.current.style.transform = 'translateX(0px)'
-      }
       setIsRunning(true)
+    }
+  }
+
+  const handleReset = () => {
+    setIsRunning(false)
+    xRef.current = 0
+    lastRef.current = 0
+    if (boxRef.current) {
+      boxRef.current.style.transform = 'translateX(0px)'
     }
   }
 
@@ -77,18 +81,11 @@ export function RafDemo() {
           onClick={handleToggle}
           className="rounded-lg border-border-default bg-bg-secondary px-4 py-2 text-sm text-text-primary transition-colors hover:bg-bg-tertiary"
         >
-          {isRunning ? 'Stop' : 'Start'} animation
+          {isRunning ? 'Pause' : 'Start'} animation
         </button>
         <button
           type="button"
-          onClick={() => {
-            setIsRunning(false)
-            xRef.current = 0
-            lastRef.current = 0
-            if (boxRef.current) {
-              boxRef.current.style.transform = 'translateX(0px)'
-            }
-          }}
+          onClick={handleReset}
           className="rounded-lg border-border-default bg-bg-secondary px-4 py-2 text-sm text-text-primary transition-colors hover:bg-bg-tertiary"
         >
           Reset

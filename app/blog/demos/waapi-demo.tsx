@@ -20,6 +20,10 @@ export function WaapiDemo() {
     )
 
     await animation.finished
+
+    if (singleElementRef.current) {
+      singleElementRef.current.innerText += ' - Animation done'
+    }
   }
 
   const handleSequence = async () => {
@@ -36,6 +40,10 @@ export function WaapiDemo() {
         { duration: 500, easing: 'ease-out', fill: 'forwards' },
       )
       await anim.finished
+
+      if (item) {
+        item.innerText += ' - Animation done'
+      }
     }
   }
 

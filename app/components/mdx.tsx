@@ -23,10 +23,12 @@ function Table({
     </th>
   ))
   const rows = data.rows.map((row, index) => (
-    <tr key={row.toString()}>
-      {row.map((cell: string | React.ReactNode) => (
+    // biome-ignore lint/suspicious/noArrayIndexKey: <we only have the index as key>
+    <tr key={index}>
+      {row.map((cell: string | React.ReactNode, rowIndex) => (
         <td
-          key={cell?.toString()}
+          // biome-ignore lint/suspicious/noArrayIndexKey: <we only have the index as key>
+          key={rowIndex}
           className={`border-border-subtle border-b px-4 py-3 text-text-secondary ${
             index === data.rows.length - 1 ? 'border-b-0' : ''
           }`}

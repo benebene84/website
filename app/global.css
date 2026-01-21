@@ -445,7 +445,7 @@ body {
 }
 
 .prose h2 {
-  @apply mt-6 mb-2 text-xl font-medium tracking-tight scroll-mt-14;
+  @apply mt-6 mb-2 text-2xl font-medium tracking-tight scroll-mt-14;
 }
 
 .prose h3 {

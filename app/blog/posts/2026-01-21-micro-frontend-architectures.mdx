@@ -1,0 +1,351 @@
+---
+title: '(Micro) Frontend Architectures: Benefits, Drawbacks and when to utilize them'
+publishedAt: '2026-01-21'
+summary: 'A practical guide to (micro) frontend architectures: monoliths, vertical and horizontal splits, and runtime script injection. Learn when each approach makes sense and what trade-offs to expect.'
+---
+
+> TL;DR
+> - **Monolith**: Simple and unified, but hard to scale across teams. Good for single teams or tightly coupled products.
+> - **Vertical micro frontends**: Maximum team autonomy with independent deployments, but requires shared packages and careful UX coordination.
+> - **Horizontal micro frontends (Module Federation)**: Runtime composition with shared dependencies, but complex setup and tight version alignment needed.
+> - **Runtime script injection**: Simplest integration for widgets and legacy systems, but poor scalability and no dependency sharing.
+
+## Introduction
+
+Modern web applications often start simple: one team, one codebase, one deployment. But as products grow and organizations scale, a single application can become a bottleneck. 
+Multiple teams stepping on each other's toes, long build times, and deployment coordination overhead start to slow everyone down.
+
+Micro frontends emerged as a solution to this scaling problem. The idea is to apply microservices principles to the frontend: break the monolith into smaller, independently deployable pieces that different teams can own end-to-end.
+But "micro frontends" isn't a single architecture - it's a spectrum of approaches with different trade-offs. This post explores four common patterns, from the traditional monolith to various micro frontend strategies, helping you understand when each makes sense.
+
+### The Problem: Scaling Frontend Development
+
+Imagine you're building a unified portal where users can access multiple services: a dashboard, a product catalog, a shopping cart, and account settings. 
+Each of these could be developed by different teams with different release cycles and potentially different technology preferences.
+
+The challenge is creating a seamless user experience that feels like one application, even though the underlying components might be developed, deployed, and maintained separately. 
+This is where architecture choices matter, let's explore the options below.
+
+## Approach 1: The Monolith
+
+The most straightforward approach is to keep everything in one application. All teams work in the same codebase, share the same build pipeline, and deploy together.
+
+```
+┌─────────────────────────────────────────────────┐
+│                 Unified Application             │
+├─────────────────────────────────────────────────┤
+│  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌───────┐  │
+│  │Dashboard│ │Products │ │  Cart   │ │Account│  │
+│  └─────────┘ └─────────┘ └─────────┘ └───────┘  │
+├─────────────────────────────────────────────────┤
+│         Shared: Auth, Navigation, Layout        │
+├─────────────────────────────────────────────────┤
+│              Single Build & Deploy              │
+└─────────────────────────────────────────────────┘
+```
+
+Teams might work on different routes (e.g., `/products` or `/cart`) or in separate packages within a monorepo setup. One team typically owns the shared infrastructure: authentication, navigation, and common components.
+
+### Benefits
+
+The monolith's greatest strength is simplicity: Everything lives in one place, so sharing logic, layouts, and components is straightforward - no need to publish packages or worry about version mismatches. 
+New developers can explore the entire application and understand how pieces fit together without hunting across repositories. This is great for small teams or early-stage products where speed of iteration matters more than team independence.
+
+Maintaining a consistent user experience comes naturally when all teams work with the same components and styles. And deployment is as simple as it gets: one pipeline, one deployment, one version in production.
+
+### Drawbacks
+
+The same properties that make monoliths simple also create their limitations: As the codebase grows, it becomes harder to maintain. 
+Build times creep upward - large applications eventually hit 15+ minute builds, slowing down feedback loops for everyone.
+
+Deployment coordination becomes a challenge when multiple teams share the same release pipeline. Even with sophisticated branching strategies, you often end up with fixed deployment schedules to avoid conflicts. And when something breaks, ownership can be ambiguous: who's responsible when the bug sits at the intersection of two teams' work?
+Perhaps most limiting is the lack of technology freedom. Everyone must use the same core technologies, which means migrating to a new framework or experimenting with alternatives becomes an all-or-nothing decision affecting every team.
+
+### When to use it
+
+The monolith is often the right choice for single teams or small groups of closely collaborating teams, especially in early-stage products where speed of iteration matters more than team independence. 
+If everyone is happy with the same technology stack and a unified release cycle is acceptable, there's little reason to add architectural complexity.
+
+Don't dismiss this approach too quickly. Modern monorepo tooling like Nx and Turborepo can mitigate many traditional monolith pain points through intelligent caching, affected-based testing, and code ownership boundaries.
+
+## Approach 2: Vertical Micro Frontends
+
+Vertical micro frontends slice the application by business domain or feature area. 
+Each team owns an independent application that handles its own rendering, data fetching, and deployment. A central router (at the shell application or ingress level) directs users to the appropriate application based on the URL.
+
+```
+┌──────────────────────────────────────────────────────────┐
+│                     User Request                         │
+└────────────────────────┬─────────────────────────────────┘
+                         │
+                         ▼
+┌──────────────────────────────────────────────────────────┐
+│              Router / Ingress / Reverse Proxy            │
+└────┬─────────────────┬─────────────────┬─────────────────┘
+     │                 │                 │
+     ▼                 ▼                 ▼
+┌──────────┐    ┌──────────┐    ┌──────────┐
+│/dashboard│    │/products │    │  /cart   │
+│   App    │    │   App    │    │   App    │
+│          │    │          │    │          │
+│ Team A   │    │ Team B   │    │ Team C   │
+└────┬─────┘    └────┬─────┘    └────┬─────┘
+     │               │               │
+     └───────────────┼───────────────┘
+                     ▼
+         ┌─────────────────────┐
+         │   Shared Packages   │
+         │  (Nav, Auth, Design)│
+         └─────────────────────┘
+```
+
+The routing can happen at different levels. At the application level, a shell application with a Node.js server routes traffic based on the incoming request - Next.js [Multi-Zones](https://nextjs.org/docs/app/building-your-application/deploying/multi-zones) is one implementation of this pattern. 
+Alternatively, routing can happen at the infrastructure level, where an ingress controller or reverse proxy (Nginx, Traefik) directs requests to different services based on path prefixes. The key requirement is simply a unique identifier, whether a path prefix or subdomain—to route traffic correctly.
+
+### Benefits
+
+The defining advantage of vertical micro frontends is independence. Each team deploys on their own schedule with no coordination needed - ship when you're ready. 
+This independence extends to technology choices: different teams can use different frameworks, mixing Next.js, Vite SPAs, and other frameworks if that's what makes sense for their domain.
+
+Each application has clear boundaries and a responsible team, eliminating the ownership ambiguity that plagues large monoliths. 
+And because each application renders its own assets and logic, there are no conflicts in styles, third-party scripts, or global state.
+
+### Drawbacks
+
+However, Independence comes at a cost: Every application needs to render common elements like navigation, which means creating and maintaining shared packages that all applications consume. When the navigation changes, every application needs an update.
+Dependencies like React and your design system load separately for each application. Navigating from the dashboard to products means loading React twice - once for each app. While shared CDN caching can help, you're still paying for the bandwidth and parse time.
+
+UX continuity is another challenge: Maintaining scroll position, preserving client-side state, and ensuring smooth transitions between applications all require extra effort. Cross-cutting concerns like user preferences and authentication state need careful handling across application boundaries.
+
+
+### When to use it
+
+Vertical micro frontends work well when teams need full autonomy, including independent deployment schedules and the freedom to choose their own technology stacks. 
+They're particularly suited to organizations with clear domain boundaries between features, where different business units or product areas can own their slice of the application end-to-end. The cost of duplicate dependencies needs to be acceptable for your situation, though shared CDN caching can help mitigate the impact.
+
+## Approach 3: Horizontal Micro Frontends (Module Federation)
+
+Horizontal micro frontends take a different approach: instead of routing to separate applications, a shell application dynamically loads components from remote applications at runtime. This is typically implemented using Module Federation.
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                   Shell Application                     │
+├─────────────────────────────────────────────────────────┤
+│  Navigation │ Auth Context │ Layout │ Mount Container   │
+└──────────────────────────┬──────────────────────────────┘
+                           │ Loads at runtime
+          ┌────────────────┼────────────────┐
+          ▼                ▼                ▼
+    ┌──────────┐    ┌──────────┐    ┌──────────┐
+    │ Products │    │   Cart   │    │Dashboard │
+    │  Remote  │    │  Remote  │    │  Remote  │
+    │          │    │          │    │          │
+    │ Exposes: │    │ Exposes: │    │ Exposes: │
+    │ <App />  │    │ <App />  │    │ <App />  │
+    └────┬─────┘    └────┬─────┘    └────┬─────┘
+         │               │               │
+         └───────────────┼───────────────┘
+                         ▼
+              ┌─────────────────────┐
+              │   Shared (singleton)│
+              │ React, Design System│
+              └─────────────────────┘
+```
+
+Module Federation allows applications to share code at runtime. Remote applications expose components (typically their root `App` component), and the shell application consumes them. The clever part: you can specify shared dependencies (React, your design system) that are loaded once and shared across all remotes.
+
+### How it works
+
+Remote applications define which components to expose and which dependencies to share. 
+The shell application defines which remotes to consume and declares the same shared dependencies. At runtime, the shell fetches a manifest from each remote, loads the exposed components, and mounts them - all while deduplicating shared dependencies so React only loads once.
+
+```ts
+// webpack.config.js for a remote application
+new ModuleFederationPlugin({
+  name: 'products',
+  filename: 'remoteEntry.js',
+  exposes: {
+    './App': './src/App',
+  },
+  shared: {
+    react: { singleton: true },
+    'react-dom': { singleton: true },
+    '@company/design-system': { singleton: true },
+  },
+})
+```
+
+### Benefits
+
+Each remote can deploy independently, and the shell automatically picks up new versions - no coordination required. The real win over vertical micro frontends is shared dependencies: React and other heavy libraries load once, not per-remote, significantly reducing bundle size and improving load times.
+
+Module Federation also offers runtime flexibility that other approaches lack. Remotes can be loaded conditionally, lazily, or based on feature flags. And because the shell can pass props, context, and callbacks directly to remotes, there's less need for shared packages to handle cross-cutting concerns.
+
+### Drawbacks
+
+The complexity cost is real: Module Federation configuration is not straightforward, and debugging module loading errors, CORS issues, and version mismatches can be frustrating. 
+The learning curve is steep, and when things break, the error messages often aren't helpful.
+
+The shared dependency requirement creates a tension that limits true independence. All applications must use compatible versions of shared dependencies. If the shell uses React 18.2 and a remote team updates to React 19, things break. This means teams can't simply update their own dependencies and upgrades need coordination.
+
+TypeScript adds another layer of complexity. Types don't automatically flow across application boundaries, so you need additional tooling like `@module-federation/typescript` or manually maintained type packages. Style isolation is also a concern: CSS from different remotes can conflict unless you use CSS Modules, CSS-in-JS, or careful naming conventions.
+
+Finally, there's ecosystem lock-in to consider: Module Federation is fundamentally a Webpack/Rspack concept. While Vite plugins exist (`@originjs/vite-plugin-federation`), you're somewhat dependent on this ecosystem continuing to evolve and support your needs.
+
+
+### When to use it
+
+Module Federation makes sense when you need runtime composition with multiple teams contributing to a single page, and when shared dependencies like React and your design system are significant enough that deduplication matters. Teams need to be willing to align on core dependency versions, and you'll need to be using Webpack or Rspack (or willing to adopt them).
+
+## Approach 4: Runtime Script Injection
+
+The simplest form of micro frontend integration: load JavaScript and CSS files from remote applications and let them render into a designated container. This is how embeddable widgets have worked for years.
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                   Shell Application                     │
+├─────────────────────────────────────────────────────────┤
+│  <div id="products-root"></div>                         │
+│                                                         │
+│  <script src="https://products.example.com/main.js">    │
+│  <link href="https://products.example.com/main.css">    │
+└─────────────────────────────────────────────────────────┘
+                           │
+                           ▼
+┌─────────────────────────────────────────────────────────┐
+│              Products Application                       │
+│  ReactDOM.render(<App />, '#products-root')             │
+└─────────────────────────────────────────────────────────┘
+```
+
+The shell provides an empty container, loads the remote application's assets, and the remote renders itself into that container.
+
+### Benefits
+
+The appeal of script injection is its simplicity. No special build tooling is required—just script and link tags pointing to remote assets. Each application deploys independently, and the shell doesn't need to know what framework the remote uses. If it renders to a DOM node, it works.
+
+### Drawbacks
+
+Simplicity comes with significant trade-offs. There's no dependency sharing, so dependencies nmight load multiple times, once for each injected application. 
+Every remote brings its own copy of every dependency, bloating the total bundle size.
+
+Caching becomes problematic because you typically need stable URLs (`main.js`, not `main.abc123.js`) for the shell to reference. 
+This breaks CDN caching strategies and requires cache-busting headers or other workarounds. Configuration management adds another burden: each environment, brand, or locale combination might need different asset URLs, turning into a content management challenge.
+
+Isolation issues appear at both ends of the spectrum. Global CSS from different applications can clash, causing unexpected styling. Third-party scripts like analytics or consent management, when loaded by multiple applications, can interfere with each other. And passing data between shell and remote is awkward, requiring global variables, custom events, or postMessage patterns.
+
+### Iframe alternative
+
+A related approach is loading remotes in iframes:
+
+```html
+<iframe src="https://products.example.com" />
+```
+
+Iframes offer complete isolation—styles, scripts, and global state are entirely separate, and you get a security sandbox for free. 
+But communication is limited to postMessage, sizing the iframe to fit its content is notoriously tricky, and sharing authentication state requires additional work. 
+Iframes work well for truly independent widgets but feel jarring for tightly integrated experiences where the embedded content should feel like part of the main application.
+
+### When to use it
+
+Runtime script injection is appropriate for embedding widgets into external sites—think chat widgets or embedded forms—and for legacy system integration where rebuilding isn't feasible. It's also a reasonable choice for very simple integrations where dependency duplication isn't a concern, or as a proof-of-concept before investing in more sophisticated approaches.
+
+## Cross-Cutting Concerns
+
+Regardless of which architecture you choose, certain challenges appear in any micro frontend setup.
+
+### Communication Between Micro Frontends
+
+Micro frontends need to communicate with each other. 
+A user clicks a notification and the dashboard should update, or a user logs out and all applications need to clear their state. How do you coordinate across application boundaries?
+
+The simplest approach is custom events: `window.dispatchEvent(new CustomEvent('user:logout'))` broadcasts to anyone listening. 
+It's straightforward but offers no type safety and can become hard to trace in larger systems. An event bus, basically a shared publish/subscribe module, adds more structure at the cost of another shared dependency to maintain.
+
+For richer communication, you can lift state into the shell. 
+A state container like Redux or Zustand in the shell application can be passed to remotes via props or context. 
+This creates tighter coupling but enables powerful coordination. 
+
+Browser storage APIs offer another option, particularly IndexedDB with reactive wrappers like [Dexie](https://dexie.org/).
+Dexie's `useLiveQuery()` hook automatically re-renders components when data changes, and its built-in cross-tab synchronization (via BroadcastChannel under the hood) means updates propagate across micro frontends without manual wiring.
+This approach provides persistent shared state without requiring a shared JavaScript runtime as each micro frontend just needs its own Dexie instance pointing to the same database.
+The trade-off is that all micro frontends need to coordinate on the database schema.
+
+At the other extreme, encoding shared state in URL parameters works across hard navigations and survives page refreshes, though capacity is obviously limited.
+
+### Authentication and Authorization
+
+Authentication state needs to be consistent across all micro frontends. 
+The simplest approach is shared token storage: all applications read from the same localStorage key or cookie. This works but requires coordination on token format and refresh logic.
+
+If you are working in a horizontal set-up, a cleaner separation has the shell handle authentication entirely and pass user info to remotes via props or context. 
+Remotes never touch tokens directly, they just receive the authenticated user and trust the shell. For maximum security, a backend-for-frontend (BFF) layer can handle auth and forward authenticated requests, keeping tokens entirely out of the browser.
+
+### Shared Design System
+
+A consistent look and feel across micro frontends requires intentional effort. 
+Publishing your shared components as an npm package that all applications consume is the most common approach, though version alignment becomes important. 
+
+With Module Federation, you can mark the shared components as a shared dependency so only one copy loads at runtime. 
+For lighter coupling, sharing design tokens via CSS custom properties lets applications inherit colors, spacing, and typography without depending on shared JavaScript components.
+
+## Choosing the Right Approach
+
+As always in software engineering, there's no universally "best" architecture - only trade-offs that fit your situation better or worse.
+
+<Table
+  data={{
+    headers: ['Consideration', 'Monolith', 'Vertical MFE', 'Module Federation', 'Script Injection'],
+    rows: [
+      ['Team independence', 'Low', 'High', 'Medium', 'High'],
+      ['Deployment independence', 'Low', 'High', 'High', 'High'],
+      ['Technology freedom', 'None', 'High', 'Medium', 'High'],
+      ['Setup complexity', 'Low', 'Medium', 'High', 'Low'],
+      ['Bundle size efficiency', 'Best', 'Poor', 'Good', 'Poor'],
+      ['UX consistency', 'Easiest', 'Requires effort', 'Good', 'Challenging'],
+      ['Debugging experience', 'Best', 'Good', 'Challenging', 'Challenging'],
+    ],
+  }}
+/>
+
+### Decision framework
+
+**Start with a monolith** if you have a single team, a small number of closely collaborating teams, or you're early in product development. The overhead of micro frontends isn't worth it until you feel the pain of coordination.
+
+**Move to vertical micro frontends** when teams need true independence: different release cycles, different technology choices, or clear domain ownership. Accept the cost of duplicate dependencies and invest in shared packages for consistency.
+
+**Consider Module Federation** when you need the independence of micro frontends but can't afford duplicate dependencies, or when multiple teams contribute components to the same page. Be prepared for setup complexity and version alignment challenges.
+
+**Use script injection** for widgets, legacy integrations, or when you need the simplest possible solution and can live with the limitations.
+
+### Migration paths
+
+Most organizations don't start with micro frontends—they evolve toward them as pain points emerge. 
+The first step is often introducing package boundaries within a monolith using tools like Nx or Turborepo. This gives you code ownership and clearer team responsibilities without architectural complexity. 
+You're still deploying together, but the codebase has more structure.
+
+When deployment independence becomes important, you can extract high-independence features into separate applications -> vertical micro frontends. 
+Start with one feature, prove the pattern works for your organization, then expand gradually. Not everything needs to be extracted, some features benefit from remaining in the monolith.
+
+If dependency duplication becomes painful or you need tighter integration between separately deployed pieces, Module Federation can bridge the gap. 
+You might introduce it for specific boundaries while keeping vertical splits elsewhere. There's no rule that says you must use one approach everywhere.
+
+## Conclusion
+
+Micro frontends solve real problems, like team scaling, deployment independence, technology flexibility, but they're not free. 
+Each approach trades some simplicity for some flexibility.
+
+The monolith remains a valid choice for many teams. Don't adopt micro frontends because they sound modern, adopt them because you're experiencing the coordination pain they solve.
+
+If you do need micro frontends, vertical splits maximize autonomy but require investment in shared packages and accept duplicate dependencies. 
+Module Federation offers a middle ground with shared dependencies but demands version alignment and adds complexity. Script injection is the simplest integration but the least capable.
+
+Whatever you choose, remember that architecture is about trade-offs, not best practices. The right choice depends on your team structure, product requirements, and how much complexity you're willing to manage.
+
+## Further Reading
+
+- [Micro Frontends](https://martinfowler.com/articles/micro-frontends.html) — Martin Fowler's foundational article on the concept
+- [Module Federation Documentation](https://module-federation.io/) — Official docs for Module Federation
+- [Next.js Multi-Zones](https://nextjs.org/docs/app/building-your-application/deploying/multi-zones) — Next.js implementation of vertical micro frontends
+- [Turborepo](https://turborepo.dev/) — Monorepo tooling that can ease the transition toward micro frontends
+- [Dexie](https://dexie.org/) — A reactive IndexedDB wrapper for shared state

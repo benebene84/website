@@ -1,0 +1,264 @@
+---
+title: 'Choosing your styling solution: from vanilla CSS to utility frameworks'
+publishedAt: '2026-02-02'
+summary: 'A practical guide to choosing between CSS, preprocessors, CSS Modules, CSS-in-JS, and utility frameworks for your next project.'
+---
+
+## Introduction
+
+If you've been doing frontend development for any length of time, you've probably noticed that there are a ton of different solutions for styling your applications. Every few years, a new approach promises to solve all our styling problems, and yet we keep coming back to the same fundamental challenges: scoping, maintainability, and developer experience.
+
+The truth is, there's no universal "best" styling solution. The right choice depends on your project's needs, your team's expertise, and the trade-offs you're willing to make. In this article, I want to walk through the main styling approaches, not just listing their features, but exploring when and why you might choose one over another.
+
+## Vanilla CSS: The foundation that never goes away
+
+Let's start with the baseline: plain CSS. No build step, no dependencies, no magic. Just stylesheets linked in your HTML.
+
+```/dev/null/example.css#L1-12
+.card {
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  background-color: white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.card--highlighted {
+  border: 2px solid #3b82f6;
+  background-color: #eff6ff;
+}
+```
+
+Modern CSS has evolved dramatically. We now have custom properties for theming, container queries for responsive layouts, cascade layers for managing specificity, and nesting (finally!) for better organization. The platform has genuinely caught up with many features that used to require preprocessors or build tools.
+
+### When vanilla CSS makes sense
+
+Vanilla CSS shines for smaller projects, content-focused sites, or when you want zero build complexity. It's also the right choice when you're building something that needs to work in constrained environments where you can't control the build pipeline - think widgets that get embedded in other sites, or plugins for platforms like WordPress.
+
+The browser's DevTools understand CSS natively, which makes debugging straightforward. There is no source maps to deal with, no generated class names to decipher. What you write is what you get, with no runtime overhead, no JavaScript parsing or execution needed for styles to apply.
+
+### The scoping problem
+
+The biggest challenge with vanilla CSS is global scope. Every class name exists in a single global namespace, which means you need naming conventions like BEM (Block Element Modifier) to avoid collisions. This works, but it requires discipline and can feel verbose.
+
+```/dev/null/example.html#L1-5
+<button class="button button--primary button--large">
+  Click me
+</button>
+```
+
+You also need to be careful about specificity. It's easy to end up in specificity wars where you keep adding more selectors or `!important` declarations to override previous styles. Once you're in that spiral, it's hard to get out.
+
+### The stylesheet bloat problem
+
+As your project grows, vanilla CSS files tend to balloon in size with redundant declarations. You'll find yourself writing `display: flex; flex-direction: column;` dozens of times across different components, or repeating the same spacing values over and over. Without tooling to deduplicate or optimize these patterns, your stylesheets can become massive.
+
+This redundancy isn't just about file size—it's about maintainability. When you need to change a common pattern, you have to hunt down every instance across your codebase. When a component is not used anymore, you need to make sure the corresponding styles are removed as well. Custom properties help with values, but they don't solve the repetition of property-value pairs themselves. This is one area where utility frameworks and CSS-in-JS solutions have a genuine advantage: they either generate optimized stylesheets or eliminate redundancy through composition.
+
+## SCSS and preprocessors: power tools for CSS
+
+Preprocessors like SCSS, Sass, and Less were game-changers when they arrived. They brought variables, nesting, mixins, and functions to CSS at a time when the language itself was much more limited.
+
+```/dev/null/example.scss#L1-23
+$color-primary: #3b82f6;
+$spacing-unit: 0.5rem;
+
+@mixin button-base {
+  padding: $spacing-unit * 2 $spacing-unit * 4;
+  border-radius: $spacing-unit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.button {
+  @include button-base;
+  
+  &--primary {
+    background-color: $color-primary;
+    color: white;
+    
+    &:hover {
+      background-color: darken($color-primary, 10%);
+    }
+  }
+}
+```
+
+### The sweet spot for preprocessors
+
+SCSS can remain valuable today, especially for projects that need complex, reusable styling logic. The ability to write mixins for cross-browser compatibility, generate utility classes programmatically, or calculate values based on design tokens can save a ton of repetitive code.
+
+### The limitations
+
+However, now that CSS has native custom properties and nesting, some of the core value propositions of preprocessors have diminished. You need to evaluate whether you truly need the extra features or if modern CSS would suffice.
+
+On top, preprocessors don't solve the scoping issue. You still have a global namespace and all the challenges that come with it. The nesting feature, while convenient, can actually make specificity problems worse if you're not careful. It's easy to end up with deeply nested selectors that are hard to override and create tight coupling between your HTML structure and styles.
+
+## CSS Modules: scoped styles without the overhead
+
+CSS Modules take a different approach to the scoping problem. Instead of relying on naming conventions, they automatically scope your styles to the component that imports them by generating unique class names at build time.
+
+```css
+.container {
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  background-color: white;
+}
+
+.highlighted {
+  border: 2px solid #3b82f6;
+  background-color: #eff6ff;
+}
+
+.title {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+```
+
+```tsx
+import styles from './Card.module.css'
+
+export function Card({ highlighted, title, children }) {
+  return (
+    <div className={`${styles.container} ${highlighted ? styles.highlighted : ''}`}>
+      <h3 className={styles.title}>{title}</h3>
+      {children}
+    </div>
+  )
+}
+```
+
+At build time, the classes get transformed into something like `Card_container__a7d3k`, making collisions essentially impossible.
+
+### Why CSS Modules work well
+
+CSS Modules solve the scoping problem elegantly without requiring you to learn a new syntax or give up on CSS. You write regular CSS, and the build tool handles the scoping. This makes them particularly appealing for teams transitioning from traditional CSS or for projects where you want component-scoped styles without the runtime overhead of CSS-in-JS.
+
+The developer experience is solid. You get autocomplete for your class names in modern editors, and the generated names are consistent across builds, which is important for caching. The fact that it's just CSS means your existing knowledge and tools still work.
+
+### Composition and theming challenges
+
+Where CSS Modules can feel limiting is in dynamic theming and cross-component composition. If you want to share styles between components, you need to use the `:global` escape hatch or create separate shared stylesheets. While CSS Modules support composition, it's not as intuitive as some other solutions.
+
+Dynamic styles based on props also require JavaScript class name logic, which can get verbose. You end up writing a lot of template strings with conditionals, especially in component-heavy applications.
+
+## CSS-in-JS: styles meet components
+
+CSS-in-JS libraries like styled-components, Emotion, and Stitches took a radically different approach: what if styles were just JavaScript? This means you can use variables, functions, and logic directly in your styles, and everything is automatically scoped to your components.
+
+```tsx
+import styled from 'styled-components'
+
+const Container = styled.div`
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  background-color: white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  
+  ${props => props.$highlighted && `
+    border: 2px solid #3b82f6;
+    background-color: #eff6ff;
+  `}
+`
+
+const Title = styled.h3`
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: ${props => props.theme.colors.text};
+`
+
+export function Card({ highlighted, title, children }) {
+  return (
+    <Container $highlighted={highlighted}>
+      <Title>{title}</Title>
+      {children}
+    </Container>
+  )
+}
+```
+
+### The power of dynamic styling
+
+CSS-in-JS really shines when you need highly dynamic, component-driven styles. Theming becomes trivial, just provide a theme object through context. Conditional styles based on props are natural and type-safe. You can compute styles based on application state without any gymnastics.
+
+I've worked on design systems where the ability to have variants, compound variants, and responsive props all type-checked was incredibly valuable. The confidence you get from knowing that an invalid variant will throw a TypeScript error rather than silently fail is hard to overstate.
+
+### The performance and complexity tax
+
+But CSS-in-JS comes with real trade-offs. There's a runtime cost—the library needs to parse your styles, generate class names, and inject them into the DOM. For some libraries, this happens on every render, which can impact performance in component-heavy applications.
+
+Server-side rendering adds complexity. Depending on the library you use, using React Server Components or frameworks like Next.js may require additional configuration. You need to extract critical CSS, inject it into the HTML, and then hydrate it on the client. The newer generation of CSS-in-JS libraries has improved this story, but it's still more complex than static CSS.
+
+The bundle size is another consideration. You're shipping the styling library to every user, which can be significant. For some libraries, we're talking 15-20kb minified and gzipped—not huge, but not nothing either.
+
+And here's something that doesn't get talked about enough: CSS-in-JS can make it harder for non-JavaScript developers (like designers who code) to contribute to styling. The barrier to entry is higher when styles are JavaScript expressions rather than CSS files.
+
+## Utility frameworks: the Tailwind revolution
+
+Utility-first CSS frameworks, particularly Tailwind, have exploded in popularity over the last few years. Instead of writing CSS, you compose styles using small, single-purpose utility classes directly in your markup.
+
+```tsx
+export function Card({ highlighted, title, children }) {
+  return (
+    <div 
+      className={`
+        p-6 rounded-lg bg-white shadow-sm
+        ${highlighted ? 'border-2 border-blue-500 bg-blue-50' : ''}
+      `}
+    >
+      <h3 className="text-xl font-semibold">{title}</h3>
+      {children}
+    </div>
+  )
+}
+```
+
+### Why developers love utility frameworks
+
+Utility frameworks solve the "naming things" problem in a radical way: don't name things. Instead of thinking about what to call a class, you just describe what you want directly in the markup. This can be incredibly freeing and fast once you learn the system.
+
+The constraints are also a feature. Instead of having infinite options for spacing or colors, you work within a designed system. This naturally leads to more consistent UIs without requiring explicit documentation or code review rules. For rapid prototyping and iteration, utilities are hard to beat. You can build entire interfaces without context switching between files. The feedback loop is immediate—change a class, see the result.
+
+The best about utility frameworks? If you work in large projects, the bundle size of the generated CSS will esentially will plateau after a certain point, because most of the utility classes will already be included. This is different from traditional CSS where adding new components often means adding new styles, increasing the overall size.
+
+A plus to consider nowadays: AI agents are very good at writing styles with utility classes. Given the popularity of Tailwind, many AI models have been trained on codebases that use it, making it easier to get accurate suggestions.
+
+### The readability debate
+
+The main criticism of utility frameworks is readability. A component with ten or fifteen utility classes can look cluttered. Some developers find it harder to scan and understand compared to semantic class names.
+
+```tsx
+<button className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2">
+  Click me
+</button>
+```
+
+That's a real-world button from a component library. Is it readable? That's subjective. Some developers see a clear description of exactly what the button looks like. Others see class soup. In the end you shouldn't care too much, because your UI is not built for developers, but for users. If the code is maintainable and the user experience is solid, that's what matters.
+
+There's also the learning curve. Tailwind's class names are intuitive once you know the system, but there is a system to learn. New team members need time to ramp up, and you're trading CSS knowledge for framework-specific knowledge.
+
+Another downside is that new or modern css features may take time to be supported in utility frameworks. For example, while Tailwind has added support for container queries, it came later than native CSS support. If you're eager to use the latest CSS features, you may find yourself waiting for the framework to catch up.
+
+## Making the choice
+
+So how do you actually choose? **Users don't care about your styling solution** - they care about performance, accessibility, and a great user experience. Your choice should be driven by what helps your team deliver that most effectively.
+
+For **small projects, content sites, or when build simplicity matters most**, vanilla CSS is often the right choice. Modern CSS is genuinely powerful, and the lack of dependencies is refreshing. When browser support is sufficient, you can leverage features like custom properties, cascade layers, and container queries to build maintainable styles without extra tooling.
+
+For **projects with complex, reusable styling logic**, SCSS or another preprocessor can provide the power tools you need. The ability to generate utility classes, create complex mixins, and work with design tokens programmatically is valuable at scale. However giving the advancements in native CSS, there might be less and less cases for preprocessors in new projects.
+
+For **aplications where scoping is important but you want to stick close to CSS**, CSS Modules offer a great middle ground. You get scoped styles without runtime overhead or a significant departure from traditional CSS.
+
+For **highly dynamic applications where styling depends heavily on application state and you value type safety**, CSS-in-JS libraries provide unmatched power. However this comes at the cost of performance implications and added complexity.
+
+For **teams that prioritize development speed and design consistency over traditional CSS practices**, utility frameworks like Tailwind can dramatically accelerate development while maintaining a coherent design system. Utility frameworks also tend to produce smaller CSS bundles in large applications due to their atomic nature and help with keeping your styles consistent at scale.
+
+## Conclusion
+
+The styling landscape has matured significantly. We have powerful options for every use case, and the browser platform itself has caught up with many features we used to need build tools for.
+
+The choice isn't about finding the "best" solution, it's about understanding the trade-offs and choosing what makes sense for your specific context. Consider your team's expertise, your project's needs, performance requirements, and the complexity you're willing to manage.
+
+What matters most is consistency. Pick an approach, document it, and stick with it. A codebase with a clear, consistent styling strategy will always be more maintainable than one that mixes approaches without clear guidelines, regardless of which solution you choose.
+
+The web platform will keep evolving, and new styling solutions will emerge. But the fundamentals remain: scope your styles, keep specificity manageable, build reusable patterns, and always prioritize the user experience over developer convenience. Whatever tools you choose should serve those goals.

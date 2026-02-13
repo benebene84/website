@@ -12,8 +12,11 @@ import { Switch } from './ui/switch'
 function Table({
   data,
 }: {
-  data: { headers: string[]; rows: (string | React.ReactNode)[][] }
+  data?: { headers: string[]; rows: (string | React.ReactNode)[][] }
 }) {
+  if (!data?.headers) {
+    return undefined
+  }
   const headers = data.headers.map((header) => (
     <th
       key={header}

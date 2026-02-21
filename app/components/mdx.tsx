@@ -1,6 +1,6 @@
+import { MDXContent } from '@content-collections/mdx/react'
 import Image, { type ImageProps } from 'next/image'
 import Link from 'next/link'
-import { MDXRemote, type MDXRemoteProps } from 'next-mdx-remote/rsc'
 import React from 'react'
 import { highlight } from 'sugar-high'
 import { KeyframeDemo } from '../blog/demos/keyframe-demo'
@@ -100,11 +100,11 @@ function slugify(str: string) {
   return str
     .toString()
     .toLowerCase()
-    .trim() // Remove whitespace from both ends of a string
-    .replace(/\s+/g, '-') // Replace spaces with -
-    .replace(/&/g, '-and-') // Replace & with 'and'
-    .replace(/[^\w-]+/g, '') // Remove all non-word characters except for -
-    .replace(/--+/g, '-') // Replace multiple - with single -
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/&/g, '-and-')
+    .replace(/[^\w-]+/g, '')
+    .replace(/--+/g, '-')
 }
 
 function createHeading(level: number) {
@@ -162,11 +162,6 @@ const components = {
   WaapiDemo,
 }
 
-export function CustomMDX({ ...props }: MDXRemoteProps) {
-  return (
-    <MDXRemote
-      {...props}
-      components={{ ...components, ...(props.components || {}) }}
-    />
-  )
+export function CustomMDX({ code }: { code: string }) {
+  return <MDXContent code={code} components={components} />
 }

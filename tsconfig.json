@@ -12,6 +12,9 @@
     "isolatedModules": true,
     "jsx": "react-jsx",
     "baseUrl": ".",
+    "paths": {
+      "content-collections": ["./.content-collections/generated"]
+    },
     "incremental": true,
     "plugins": [
       {
@@ -27,7 +30,8 @@
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",
-    ".next/dev/types/**/*.ts"
+    ".next/dev/types/**/*.ts",
+    ".content-collections/generated"
   ],
   "exclude": ["node_modules"]
 }

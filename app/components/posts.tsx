@@ -1,15 +1,13 @@
-import { formatDate, getBlogPosts } from 'app/utils/mdx'
+import { formatDate } from 'app/utils/mdx'
+import { allPosts } from 'content-collections'
 import { ArrowRight, ChevronRight, FileText } from 'lucide-react'
 import Link from 'next/link'
 
 export function BlogPosts({ limit }: { limit?: number }) {
-  const allBlogs = getBlogPosts()
-
-  const sortedBlogs = allBlogs
+  const sortedBlogs = [...allPosts]
     .sort(
       (a, b) =>
-        new Date(b.metadata.publishedAt).getTime() -
-        new Date(a.metadata.publishedAt).getTime(),
+        new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime(),
     )
     .slice(0, limit)
 
@@ -17,8 +15,8 @@ export function BlogPosts({ limit }: { limit?: number }) {
     <div className="-mx-2 flex flex-col">
       {sortedBlogs.map((post) => (
         <Link
-          key={post.slug}
-          href={`/blog/${post.slug}`}
+          key={post._meta.path}
+          href={`/blog/${post._meta.path}`}
           className="group flex items-center gap-3 rounded-lg px-2 py-2.5 transition-all duration-200 hover:bg-bg-hover"
         >
           {/* File icon */}
@@ -30,12 +28,12 @@ export function BlogPosts({ limit }: { limit?: number }) {
           <div className="flex min-w-0 flex-1 flex-col gap-0.5 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
             <span
               className="truncate font-medium text-text-primary transition-colors"
-              style={{ viewTransitionName: `title-${post.slug}` }}
+              style={{ viewTransitionName: `title-${post._meta.path}` }}
             >
-              {post.metadata.title}
+              {post.title}
             </span>
             <span className="shrink-0 text-text-muted text-xs tabular-nums">
-              {formatDate(post.metadata.publishedAt, false)}
+              {formatDate(post.publishedAt, false)}
             </span>
           </div>
 
@@ -47,12 +45,12 @@ export function BlogPosts({ limit }: { limit?: number }) {
       ))}
 
       {/* View all link if limited */}
-      {limit && allBlogs.length > limit && (
+      {limit && allPosts.length > limit && (
         <Link
           href="/blog"
           className="mt-2 flex items-center gap-2 px-2 py-2 font-medium text-accent text-sm transition-colors hover:text-accent-hover"
         >
-          <span>View all {allBlogs.length} articles</span>
+          <span>View all {allPosts.length} articles</span>
           <ArrowRight size={14} aria-hidden="true" />
         </Link>
       )}

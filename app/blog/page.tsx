@@ -1,6 +1,7 @@
 import { Headline } from 'app/components/ui'
 import { Window } from 'app/components/ui/window'
-import { formatDate, getBlogPosts } from 'app/utils/mdx'
+import { formatDate } from 'app/utils/mdx'
+import { allPosts } from 'content-collections'
 import { FileText } from 'lucide-react'
 import type { Metadata } from 'next'
 import Link from 'next/link'
@@ -13,11 +14,9 @@ export const metadata: Metadata = {
 }
 
 export default function Page() {
-  const allBlogs = getBlogPosts()
-  const sortedBlogs = allBlogs.sort(
+  const sortedBlogs = [...allPosts].sort(
     (a, b) =>
-      new Date(b.metadata.publishedAt).getTime() -
-      new Date(a.metadata.publishedAt).getTime(),
+      new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime(),
   )
 
   return (
@@ -57,8 +56,8 @@ export default function Page() {
           <div className="flex flex-col">
             {sortedBlogs.map((post, _index) => (
               <Link
-                key={post.slug}
-                href={`/blog/${post.slug}`}
+                key={post._meta.path}
+                href={`/blog/${post._meta.path}`}
                 className="group -mx-4 flex items-center gap-4 border-border-subtle border-b px-4 py-3 transition-colors last:border-b-0 hover:bg-bg-hover"
               >
                 {/* File icon */}
@@ -75,23 +74,25 @@ export default function Page() {
                 <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                   <span
                     className="truncate font-medium text-text-primary"
-                    style={{ viewTransitionName: `title-${post.slug}` }}
+                    style={{ viewTransitionName: `title-${post._meta.path}` }}
                   >
-                    {post.metadata.title}
+                    {post.title}
                   </span>
-                  {post.metadata.summary && (
+                  {post.summary && (
                     <span
                       className="line-clamp-1 text-sm text-text-tertiary"
-                      style={{ viewTransitionName: `summary-${post.slug}` }}
+                      style={{
+                        viewTransitionName: `summary-${post._meta.path}`,
+                      }}
                     >
-                      {post.metadata.summary}
+                      {post.summary}
                     </span>
                   )}
                 </div>
 
                 {/* Date */}
                 <div className="hidden shrink-0 text-sm text-text-tertiary tabular-nums sm:flex">
-                  {formatDate(post.metadata.publishedAt, false)}
+                  {formatDate(post.publishedAt, false)}
                 </div>
               </Link>
             ))}

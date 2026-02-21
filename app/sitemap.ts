@@ -1,11 +1,11 @@
-import { getBlogPosts } from 'app/utils/mdx'
+import { allPosts } from 'content-collections'
 
 export const baseUrl = 'https://www.benedikt-sperl.de'
 
 export default async function sitemap() {
-  const blogs = getBlogPosts().map((post) => ({
-    url: `${baseUrl}/blog/${post.slug}`,
-    lastModified: post.metadata.publishedAt,
+  const blogs = allPosts.map((post) => ({
+    url: `${baseUrl}/blog/${post._meta.path}`,
+    lastModified: post.publishedAt,
   }))
 
   const routes = ['', '/blog', '/imprint', '/about-me'].map((route) => ({

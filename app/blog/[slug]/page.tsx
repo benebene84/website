@@ -1,7 +1,8 @@
 import { CustomMDX } from 'app/components/mdx'
 import { Window } from 'app/components/ui/window'
 import { baseUrl } from 'app/sitemap'
-import { formatDate, getBlogPosts } from 'app/utils/mdx'
+import { formatDate } from 'app/utils/mdx'
+import { allPosts } from 'content-collections'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { ViewTransition } from 'react'
@@ -9,10 +10,8 @@ import { ShareButton } from '../../components/ui/share'
 import { Comments } from './comments'
 
 export async function generateStaticParams() {
-  const posts = getBlogPosts()
-
-  return posts.map((post) => ({
-    slug: post.slug,
+  return allPosts.map((post) => ({
+    slug: post._meta.path,
   }))
 }
 
@@ -20,7 +19,7 @@ export async function generateMetadata(props: {
   params: Promise<{ slug: string }>
 }): Promise<Metadata> {
   const params = await props.params
-  const post = getBlogPosts().find((post) => post.slug === params.slug)
+  const post = allPosts.find((post) => post._meta.path === params.slug)
   if (!post) {
     return { title: 'Not Found' }
   }
@@ -30,7 +29,7 @@ export async function generateMetadata(props: {
     publishedAt: publishedTime,
     summary: description,
     image,
-  } = post.metadata
+  } = post
   const ogImage = image ?? `${baseUrl}/og?title=${encodeURIComponent(title)}`
 
   return {
@@ -41,7 +40,7 @@ export async function generateMetadata(props: {
       description,
       type: 'article',
       publishedTime,
-      url: `${baseUrl}/blog/${post.slug}`,
+      url: `${baseUrl}/blog/${post._meta.path}`,
       images: [
         {
           url: ogImage,
@@ -61,7 +60,7 @@ export default async function Blog(props: {
   params: Promise<{ slug: string }>
 }) {
   const params = await props.params
-  const post = getBlogPosts().find((post) => post.slug === params.slug)
+  const post = allPosts.find((post) => post._meta.path === params.slug)
 
   if (!post) {
     notFound()
@@ -78,14 +77,14 @@ export default async function Blog(props: {
             __html: JSON.stringify({
               '@context': 'https://schema.org',
               '@type': 'BlogPosting',
-              headline: post.metadata.title,
-              datePublished: post.metadata.publishedAt,
-              dateModified: post.metadata.publishedAt,
-              description: post.metadata.summary,
-              image: post.metadata.image
-                ? `${baseUrl}${post.metadata.image}`
-                : `/og?title=${encodeURIComponent(post.metadata.title)}`,
-              url: `${baseUrl}/blog/${post.slug}`,
+              headline: post.title,
+              datePublished: post.publishedAt,
+              dateModified: post.publishedAt,
+              description: post.summary,
+              image: post.image
+                ? `${baseUrl}${post.image}`
+                : `/og?title=${encodeURIComponent(post.title)}`,
+              url: `${baseUrl}/blog/${post._meta.path}`,
               author: {
                 '@type': 'Person',
                 name: 'Benedikt Sperl',
@@ -96,7 +95,7 @@ export default async function Blog(props: {
 
         {/* Article Window - TextEdit style */}
         <Window
-          title={`${post.metadata.title}.md`}
+          title={`${post.title}.md`}
           as="article"
           className="window-animate-in"
           hover
@@ -110,14 +109,14 @@ export default async function Blog(props: {
               </span>
               {/* Date */}
               <span className="text-sm">
-                {formatDate(post.metadata.publishedAt, true)}
+                {formatDate(post.publishedAt, true)}
               </span>
             </div>
             <ShareButton
               data={{
-                title: post.metadata.title,
-                text: post.metadata.summary,
-                url: `${baseUrl}/blog/${post.slug}`,
+                title: post.title,
+                text: post.summary,
+                url: `${baseUrl}/blog/${post._meta.path}`,
               }}
             />
           </div>
@@ -126,23 +125,23 @@ export default async function Blog(props: {
           <header className="mb-8">
             <h1
               className="mb-3 text-balance font-semibold text-2xl tracking-tight sm:text-3xl"
-              style={{ viewTransitionName: `title-${post.slug}` }}
+              style={{ viewTransitionName: `title-${post._meta.path}` }}
             >
-              {post.metadata.title}
+              {post.title}
             </h1>
-            {post.metadata.summary && (
+            {post.summary && (
               <p
                 className="text-lg text-text-tertiary"
-                style={{ viewTransitionName: `summary-${post.slug}` }}
+                style={{ viewTransitionName: `summary-${post._meta.path}` }}
               >
-                {post.metadata.summary}
+                {post.summary}
               </p>
             )}
           </header>
 
           {/* Document content */}
           <div className="prose max-w-none">
-            <CustomMDX source={post.content} />
+            <CustomMDX code={post.mdx} />
           </div>
 
           {/* Document footer */}
@@ -155,9 +154,9 @@ export default async function Blog(props: {
             </div>
             <ShareButton
               data={{
-                title: post.metadata.title,
-                text: post.metadata.summary,
-                url: `${baseUrl}/blog/${post.slug}`,
+                title: post.title,
+                text: post.summary,
+                url: `${baseUrl}/blog/${post._meta.path}`,
               }}
             />
           </footer>

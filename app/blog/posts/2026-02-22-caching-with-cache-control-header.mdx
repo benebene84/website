@@ -1,0 +1,276 @@
+---
+title: 'Caching with the cache-control header'
+publishedAt: '2026-02-22'
+summary: 'A practical guide to HTTP caching with the cache-control header, covering max-age, public vs. private, immutable, stale-while-revalidate, and hash-based cache busting for static assets.'
+---
+
+## Introduction
+
+Caching is one of the most impactful performance optimizations you can make for a web application. A well-configured caching strategy can eliminate unnecessary network requests, reduce server load, and make your site feel significantly faster for returning visitors. Yet it's also one of the most commonly misconfigured aspects of web development — stale content being served to users, cache invalidation issues, or simply not caching anything at all because the defaults felt "safer."
+
+The `cache-control` HTTP response header is the primary mechanism for controlling how browsers, CDNs, and proxies cache your resources. It replaced the older `Expires` header and gives you fine-grained control over caching behavior through a set of comma-separated directives. In this post, we'll walk through each directive, when to use it, and how they work together to form a solid caching strategy.
+
+## How cache-control works
+
+When a browser requests a resource from your server, the server can include a `cache-control` header in the response. This header tells the browser (and any intermediary caches like CDNs or reverse proxies) how long the response can be cached, who is allowed to cache it, and under what conditions it should be revalidated.
+
+```http
+HTTP/1.1 200 OK
+Content-Type: text/css
+Cache-Control: public, max-age=86400
+```
+
+This response tells any cache — browser, CDN, proxy — that it can store this CSS file for 86,400 seconds (one day). During that window, the browser will serve the file directly from its local cache without making a network request at all.
+
+The `cache-control` header consists of one or more directives, separated by commas. Each directive controls a specific aspect of caching behavior. Some directives take a value (like `max-age=3600`), while others are flags that simply enable or disable a behavior (like `no-store`). Let's look at the most important ones.
+
+## max-age: controlling cache duration
+
+The `max-age` directive specifies how long a response is considered "fresh" — that is, how long the browser can use the cached copy without checking with the server. The value is in seconds.
+
+```http
+Cache-Control: max-age=3600
+```
+
+This tells the browser: "You can use this cached response for the next 3,600 seconds (one hour). After that, you need to check with the server before using it again."
+
+During the fresh period, the browser serves the resource directly from its local cache. No network request is made at all — not even a conditional request. This is what makes caching so powerful: zero latency, zero bandwidth, zero server load.
+
+Once the `max-age` window expires, the cached response becomes "stale." The browser won't discard it immediately, but it will revalidate with the server before using it again. We'll cover how revalidation works in a later section.
+
+Common `max-age` values you'll encounter:
+
+- `max-age=0` — Always revalidate before using the cached copy
+- `max-age=3600` — Cache for one hour
+- `max-age=86400` — Cache for one day
+- `max-age=604800` — Cache for one week
+- `max-age=31536000` — Cache for one year (typically used with hashed filenames)
+
+### s-maxage: a separate TTL for shared caches
+
+There's a related directive called `s-maxage` that lets you set a different cache duration specifically for shared caches like CDNs and reverse proxies, without affecting the browser's cache behavior.
+
+```http
+Cache-Control: public, max-age=60, s-maxage=600
+```
+
+This tells the browser to cache the response for 60 seconds, but tells CDNs and proxies they can cache it for 600 seconds (10 minutes). This is useful when you want users to get reasonably fresh content from their browser cache, but you don't want your origin server hammered with requests — the CDN absorbs most of the traffic with its longer cache window.
+
+## Public vs. private cache
+
+The `public` and `private` directives control *who* is allowed to cache the response. This distinction matters because there are two fundamentally different types of caches in the request chain.
+
+A **private cache** is the browser's local cache. Only the user who made the request can access it. A **shared cache** (or public cache) is anything between the browser and the origin server — CDNs, reverse proxies, corporate proxies, and other intermediary caches. These serve cached responses to multiple users.
+
+```http
+Cache-Control: public, max-age=86400
+```
+
+The `public` directive explicitly allows any cache (browser, CDN, proxy) to store the response. This is appropriate for resources that are the same for every user — static assets like JavaScript, CSS, images, and fonts.
+
+```http
+Cache-Control: private, max-age=300
+```
+
+The `private` directive restricts caching to the browser only. CDNs and proxies must not store the response. This is essential for any response that contains user-specific data — account pages, personalized dashboards, API responses that include authentication details, or anything that would be a security or privacy issue if served to the wrong user.
+
+**Rule of thumb:** If a response is the same for every user, use `public`. If it contains anything user-specific, use `private`. When in doubt, `private` is the safer default.
+
+## Revalidation with ETag and If-None-Match
+
+When a cached response expires (its `max-age` has passed), the browser doesn't just throw it away and fetch a completely new copy. Instead, it can perform a **conditional request** to check whether the content has actually changed. This is called revalidation, and it avoids re-downloading the full response body when nothing has changed.
+
+The most common revalidation mechanism uses `ETag` and `If-None-Match` headers. When the server sends a response, it can include an `ETag` header — a fingerprint of the response content:
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+Cache-Control: max-age=60
+ETag: "a3f2b8c1"
+
+{"products": [...]}
+```
+
+The browser stores both the response body and the `ETag`. When the cached response expires, the browser sends a conditional request with the `If-None-Match` header:
+
+```http
+GET /api/products HTTP/1.1
+If-None-Match: "a3f2b8c1"
+```
+
+The server compares the `ETag` and responds in one of two ways:
+
+- **304 Not Modified** — The content hasn't changed. The browser uses its cached copy. No response body is sent, so the transfer is tiny.
+- **200 OK** with a new body — The content has changed. The browser replaces its cached copy with the new response.
+
+```http
+HTTP/1.1 304 Not Modified
+ETag: "a3f2b8c1"
+```
+
+This is a significant optimization. A `304` response is typically just a few hundred bytes, compared to potentially hundreds of kilobytes for the full response. The server still has to process the request and compute the `ETag`, but the bandwidth savings can be substantial — especially for large resources like images or API responses.
+
+## no-cache and no-store
+
+These two directives are probably the most misunderstood in the entire `cache-control` specification. Despite what the names suggest, `no-cache` does **not** mean "don't cache."
+
+### no-cache
+
+`no-cache` tells the browser: "You can store this response, but you must revalidate with the server before every use." The browser will always make a conditional request (using `ETag` or `Last-Modified`) to check if the cached content is still valid.
+
+```http
+Cache-Control: no-cache
+```
+
+This is functionally similar to `max-age=0, must-revalidate`. The response is cached, but it's never considered fresh — every use triggers a revalidation. If the server responds with `304 Not Modified`, the browser uses the cached copy without re-downloading the body. This makes `no-cache` a good choice for HTML documents: you always get the latest version, but you still benefit from conditional requests when the content hasn't changed.
+
+### no-store
+
+`no-store` is the real "don't cache" directive. It tells the browser (and all intermediary caches) to not store the response at all — not in the disk cache, not in the memory cache, nowhere.
+
+```http
+Cache-Control: no-store
+```
+
+Use `no-store` for truly sensitive data: banking pages, medical records, authentication tokens, or any response where a cached copy could be a security risk. Keep in mind that `no-store` means every request hits your server and transfers the full response body — there's no revalidation shortcut. Use it only when you genuinely need it.
+
+## stale-while-revalidate
+
+The `stale-while-revalidate` directive is one of the most useful and underappreciated caching features. It addresses a common tension: you want users to get fresh content, but you also don't want them to wait for a network request when the cache has expired.
+
+```http
+Cache-Control: max-age=60, stale-while-revalidate=3600
+```
+
+Here's how this works:
+
+- **First 60 seconds** — The response is fresh. The browser serves it directly from cache, no network request at all.
+- **60 seconds to 3,660 seconds** — The response is stale, but the browser serves it immediately from cache *and* makes a background request to fetch a fresh copy. The user sees the (slightly stale) content instantly, and the cache is silently updated for the next request.
+- **After 3,660 seconds** — The response is too stale even for `stale-while-revalidate`. The browser must wait for a fresh response from the server before showing anything.
+
+The key insight is that during the `stale-while-revalidate` window, users never wait for a network request. They always get an instant response from cache, while the browser quietly updates the cache in the background. The next user (or the same user on their next visit) gets the fresh content.
+
+This is particularly valuable for content that changes periodically but where showing slightly stale data is acceptable — blog listings, product catalogs, news feeds, or analytics dashboards. The user experience benefit is significant: instead of a loading spinner or delay while the cache revalidates, users see content immediately.
+
+```http
+Cache-Control: public, max-age=300, stale-while-revalidate=86400
+```
+
+This example caches a response as fresh for 5 minutes, then serves stale content for up to a day while revalidating in the background. For something like a blog index page, this means users always see the page instantly, even if the cached version is a few hours old. Once the background revalidation completes, subsequent requests get the updated content.
+
+## The immutable flag
+
+When a browser performs a "hard reload" (Ctrl+Shift+R or Cmd+Shift+R), it typically revalidates all cached resources, even those that haven't expired yet. For static assets that genuinely never change at a given URL, this revalidation is pointless — you're sending conditional requests for files that you know haven't changed.
+
+The `immutable` directive tells the browser: "This resource will never change at this URL. Don't bother revalidating it, even on a hard reload."
+
+```http
+Cache-Control: public, max-age=31536000, immutable
+```
+
+This eliminates unnecessary conditional requests for assets that are guaranteed not to change. But you should only use `immutable` when you can actually guarantee the content at that URL won't change — which brings us to hash-based cache busting.
+
+**A note on browser support:** `immutable` is well-supported in modern browsers. Firefox was the first to implement it, and Chrome, Safari, and Edge have followed. Even without `immutable`, the long `max-age` still does the heavy lifting — `immutable` is an optimization on top.
+
+## Hash-based cache busting for static assets
+
+If you set `max-age=31536000` on a file, how do users ever get the updated version? If the URL stays the same, the browser will happily serve the cached copy for an entire year, even if you've deployed new code.
+
+The solution is **content-based hashing**: include a hash of the file's contents in its filename or URL. When the content changes, the hash changes, which means the URL changes, which means the browser treats it as an entirely new resource.
+
+```http
+GET /assets/app.a1b2c3d4.js HTTP/1.1
+
+HTTP/1.1 200 OK
+Cache-Control: public, max-age=31536000, immutable
+```
+
+Modern build tools like Webpack, Vite, and Rollup do this automatically. When you build your application, they generate filenames like:
+
+- `app.a1b2c3d4.js`
+- `styles.e5f6g7h8.css`
+- `vendor.i9j0k1l2.js`
+
+If you change a single line of code in your application, only the affected file gets a new hash. The other files keep their hashes and remain cached in users' browsers.
+
+This creates a powerful caching model:
+
+- **Static assets** (JS, CSS, fonts) get hashed filenames and are cached with `public, max-age=31536000, immutable`. They're effectively cached forever, because when they change, they get a new URL.
+- **HTML documents** reference these hashed assets. When you deploy new code, the HTML points to new hashed filenames, so browsers fetch the new files. The HTML itself should not be aggressively cached — you want users to always get the latest HTML so they pick up the new asset references.
+
+This is the fundamental pattern behind modern static asset caching. The URL becomes the cache key, and by changing the URL when the content changes, you never have to worry about stale caches.
+
+## Common patterns and best practices
+
+Let's tie everything together with concrete caching strategies for different types of resources.
+
+### Static assets with content hashes
+
+JavaScript, CSS, fonts, and images with hashed filenames. These are the easiest to cache aggressively because the URL changes whenever the content changes.
+
+```http
+Cache-Control: public, max-age=31536000, immutable
+```
+
+### HTML documents
+
+HTML files reference your hashed static assets. You want browsers to always check for the latest version so they pick up new asset URLs after a deployment.
+
+```http
+Cache-Control: no-cache
+```
+
+This ensures the browser always revalidates the HTML, but still benefits from `304 Not Modified` responses when the content hasn't changed. Some teams prefer `max-age=0, must-revalidate` which is functionally equivalent.
+
+### API responses with user-specific data
+
+Authenticated endpoints returning data tied to a specific user. These must never be stored in shared caches.
+
+```http
+Cache-Control: private, no-store
+```
+
+For less sensitive user-specific data where caching provides a benefit (e.g., a user's dashboard preferences), you might use:
+
+```http
+Cache-Control: private, max-age=300
+```
+
+### Shared API responses
+
+Public API endpoints returning data that's the same for all users — product listings, category pages, search results. These benefit from CDN caching with `stale-while-revalidate` to keep the experience fast while content updates propagate.
+
+```http
+Cache-Control: public, max-age=60, s-maxage=300, stale-while-revalidate=3600
+```
+
+This gives browsers a 60-second fresh window, CDNs a 5-minute window, and serves stale content for up to an hour while revalidating in the background.
+
+### Images without content hashes
+
+Images that are referenced by a stable URL (e.g., user avatars, CMS-uploaded images) can't use the aggressive hashing strategy. Use a moderate `max-age` and rely on revalidation.
+
+```http
+Cache-Control: public, max-age=86400
+```
+
+One day is a reasonable default. If you need faster updates, lower the `max-age` or add `stale-while-revalidate` for a smoother experience:
+
+```http
+Cache-Control: public, max-age=3600, stale-while-revalidate=86400
+```
+
+## Conclusion
+
+A good caching strategy comes down to one fundamental question: does the URL change when the content changes? If it does (hashed filenames), cache aggressively with long `max-age` and `immutable`. If it doesn't (HTML documents, API responses), use shorter cache windows, revalidation, and `stale-while-revalidate` to balance freshness with performance.
+
+The `cache-control` header gives you all the tools you need, but the directives work best when they work together. `public` and `private` control who can cache. `max-age` and `s-maxage` control how long. `no-cache` and `no-store` control whether. `immutable` and `stale-while-revalidate` optimize the edges. And content hashing ties the whole strategy together by making aggressive caching safe.
+
+Getting caching right is one of the highest-leverage performance optimizations you can make. A single well-configured `cache-control` header can eliminate thousands of unnecessary requests, reduce your infrastructure costs, and make your application feel instant for returning visitors.
+
+## Further reading
+
+- [MDN: Cache-Control](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control) — The comprehensive reference for all `cache-control` directives and their behavior.
+- [MDN: HTTP Caching](https://developer.mozilla.org/en-US/docs/Web/HTTP/Caching) — A broader overview of how HTTP caching works, including the role of `ETag`, `Last-Modified`, and `Vary` headers.
+- [web.dev: Prevent unnecessary network requests with the HTTP cache](https://web.dev/articles/http-cache) — Google's practical guide to HTTP caching with real-world examples.
+- [RFC 9111: HTTP Caching](https://www.rfc-editor.org/rfc/rfc9111) — The official HTTP caching specification, if you want the definitive source of truth.

@@ -19,7 +19,7 @@ function MenuBarItem({ href, active, children }: MenuBarItemProps) {
     <Link
       href={href}
       className={cx(
-        'rounded-md px-3 py-1 text-sm transition-colors',
+        'rounded-md px-3 pointer-coarse:py-3 py-1 text-sm transition-colors',
         'hover:bg-menubar-hover',
         active ? 'bg-menubar-active' : undefined,
       )}

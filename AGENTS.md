@@ -58,23 +58,9 @@ biome.json                  # Biome linter/formatter config
 
 ### Formatting (enforced by Biome)
 
-- **Indentation:** 2 spaces
-- **Semicolons:** omit where possible (`asNeeded`)
-- **Quotes:** single quotes
-- **Trailing commas:** always (in arrays, objects, function params)
-- **Tailwind classes:** sorted automatically (`useSortedClasses` rule)
-- **Imports:** auto-organized by Biome
-
 Always run `bun check:fix` before committing to ensure formatting compliance.
 
 ### Imports
-
-- Use `import type { ... }` for type-only imports (separate from value imports)
-- Use absolute imports from project root (`app/components/...`, `app/utils/...`)
-- Use relative imports only for sibling/child files within the same directory
-- `content-collections` is a path alias to `.content-collections/generated`
-- Import order (handled by Biome): external packages first, then internal modules
-- UI components have a barrel export at `app/components/ui/index.ts`
 
 ```ts
 // Correct import style
@@ -85,28 +71,10 @@ import type { Metadata } from 'next'
 import { Comments } from './comments'
 ```
 
-### TypeScript
-
-- Strict mode with `strictNullChecks` enabled
-- Target: ESNext
-- Use `interface` for component props, `type` for unions and aliases
-- Props interfaces extend HTML element attributes when wrapping native elements:
-  `interface WindowProps extends HTMLAttributes<HTMLElement> { ... }`
-- Use `PropsWithChildren<T>` from React for components that accept children
-- Use `React.ReactNode` for the `children` type in inline prop types
-
 ### React Components
 
 - **Server Components by default.** Only add `'use client'` when the component needs interactivity (event handlers, hooks, browser APIs)
 - Use `function` declarations for React components (not arrow functions)
-- Use `export function ComponentName` (named exports), not `export default`
-- Exception: Next.js page/layout components use `export default function`
-- Arrow functions are used for utilities and callbacks, not components
-- Destructure props in the function signature
-- Use the `as` prop pattern for polymorphic semantic HTML elements:
-  ```ts
-  type SemanticElement = 'section' | 'article' | 'aside' | 'div' | 'main'
-  ```
 
 ### Naming Conventions
 
@@ -119,12 +87,9 @@ import { Comments } from './comments'
 
 ### Styling
 
-- Use Tailwind CSS v4 utility classes exclusively (no CSS modules, no styled-components)
 - Use the custom `cx()` utility from `app/utils/cx` for conditional classnames (not clsx or classnames)
 - Use semantic CSS custom properties for colors (defined in `global.css`), not raw Tailwind color values
-- Tailwind classes are auto-sorted by Biome
 - Dark mode: class-based strategy (`.dark` / `.light` classes on `<html>`)
-- Theme variables are defined in `global.css` under `@theme` blocks
 - Support `prefers-reduced-motion` for animations
 - Support `pointer-coarse` / `pointer-fine` for touch vs mouse interactions
 
@@ -136,12 +101,6 @@ import { Comments } from './comments'
 - Include skip links for keyboard navigation
 - Use `focus-visible` styles (not `focus`) for keyboard-only focus indicators
 - Respect `prefers-reduced-motion` for all animations
-
-### Error Handling
-
-- Use Next.js `notFound()` for missing content (returns 404)
-- Use `not-found.tsx` for custom 404 pages
-- Wrap risky browser API calls in try-catch (e.g., localStorage access)
 
 ### MDX Blog Posts
 
@@ -157,18 +116,3 @@ image: '/optional/og-image.png'  # optional, falls back to auto-generated OG
 ```
 
 The schema is validated by Zod in `content-collections.ts`. The `content` field is auto-populated.
-
-### Biome Lint Suppressions
-
-When suppressing a Biome rule, always include a reason:
-```ts
-// biome-ignore lint/security/noDangerouslySetInnerHtml: <reason>
-```
-
-### SEO
-
-- Every page should have appropriate `metadata` export (title, description, openGraph)
-- Blog posts auto-generate JSON-LD structured data (`BlogPosting` schema)
-- OG images are auto-generated via `app/og/route.tsx` using Next.js `ImageResponse`
-- Sitemap (`app/sitemap.ts`) and robots (`app/robots.ts`) are configured
-- RSS feed is available at `app/rss/route.ts`

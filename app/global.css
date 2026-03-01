@@ -383,12 +383,10 @@ body {
    ========================================== */
 
 .prose .anchor {
-  @apply invisible absolute no-underline;
+  @apply invisible no-underline;
 
-  margin-left: -1em;
-  padding-right: 0.5em;
-  width: 80%;
-  max-width: 700px;
+  display: inline;
+  margin-left: 0.5em;
   cursor: pointer;
 }
 

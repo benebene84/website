@@ -1,0 +1,463 @@
+---
+title: 'Domain-Driven Design in Frontend Applications'
+publishedAt: '2026-03-16'
+summary: 'A practical look at applying Domain-Driven Design principles in frontend projects to separate domain logic from technical implementation, improving longevity and making it easier to swap external services.'
+---
+
+## Introduction
+
+Domain-Driven Design (DDD) is typically associated with backend systems: microservices, aggregates, bounded contexts, event sourcing. 
+When you hear "DDD," you probably think of complex enterprise backends, not frontend logic.
+
+But here's the thing: modern frontend applications have grown far beyond simple view layers. They contain pricing logic, permission models, multi-step workflows, form validation rules tied to business constraints, and data transformations that mirror core business processes. When that complexity lives scattered across components, hooks, and utility files with no clear structure, things get messy fast.
+
+I'm not suggesting you need to implement full-blown DDD with aggregates and domain events in every frontend application - which would be indeed over-engineering in most cases. 
+What I am suggesting is that a few core principles from DDD - separating domain logic from infrastructure, using a shared language, and drawing clear boundaries around external dependencies - can dramatically improve the maintainability of a frontend codebase.
+
+In this post, I'll walk through when DDD principles make sense in frontend projects, how to separate domain logic from framework-specific code, and how that separation protects you when external APIs inevitably change.
+
+## Does DDD make sense in frontend projects?
+
+The short answer: it depends on your project's complexity.
+
+If you're building a marketing site, a blog, or a thin CRUD interface that mostly just renders what the API returns - you probably don't need any of this. The overhead isn't worth it. 
+A well-structured component tree with a few utility functions is perfectly fine.
+
+But if your frontend is doing any of the following, you likely have domain logic in your codebase whether you've recognized it or not:
+
+- **Calculating prices, discounts, or totals** based on business rules (e.g., "buy 3, get 10% off," "free shipping over 50 EUR," "apply VAT based on country")
+- **Enforcing permission models** that determine what a user can see or do
+- **Managing multi-step workflows** with state transitions (e.g., checkout flows, onboarding wizards, approval processes)
+- **Validating input** against business constraints, not just format checks (e.g., "you can't schedule a meeting in the past" or "maximum 5 items per order for guest users")
+- **Transforming and aggregating data** for presentation in ways that encode business meaning
+
+In these cases, the logic isn't really about your framework or the DOM. It's about your business domain. 
+And when that logic is tangled into your components, it becomes hard to test, hard to reuse, and hard to change without accidentally breaking the UI.
+
+### When to skip it
+
+Not every frontend project benefits from this level of separation. If your business logic lives entirely on the backend and your frontend is mostly a presentation layer that calls APIs and renders responses, then keep things simple. Don't introduce abstractions you don't need. 
+The value of DDD principles scales with the amount of domain logic your frontend actually contains.
+
+## Ubiquitous language in your codebase
+
+One of the most practical and low-effort takeaways from DDD is the concept of ubiquitous language: using the same terms in your code that the business uses in conversation.
+
+This sounds obvious, but in practice, frontend codebases are full of generic technical names that obscure what the code actually does. Consider the difference:
+
+```ts
+// Generic naming - what does this even do?
+function calculate(items: Item[], options: Options): number {
+  return items.reduce((sum, item) => {
+    const adjusted = options.flag ? item.value * 0.9 : item.value
+    return sum + adjusted
+  }, 0)
+}
+```
+
+```ts
+// Domain-aligned naming - intent is immediately clear
+function calculateCartTotal(
+  lineItems: CartLineItem[],
+  discount: DiscountPolicy
+): Money {
+  return lineItems.reduce((total, lineItem) => {
+    const price = discount.applyTo(lineItem.unitPrice, lineItem.quantity)
+    return total.add(price)
+  }, Money.zero())
+}
+```
+
+The second version communicates business intent. A new developer joining the team can read `DiscountPolicy`, `CartLineItem`, and `Money` and immediately understand the domain concepts at play. 
+They don't need to reverse-engineer what `options.flag` means or why `item.value` gets multiplied by `0.9` to apply a discount.
+
+This applies everywhere: component names, function names, type definitions, folder names. When your product owner says "discount policy" and your code says `DiscountPolicy`, conversations between developers and stakeholders become much more productive. 
+Bugs get reported and fixed faster because everyone is speaking the same language.
+
+## Separating domain logic from technical implementation
+
+This is the core idea, and the one that pays off the most: your domain logic should not depend on your framework.
+
+In most React codebases, business logic ends up inside components or hooks. It works, but it creates a tight coupling between _what_ your application does (the domain) and _how_ it's rendered (the framework). 
+Let me illustrate this with an e-commerce cart example.
+
+### The tangled version
+
+Here's what a typical cart component might look like when domain logic lives directly inside the component:
+
+```tsx
+'use client'
+
+import { useState } from 'react'
+
+function Cart({ items, userCountry }: CartProps) {
+  const [couponCode, setCouponCode] = useState('')
+
+  const subtotal = items.reduce((sum, item) => {
+    return sum + item.price * item.quantity
+  }, 0)
+
+  // Business rule: 10% discount for orders over 100 EUR
+  const discount = subtotal > 100 ? subtotal * 0.1 : 0
+
+  // Business rule: free shipping over 50 EUR, otherwise 5.99
+  const shipping = subtotal - discount > 50 ? 0 : 5.99
+
+  // Business rule: VAT rate depends on country
+  const vatRate =
+    userCountry === 'DE' ? 0.19 : userCountry === 'AT' ? 0.2 : 0.21
+  const vat = (subtotal - discount + shipping) * vatRate
+
+  const total = subtotal - discount + shipping + vat
+
+  return (
+    <div>
+      <h2>Your Cart</h2>
+      {items.map((item) => (
+        <div key={item.id}>
+          {item.name} - {item.quantity} x {item.price.toFixed(2)} EUR
+        </div>
+      ))}
+      <p>Subtotal: {subtotal.toFixed(2)} EUR</p>
+      {discount > 0 && <p>Discount: -{discount.toFixed(2)} EUR</p>}
+      <p>Shipping: {shipping.toFixed(2)} EUR</p>
+      <p>
+        VAT ({(vatRate * 100).toFixed(0)}%): {vat.toFixed(2)} EUR
+      </p>
+      <p>Total: {total.toFixed(2)} EUR</p>
+    </div>
+  )
+}
+```
+
+This works. But the pricing rules, discount thresholds, shipping logic, and VAT calculation are all embedded in the component. You can't test them without rendering React. You can't reuse them in a server-side context or a different component. And when the business changes the discount threshold from 100 EUR to 75 EUR, you're editing a React component to change a business rule.
+
+### Extracting domain logic
+
+Now let's separate the domain from the framework. First, the domain module -- pure TypeScript, no React:
+
+```ts
+// domain/cart.ts
+
+export type CartLineItem = {
+  id: string
+  name: string
+  unitPrice: number;
+  quantity: number;
+};
+
+export type CartSummary = {
+  subtotal: number
+  discount: number
+  shipping: number
+  vatRate: number
+  vat: number
+  total: number
+}
+
+export function calculateSubtotal(items: CartLineItem[]): number {
+  return items.reduce(
+    (sum, item) => sum + item.unitPrice * item.quantity,
+    0
+  )
+}
+
+export function calculateDiscount(subtotal: number): number {
+  // Business rule: 10% discount for orders over 100 EUR
+  return subtotal > 100 ? subtotal * 0.1 : 0
+}
+
+export function calculateShipping(subtotalAfterDiscount: number): number {
+  // Business rule: free shipping over 50 EUR
+  return subtotalAfterDiscount > 50 ? 0 : 5.99
+}
+
+export function getVatRate(country: string): number {
+  const rates: Record<string, number> = {
+    DE: 0.19,
+    AT: 0.2,
+  }
+  return rates[country] ?? 0.21
+}
+
+export function calculateCartSummary(
+  items: CartLineItem[],
+  country: string
+): CartSummary {
+  const subtotal = calculateSubtotal(items)
+  const discount = calculateDiscount(subtotal)
+  const shipping = calculateShipping(subtotal - discount)
+  const vatRate = getVatRate(country)
+  const vat = (subtotal - discount + shipping) * vatRate
+  const total = subtotal - discount + shipping + vat
+
+  return { subtotal, discount, shipping, vatRate, vat, total }
+}
+```
+
+And the component becomes purely presentational:
+
+```tsx
+import { calculateCartSummary } from '../domain/cart'
+import type { CartLineItem } from '../domain/cart'
+
+type CartProps = {
+  items: CartLineItem[]
+  userCountry: string
+}
+
+function Cart({ items, userCountry }: CartProps) {
+  const summary = calculateCartSummary(items, userCountry)
+
+  return (
+    <div>
+      <h2>Your Cart</h2>
+      {items.map((item) => (
+        <div key={item.id}>
+          {item.name} - {item.quantity} x {item.unitPrice.toFixed(2)} EUR
+        </div>
+      ))}
+      <p>Subtotal: {summary.subtotal.toFixed(2)} EUR</p>
+      {summary.discount > 0 && (
+        <p>Discount: -{summary.discount.toFixed(2)} EUR</p>
+      )}
+      <p>Shipping: {summary.shipping.toFixed(2)} EUR</p>
+      <p>
+        VAT ({(summary.vatRate * 100).toFixed(0)}%):{' '}
+        {summary.vat.toFixed(2)} EUR
+      </p>
+      <p>Total: {summary.total.toFixed(2)} EUR</p>
+    </div>
+  )
+}
+```
+
+The component is now a thin presentation layer. It calls `calculateCartSummary` and renders the result. Nothing more.
+
+### Why this matters
+
+The benefits of this separation compound over time:
+
+- **Testability**: You can test `calculateCartSummary` with plain unit tests. No need to render components, mock React context, or set up a testing library. Just call the function and assert the output.
+- **Reusability**: The same domain logic can be used in server-side rendering, API routes, email templates, or a completely different UI framework.
+- **Readability**: The component communicates its purpose clearly: it presents a cart summary. The domain module communicates its purpose clearly: it calculates a cart summary. Each file has a single responsibility.
+- **Portability**: If you migrate from React to another framework (or from the one Router to the another Router, or from client-side to server-side rendering), the domain logic doesn't change. At all.
+
+## Longevity: swapping external APIs and services
+
+The second major benefit of thinking in domain boundaries is longevity. Frontend applications don't exist in isolation - they depend on external services: REST APIs, GraphQL endpoints, third-party payment providers, analytics services, CMS platforms. 
+And these change quite often.
+
+API versions get deprecated, third-party services get replaced, (backend) teams restructure their endpoints. 
+When your components call these services directly, every API change ripples through your entire UI layer - you need to find and update every component that calls that service.
+
+### The direct dependency problem
+
+Here's a common pattern: a component that fetches products directly from an API and transforms the response inline.
+
+```tsx
+'use client'
+
+import { useEffect, useState } from 'react'
+
+function ProductList() {
+  const [products, setProducts] = useState([])
+
+  useEffect(() => {
+    fetch('/api/v2/products')
+      .then((res) => res.json())
+      .then((data) => {
+        // API v2 returns { items: [{ product_name, price_cents, ... }] }
+        const mapped = data.items.map((item: any) => ({
+          id: item.id,
+          name: item.product_name,
+          price: item.price_cents / 100,
+          currency: 'EUR',
+        }))
+        setProducts(mapped)
+      })
+  }, [])
+
+  return (
+    <ul>
+      {products.map((product: any) => (
+        <li key={product.id}>
+          {product.name} - {product.price} {product.currency}
+        </li>
+      ))}
+    </ul>
+  )
+}
+```
+
+Now imagine the backend team ships API v3, where `product_name` becomes `title` and `price_cents` becomes `price` (as a proper decimal). You need to find every component that calls this API and update the field mappings. If you have 10 components that fetch products in different contexts, that's 10 places to update, test, and verify.
+
+### Introducing an adapter layer
+
+The adapter pattern (or repository pattern, if you prefer that term) puts a boundary between your domain and the external world. Your domain defines what a `Product` looks like. The adapter handles the translation from whatever the API actually returns.
+
+First, define your domain model and a contract for fetching products:
+
+```ts
+// domain/product.ts
+
+export type Product = {
+  id: string
+  name: string
+  price: number
+  currency: string;
+};
+
+export type ProductRepository = {
+  getAll: () => Promise<Product[]>;
+  getById: (id: string) => Promise<Product | null>;
+};
+```
+
+Then, implement the adapter for the current API version:
+
+```ts
+// infrastructure/api-product-repository.ts
+
+import type { Product, ProductRepository } from '../domain/product'
+
+export function createApiProductRepository(): ProductRepository {
+  return {
+    async getAll(): Promise<Product[]> {
+      const response = await fetch('/api/v2/products')
+      const data = await response.json()
+
+      return data.items.map((item: { id: string; product_name: string; price_cents: number }) => ({
+        id: item.id,
+        name: item.product_name,
+        price: item.price_cents / 100,
+        currency: 'EUR',
+      }))
+    },
+
+    async getById(id: string): Promise<Product | null> {
+      const response = await fetch(`/api/v2/products/${id}`)
+      if (!response.ok) return null
+      const item = await response.json()
+
+      return {
+        id: item.id,
+        name: item.product_name,
+        price: item.price_cents / 100,
+        currency: 'EUR',
+      }
+    },
+  }
+}
+```
+
+Your component now depends only on the domain model:
+
+```tsx
+'use client'
+
+import { useEffect, useState } from 'react'
+import type { Product } from '../domain/product'
+import { createApiProductRepository } from '../infrastructure/api-product-repository'
+
+const productRepository = createApiProductRepository()
+
+function ProductList() {
+  const [products, setProducts] = useState<Product[]>([])
+
+  useEffect(() => {
+    productRepository.getAll().then(setProducts)
+  }, [])
+
+  return (
+    <ul>
+      {products.map((product) => (
+        <li key={product.id}>
+          {product.name} - {product.price} {product.currency}
+        </li>
+      ))}
+    </ul>
+  )
+}
+```
+
+#### What happens when the API changes?
+
+Now when the backend ships v3, you create a new adapter or update the existing one. No component changes required:
+
+```ts
+// infrastructure/api-v3-product-repository.ts
+
+import type { Product, ProductRepository } from '../domain/product'
+
+export function createApiV3ProductRepository(): ProductRepository {
+  return {
+    async getAll(): Promise<Product[]> {
+      const response = await fetch('/api/v3/products')
+      const data = await response.json()
+
+      // v3 uses different field names and price format
+      return data.products.map((item: any) => ({
+        id: item.id,
+        name: item.title,
+        price: item.price,
+        currency: item.currency,
+      }))
+    },
+
+    async getById(id: string): Promise<Product | null> {
+      const response = await fetch(`/api/v3/products/${id}`)
+      if (!response.ok) return null
+      const item = await response.json()
+
+      return {
+        id: item.id,
+        name: item.title,
+        price: item.price,
+        currency: item.currency,
+      }
+    },
+  }
+}
+```
+
+The same principle applies when you swap out entire services. Moving from a custom CMS to a headless CMS? Write a new adapter. Replacing Stripe with a different payment provider? New adapter, same domain interface. Your components and your domain logic remain untouched.
+
+This is the anti-corruption layer from DDD in practice: a boundary that prevents external changes from corrupting your domain model. In frontend terms, it means your UI and business logic are shielded from the volatility of the services they depend on.
+
+### Organizing the layers
+
+A practical folder structure for this approach might look like:
+
+```
+src/
+  domain/
+    cart.ts              # Cart calculation logic
+    product.ts           # Product model and repository interface
+    discount.ts          # Discount policies
+  infrastructure/
+    api-product-repository.ts    # Current API adapter
+    api-cart-repository.ts       # Cart API adapter
+  components/
+    cart.tsx              # Cart UI
+    product-list.tsx      # Product list UI
+```
+
+The `domain/` folder contains pure TypeScript with zero framework imports. The `infrastructure/` folder contains everything that talks to the outside world. The `components/` folder contains the React-specific presentation layer. Dependencies flow inward: components depend on domain, infrastructure implements domain interfaces, but the domain depends on nothing.
+
+## Conclusion
+
+DDD in the frontend isn't about importing the full ceremony of aggregates, bounded contexts, and event sourcing into your React app. It's about applying a few principles selectively where they provide genuine value:
+
+- **Use the language of your domain** in your code. Name things after business concepts, not technical ones.
+- **Separate domain logic from framework code.** Pure TypeScript functions are easier to test, reuse, and maintain than business rules buried in components.
+- **Put boundaries around external dependencies.** An adapter layer means API changes, service migrations, and backend restructures don't ripple through your entire UI.
+
+These are small, incremental changes that don't require rewriting your codebase. You can start by extracting one calculation into a domain module, or wrapping one API call in an adapter. Over time, the boundaries become clearer, the codebase becomes more resilient, and the next time someone says "we're switching to a new API," you'll smile instead of panic.
+
+## Further Reading
+
+- [Domain-Driven Design: Tackling Complexity in the Heart of Software](https://www.oreilly.com/library/view/domain-driven-design-tackling/0321125215/) by Eric Evans - the original book that started it all
+- [Does DDD Belong on the Frontend?](https://khalilstemmler.com/articles/typescript-domain-driven-design/ddd-frontend/) by Khalil Stemmler - an evolving perspective on applying DDD principles in frontend applications
+- [Client-Side Architecture Basics](https://khalilstemmler.com/articles/client-side-architecture/introduction/) by Khalil Stemmler - introduction to architectural layers on the client side
+- [Hexagonal Architecture](https://alistair.cockburn.us/hexagonal-architecture/) by Alistair Cockburn - the ports and adapters pattern that underpins the adapter approach discussed in this post

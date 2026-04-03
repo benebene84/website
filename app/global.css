@@ -30,8 +30,8 @@
   /* Semantic Text Colors - Light Mode */
   --color-text-primary: #1d1d1f;
   --color-text-secondary: #525252;
-  --color-text-tertiary: #737373;
-  --color-text-muted: #a3a3a3;
+  --color-text-tertiary: #666666;
+  --color-text-muted: #6e6e6e;
   --color-text-inverse: #ffffff;
 
   /* Semantic Background Colors - Light Mode */
@@ -93,12 +93,12 @@
   --color-terminal-text: #4ade80;
   --color-terminal-prompt: #4ade80;
   --color-terminal-path: #22d3ee;
-  --color-terminal-muted: #737373;
+  --color-terminal-muted: #888888;
 
   /* Toolbar/Status Bar - Light Mode */
   --color-toolbar-bg: #fafafa;
   --color-toolbar-border: #e5e5e5;
-  --color-toolbar-text: #737373;
+  --color-toolbar-text: #666666;
 
   /* Badge Colors - Light Mode */
   --color-badge-bg: #f5f5f5;
@@ -123,7 +123,7 @@
    Background HL:  #292e42 (highlight/hover)
    Foreground:     #a9b1d6 (soft blue-gray)
    Foreground Br:  #c0caf5 (bright text)
-   Comment:        #565f89 (muted)
+   Comment:        #565f89 (muted, boosted to #8c95b8 for WCAG AA 4.5:1)
    Selection:      #33467c (selection bg)
    Border:         #3b4261 (subtle borders)
 
@@ -146,8 +146,8 @@
     /* Semantic Text Colors - Tokyo Night */
     --color-text-primary: #c0caf5;
     --color-text-secondary: #a9b1d6;
-    --color-text-tertiary: #787c99;
-    --color-text-muted: #565f89;
+    --color-text-tertiary: #9099b7;
+    --color-text-muted: #8c95b8;
     --color-text-inverse: #1a1b26;
 
     /* Semantic Background Colors - Tokyo Night */
@@ -160,7 +160,7 @@
     /* Semantic Border Colors - Tokyo Night */
     --color-border-default: #3b4261;
     --color-border-subtle: #292e42;
-    --color-border-strong: #565f89;
+    --color-border-strong: #8c95b8;
 
     /* Accent Colors - Tokyo Night */
     --color-accent: #bb9af7;
@@ -204,12 +204,12 @@
     --color-terminal-text: #9ece6a;
     --color-terminal-prompt: #9ece6a;
     --color-terminal-path: #7dcfff;
-    --color-terminal-muted: #565f89;
+    --color-terminal-muted: #8c95b8;
 
     /* Toolbar/Status Bar - Tokyo Night */
     --color-toolbar-bg: #24283b;
     --color-toolbar-border: #3b4261;
-    --color-toolbar-text: #787c99;
+    --color-toolbar-text: #9099b7;
 
     /* Badge Colors - Tokyo Night */
     --color-badge-bg: #292e42;
@@ -226,7 +226,7 @@
     --sh-sign: #89ddff;
     --sh-string: #9ece6a;
     --sh-keyword: #bb9af7;
-    --sh-comment: #565f89;
+    --sh-comment: #8c95b8;
     --sh-jsxliterals: #7dcfff;
     --sh-property: #ff9e64;
     --sh-entity: #ff9e64;
@@ -250,8 +250,8 @@
   /* Semantic Text Colors - Tokyo Night */
   --color-text-primary: #c0caf5;
   --color-text-secondary: #a9b1d6;
-  --color-text-tertiary: #787c99;
-  --color-text-muted: #565f89;
+  --color-text-tertiary: #9099b7;
+  --color-text-muted: #8c95b8;
   --color-text-inverse: #1a1b26;
 
   /* Semantic Background Colors - Tokyo Night */
@@ -264,7 +264,7 @@
   /* Semantic Border Colors - Tokyo Night */
   --color-border-default: #3b4261;
   --color-border-subtle: #292e42;
-  --color-border-strong: #565f89;
+  --color-border-strong: #8c95b8;
 
   /* Accent Colors - Tokyo Night */
   --color-accent: #bb9af7;
@@ -308,12 +308,12 @@
   --color-terminal-text: #9ece6a;
   --color-terminal-prompt: #9ece6a;
   --color-terminal-path: #7dcfff;
-  --color-terminal-muted: #565f89;
+  --color-terminal-muted: #8c95b8;
 
   /* Toolbar/Status Bar - Tokyo Night */
   --color-toolbar-bg: #24283b;
   --color-toolbar-border: #3b4261;
-  --color-toolbar-text: #787c99;
+  --color-toolbar-text: #9099b7;
 
   /* Badge Colors - Tokyo Night */
   --color-badge-bg: #292e42;
@@ -330,7 +330,7 @@
   --sh-sign: #89ddff;
   --sh-string: #9ece6a;
   --sh-keyword: #bb9af7;
-  --sh-comment: #565f89;
+  --sh-comment: #8c95b8;
   --sh-jsxliterals: #7dcfff;
   --sh-property: #ff9e64;
   --sh-entity: #ff9e64;

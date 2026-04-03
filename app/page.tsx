@@ -19,13 +19,34 @@ const professionalExperience = [
   {
     company: 'BSH Home Appliances',
     role: 'Frontend Architect',
-    duration: '01-2019 - 02-2024',
+    duration: '06-2020 - 02-2024',
     description:
       'Managed the transformation of a monolith e-commerce architecture into a modern multi application frontend based on React and Next.Js',
     highlights: [
       'Creating a new frontend architecture target picture to split up a monolith e-commerce system into microservices with different frontend applications',
       'Choosing the technology stack for the new frontend with special focus on performance optimizations',
       'Creation of a reusable mulitbrand component library',
+    ],
+  },
+  {
+    company: 'BSH Home Appliances',
+    role: 'Senior UX & Digital Solutions Specialist',
+    duration: '05/2019 - 06/2020',
+    description: 'Identified, tested and implemented global UX/UI improvements',
+    highlights: [
+      'Website and Conversion Optimization',
+      'UX & UI improvements for digital touchpoints',
+    ],
+  },
+  {
+    company: 'BSH Home Appliances',
+    role: 'Global Brand Website Manager - Bosch Home Appliances',
+    duration: '08/2015 - 05/2019',
+    description: 'SPOC for the Global Bosch website',
+    highlights: [
+      'Website and Conversion Optimization',
+      'Development and Implementation of digital tools',
+      'Planning, Implementation and Analysis of Global Marketing Campaigns',
     ],
   },
 ]
@@ -128,7 +149,7 @@ export default function Page() {
             {professionalExperience.map((experience) => (
               <div
                 className="flex flex-col gap-3 border-accent border-l-2 pl-4"
-                key={experience.company}
+                key={experience.role}
               >
                 <div className="flex flex-col gap-1">
                   <div className="flex flex-wrap items-center gap-2">

@@ -46,12 +46,10 @@
   --color-border-subtle: #f0f0f0;
   --color-border-strong: #d4d4d4;
 
-  /* Accent Colors - Light Mode (Blue/Cyan gradient) */
+  /* Accent Colors - Light Mode */
   --color-accent: #2563eb;
   --color-accent-hover: #1d4ed8;
   --color-accent-secondary: #06b6d4;
-  --color-accent-from: #2563eb;
-  --color-accent-to: #06b6d4;
 
   /* Status Colors */
   --color-status-success: #22c55e;
@@ -164,12 +162,10 @@
     --color-border-subtle: #292e42;
     --color-border-strong: #565f89;
 
-    /* Accent Colors - Tokyo Night (Purple/Pink gradient) */
+    /* Accent Colors - Tokyo Night */
     --color-accent: #bb9af7;
     --color-accent-hover: #9d7cd8;
     --color-accent-secondary: #7dcfff;
-    --color-accent-from: #bb9af7;
-    --color-accent-to: #f7768e;
 
     /* Status Colors - Tokyo Night */
     --color-status-success: #9ece6a;
@@ -270,12 +266,10 @@
   --color-border-subtle: #292e42;
   --color-border-strong: #565f89;
 
-  /* Accent Colors - Tokyo Night (Purple/Pink gradient) */
+  /* Accent Colors - Tokyo Night */
   --color-accent: #bb9af7;
   --color-accent-hover: #9d7cd8;
   --color-accent-secondary: #7dcfff;
-  --color-accent-from: #bb9af7;
-  --color-accent-to: #f7768e;
 
   /* Status Colors - Tokyo Night */
   --color-status-success: #9ece6a;

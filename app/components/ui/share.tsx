@@ -21,7 +21,10 @@ export const ShareButton = ({
   return (
     <button
       type="button"
-      className={cx('flex cursor-pointer items-center gap-2', className)}
+      className={cx(
+        'flex cursor-pointer items-center gap-2 px-2 py-1 hover:bg-bg-hover',
+        className,
+      )}
       onClick={() => share(data)}
     >
       <Share2 size={12} aria-hidden="true" />

@@ -3,10 +3,12 @@ import Image, { type ImageProps } from 'next/image'
 import Link from 'next/link'
 import React from 'react'
 import { highlight } from 'sugar-high'
-import { KeyframeDemo } from '../blog/demos/keyframe-demo'
-import { RafDemo } from '../blog/demos/raf-demo'
-import { TransitionDemo } from '../blog/demos/transition-demo'
-import { WaapiDemo } from '../blog/demos/waapi-demo'
+import {
+  KeyframeDemo,
+  RafDemo,
+  TransitionDemo,
+  WaapiDemo,
+} from './mdx-demos-lazy'
 import { Switch } from './ui/switch'
 
 function Table({

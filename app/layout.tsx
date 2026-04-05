@@ -1,12 +1,11 @@
 import './global.css'
-import { GeistMono } from 'geist/font/mono'
-import { GeistSans } from 'geist/font/sans'
 import type { Metadata } from 'next'
 import Script from 'next/script'
 import { ThemeProvider } from './components/theme-provider'
 import { Footer } from './components/ui/footer'
 import { Header } from './components/ui/header'
 import { SkipLink } from './components/ui/skip-link'
+import { geistMono, geistSans } from './fonts'
 import { baseUrl } from './sitemap'
 import { cx } from './utils/cx'
 
@@ -48,7 +47,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={cx('scroll-smooth', GeistSans.variable, GeistMono.variable)}
+      className={cx('scroll-smooth', geistSans.variable, geistMono.variable)}
       suppressHydrationWarning
     >
       <head>
@@ -133,7 +132,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="min-h-screen antialiased">
+      <body className="min-h-screen font-sans antialiased">
         <ThemeProvider>
           <SkipLink />
           <Header />

@@ -20,6 +20,14 @@
    ========================================== */
 
 @theme {
+  /* Geist (variables set on <html> via next/font) */
+  --font-sans:
+    var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif,
+    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-mono:
+    var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, Monaco,
+    Consolas, "Liberation Mono", "Courier New", monospace;
+
   /* Selection Colors */
   --color-selection: #47a3f3;
   --color-selection-text: #fefefe;

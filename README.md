@@ -7,3 +7,4 @@ This is a porfolio site with a blog. Includes:
 - RSS Feed
 - Dynamic OG images
 - Syntax highlighting
+- View transitions

@@ -21,7 +21,7 @@ export default function Page() {
   return (
     <ViewTransition>
       <main className="page-animate-in" id="main">
-        <PageContainer>
+        <PageContainer wide>
           {/* Header */}
           <header className="mb-12">
             <Headline as="h1">Blog</Headline>

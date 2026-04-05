@@ -54,7 +54,7 @@ export default function AboutMe() {
   return (
     <ViewTransition>
       <main className="page-animate-in" id="main">
-        <PageContainer>
+        <PageContainer wide>
           <article>
             {/* Profile */}
             <header className="mb-16 flex flex-col gap-6 sm:flex-row-reverse sm:gap-8">

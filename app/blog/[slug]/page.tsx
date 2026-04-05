@@ -69,7 +69,7 @@ export default async function Blog(props: {
   return (
     <ViewTransition>
       <main className="page-animate-in" id="main">
-        <PageContainer>
+        <PageContainer wide>
           <script
             type="application/ld+json"
             suppressHydrationWarning

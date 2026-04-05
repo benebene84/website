@@ -4,9 +4,8 @@ import { GeistSans } from 'geist/font/sans'
 import type { Metadata } from 'next'
 import Script from 'next/script'
 import { ThemeProvider } from './components/theme-provider'
-import { Desktop } from './components/ui/desktop'
-import { Dock } from './components/ui/dock'
-import { MenuBar } from './components/ui/menu-bar'
+import { Footer } from './components/ui/footer'
+import { Header } from './components/ui/header'
 import { SkipLink } from './components/ui/skip-link'
 import { baseUrl } from './sitemap'
 import { cx } from './utils/cx'
@@ -137,16 +136,11 @@ export default function RootLayout({
       <body className="min-h-screen antialiased">
         <ThemeProvider>
           <SkipLink />
-
-          {/* OS Menu Bar - fixed at top */}
-          <MenuBar />
-
-          {/* Desktop Environment */}
-          <Desktop>{children}</Desktop>
-
-          {/* OS Dock - fixed at bottom */}
-          <Dock />
-
+          <Header />
+          <div className="flex min-h-screen flex-col">
+            <div className="flex-1">{children}</div>
+            <Footer />
+          </div>
           {process.env.NODE_ENV === 'production' && (
             <Script
               defer

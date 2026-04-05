@@ -22,12 +22,13 @@ export const ShareButton = ({
     <button
       type="button"
       className={cx(
-        'flex cursor-pointer items-center gap-2 px-2 py-1 hover:bg-bg-hover',
+        'flex cursor-pointer items-center gap-1.5 rounded-md px-2 py-1 text-sm',
+        'text-text-muted transition-colors hover:bg-bg-hover hover:text-text-primary',
         className,
       )}
       onClick={() => share(data)}
     >
-      <Share2 size={12} aria-hidden="true" />
+      <Share2 size={14} aria-hidden="true" />
       Share
     </button>
   )

@@ -10,7 +10,7 @@ export const Headline = ({
   }) => {
   return (
     <Component
-      className="inline-block font-semibold text-3xl text-accent tracking-tighter sm:text-4xl"
+      className="inline-block font-semibold text-3xl text-text-primary tracking-tight sm:text-4xl"
       {...props}
     >
       {children}

@@ -1,5 +1,5 @@
 import { BlogPosts } from 'app/components/posts'
-import { Window } from 'app/components/ui/window'
+import { PageContainer } from 'app/components/ui/page-container'
 import { ViewTransition } from 'react'
 import { Headline } from './components/ui'
 
@@ -66,19 +66,14 @@ const skills = [
 export default function Page() {
   return (
     <ViewTransition>
-      <main className="flex flex-col gap-6" id="main">
-        {/* Hero Window */}
-        <Window
-          title="Welcome.app"
-          as="section"
-          className="window-animate-in"
-          hover
-        >
-          <div className="flex flex-col gap-4 py-2">
+      <main className="page-animate-in" id="main">
+        <PageContainer wide>
+          {/* Hero */}
+          <section className="mb-16">
             <Headline as="div">
               Hi, I'm <h1 className="inline">Benedikt Sperl</h1>!
             </Headline>
-            <p className="text-text-secondary sm:text-lg">
+            <p className="mt-4 max-w-xl text-lg text-text-secondary leading-relaxed">
               <strong className="text-text-primary">Frontend Architect</strong>{' '}
               and <strong className="text-text-primary">Frontend Lead</strong>{' '}
               based in Munich, Germany. I specialize in crafting
@@ -87,97 +82,74 @@ export default function Page() {
               <strong className="text-text-primary">accessibility</strong>, and{' '}
               <strong className="text-text-primary">automation</strong>.
             </p>
-          </div>
-        </Window>
+          </section>
 
-        {/* Two column layout for Terminal and Blog */}
-        <div className="grid gap-6 md:grid-cols-2">
-          {/* Terminal Window - Skills */}
-          <Window
-            title="skills.sh"
-            variant="terminal"
-            as="aside"
-            className="window-animate-in"
-            hover
-          >
-            <div className="flex flex-col gap-2">
-              <p className="text-terminal-muted">
-                <span className="text-terminal-prompt">➜</span>{' '}
-                <span className="text-terminal-path">~</span> cat skills.txt
-              </p>
-              <div className="flex flex-wrap gap-2 pt-2">
-                {skills.map((skill) => (
-                  <span
-                    key={skill}
-                    className="rounded border border-terminal-text/30 bg-terminal-text/10 px-2 py-1 text-terminal-text"
-                  >
-                    {skill}
-                  </span>
-                ))}
-              </div>
-              <p className="mt-2 text-terminal-muted">
-                <span className="text-terminal-prompt">➜</span>{' '}
-                <span className="text-terminal-path">~</span>{' '}
-                <span className="animate-pulse">▊</span>
-              </p>
-            </div>
-          </Window>
-
-          {/* Blog Posts Window */}
-          <Window
-            title="Articles"
-            variant="finder"
-            as="section"
-            className="window-animate-in"
-            hover
-          >
-            <BlogPosts limit={5} />
-          </Window>
-        </div>
-
-        {/* Experience Window */}
-        <Window
-          title="experience.md"
-          as="section"
-          className="window-animate-in"
-          hover
-        >
-          <div className="flex flex-col gap-6">
-            <h2 className="font-semibold text-xl tracking-tighter">
-              Professional Experience
+          {/* Skills */}
+          <section className="mb-16">
+            <h2 className="mb-4 font-semibold text-xl tracking-tight">
+              Skills
             </h2>
-            {professionalExperience.map((experience) => (
-              <div
-                className="flex flex-col gap-3 border-accent border-l-2 pl-4"
-                key={experience.role}
-              >
-                <div className="flex flex-col gap-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <strong className="text-lg">{experience.company}</strong>
-                    <span className="rounded-full bg-badge-bg px-2 py-0.5 text-badge-text text-xs">
-                      {experience.role}
+            <div className="flex flex-wrap gap-2">
+              {skills.map((skill) => (
+                <span
+                  key={skill}
+                  className="rounded-full bg-tag-bg px-3 py-1 text-sm text-tag-text"
+                >
+                  {skill}
+                </span>
+              ))}
+            </div>
+          </section>
+
+          {/* Recent Articles */}
+          <section className="mb-16">
+            <h2 className="mb-6 font-semibold text-xl tracking-tight">
+              Recent Articles
+            </h2>
+            <BlogPosts limit={5} />
+          </section>
+
+          {/* Experience */}
+          <section>
+            <h2 className="mb-6 font-semibold text-xl tracking-tight">
+              Experience
+            </h2>
+            <div className="flex flex-col gap-8">
+              {professionalExperience.map((experience) => (
+                <div
+                  className="flex flex-col gap-3 border-accent border-l-2 pl-4"
+                  key={experience.role}
+                >
+                  <div className="flex flex-col gap-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <strong className="text-lg">{experience.company}</strong>
+                      <span className="rounded-full bg-tag-bg px-2 py-0.5 text-tag-text text-xs">
+                        {experience.role}
+                      </span>
+                    </div>
+                    <span className="font-mono text-sm text-text-tertiary">
+                      {experience.duration}
                     </span>
                   </div>
-                  <span className="text-sm text-text-tertiary">
-                    {experience.duration}
-                  </span>
+                  <p className="text-text-secondary">
+                    {experience.description}
+                  </p>
+                  <ul className="flex flex-col gap-1.5">
+                    {experience.highlights.map((highlight) => (
+                      <li
+                        key={highlight}
+                        className="flex gap-2 text-sm text-text-tertiary"
+                      >
+                        <span className="text-accent">·</span>
+                        <span>{highlight}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-                <p className="text-text-secondary">{experience.description}</p>
-                <ul className="flex flex-col gap-1.5">
-                  {experience.highlights.map((highlight) => (
-                    <li
-                      key={highlight}
-                      className="flex gap-2 text-sm text-text-tertiary"
-                    >
-                      <span className="text-accent">•</span>
-                      <span>{highlight}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-        </Window>
+              ))}
+            </div>
+          </section>
+        </PageContainer>
       </main>
     </ViewTransition>
   )

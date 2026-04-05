@@ -1,6 +1,6 @@
 import { formatDate } from 'app/utils/mdx'
 import { allPosts } from 'content-collections'
-import { ArrowRight, ChevronRight, FileText } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import Link from 'next/link'
 
 export function BlogPosts({ limit }: { limit?: number }) {
@@ -12,35 +12,24 @@ export function BlogPosts({ limit }: { limit?: number }) {
     .slice(0, limit)
 
   return (
-    <div className="-mx-2 flex flex-col">
+    <div className="flex flex-col divide-y divide-border-subtle">
       {sortedBlogs.map((post) => (
         <Link
           key={post._meta.path}
           href={`/blog/${post._meta.path}`}
-          className="group flex items-center gap-3 rounded-lg px-2 py-2.5 transition-all duration-200 hover:bg-bg-hover"
+          className="group py-4 transition-colors first:pt-0 last:pb-0"
         >
-          {/* File icon */}
-          <span className="shrink-0 text-accent transition-transform duration-200 group-hover:scale-110">
-            <FileText size={18} strokeWidth={1.5} aria-hidden="true" />
-          </span>
-
-          {/* Content */}
-          <div className="flex min-w-0 flex-1 flex-col gap-0.5 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+          <div className="flex flex-col gap-0.5 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4">
             <span
-              className="truncate font-medium text-text-primary transition-colors"
+              className="font-medium text-text-primary transition-colors group-hover:text-accent"
               style={{ viewTransitionName: `title-${post._meta.path}` }}
             >
               {post.title}
             </span>
-            <span className="shrink-0 text-text-muted text-xs tabular-nums">
+            <span className="shrink-0 font-mono text-text-muted text-xs tabular-nums">
               {formatDate(post.publishedAt, false)}
             </span>
           </div>
-
-          {/* Arrow indicator */}
-          <span className="shrink-0 text-text-muted opacity-0 transition-all duration-200 group-hover:translate-x-0.5 group-hover:opacity-100">
-            <ChevronRight size={16} aria-hidden="true" />
-          </span>
         </Link>
       ))}
 
@@ -48,7 +37,7 @@ export function BlogPosts({ limit }: { limit?: number }) {
       {limit && allPosts.length > limit && (
         <Link
           href="/blog"
-          className="mt-2 flex items-center gap-2 px-2 py-2 font-medium text-accent text-sm transition-colors hover:text-accent-hover"
+          className="flex items-center gap-2 pt-4 font-medium text-accent text-sm transition-colors hover:text-accent-hover"
         >
           <span>View all {allPosts.length} articles</span>
           <ArrowRight size={14} aria-hidden="true" />

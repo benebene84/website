@@ -1,7 +1,6 @@
 import './global.css'
 import type { Metadata } from 'next'
 import Script from 'next/script'
-import { ThemeProvider } from './components/theme-provider'
 import { Footer } from './components/ui/footer'
 import { Header } from './components/ui/header'
 import { SkipLink } from './components/ui/skip-link'
@@ -133,21 +132,19 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-screen font-sans antialiased">
-        <ThemeProvider>
-          <SkipLink />
-          <Header />
-          <div className="flex min-h-screen flex-col">
-            <div className="flex-1">{children}</div>
-            <Footer />
-          </div>
-          {process.env.NODE_ENV === 'production' && (
-            <Script
-              defer
-              src="https://cloud.umami.is/script.js"
-              data-website-id="e5a9dd7b-f9a8-41f0-82bd-8c7a5a911239"
-            />
-          )}
-        </ThemeProvider>
+        <SkipLink />
+        <Header />
+        <div className="flex min-h-screen flex-col">
+          <div className="flex-1">{children}</div>
+          <Footer />
+        </div>
+        {process.env.NODE_ENV === 'production' && (
+          <Script
+            defer
+            src="https://cloud.umami.is/script.js"
+            data-website-id="e5a9dd7b-f9a8-41f0-82bd-8c7a5a911239"
+          />
+        )}
       </body>
     </html>
   )

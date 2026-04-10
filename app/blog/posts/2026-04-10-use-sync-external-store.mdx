@@ -1,0 +1,460 @@
+---
+title: 'useSyncExternalStore: Replacing React Context with a global state store'
+publishedAt: '2026-04-10'
+summary: 'Replacing React Context and useState with useSyncExternalStore for shared client state, using a real theme provider refactoring as the example.'
+---
+
+## Introduction
+
+If you've built a React application with shared client state — theme preferences, locale, auth status — chances are you reached for the same toolkit: `createContext`, `useState`, `useEffect` to handle initialization and subscriptions, a Provider component wrapping your tree, and a custom hook to consume the value. It's the standard approach, well-documented, and it works.
+
+But since React 18, there's an alternative that often gets overlooked: `useSyncExternalStore`. It was originally designed to help library authors integrate external state management with React's concurrent features, but it turns out to be a surprisingly good fit for application-level global state too.
+
+I recently refactored the theme provider on this site from the classic Context + useState + useEffect pattern to `useSyncExternalStore`. The result was a simpler layout, better SSR support, and the ability to read and write theme state from outside React entirely. In this post, I'll walk through both approaches using the actual code, and lay out where each one shines and where it falls short.
+
+## The Context + useState approach
+
+Here's a simplified version of what the theme provider looked like before the refactoring. If you've ever built a dark mode toggle, this will look familiar:
+
+```tsx
+'use client'
+
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from 'react'
+
+type ThemePreference = 'light' | 'dark' | 'system'
+type ResolvedTheme = 'light' | 'dark'
+
+interface ThemeContextValue {
+  theme: ThemePreference
+  resolvedTheme: ResolvedTheme
+  setTheme: (theme: ThemePreference) => void
+  mounted: boolean
+}
+
+const ThemeContext = createContext<ThemeContextValue | null>(null)
+
+function resolveTheme(theme: ThemePreference): ResolvedTheme {
+  if (theme === 'system') {
+    return window.matchMedia('(prefers-color-scheme: dark)').matches
+      ? 'dark'
+      : 'light'
+  }
+  return theme
+}
+
+export function ThemeProvider({ children }: { children: React.ReactNode }) {
+  const [theme, setThemeState] = useState<ThemePreference>('system')
+  const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>('light')
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    const stored = localStorage.getItem('theme') as ThemePreference | null
+    if (stored && ['light', 'dark', 'system'].includes(stored)) {
+      setThemeState(stored)
+      setResolvedTheme(resolveTheme(stored))
+    } else {
+      setResolvedTheme(resolveTheme('system'))
+    }
+    setMounted(true)
+  }, [])
+
+  const setTheme = useCallback((newTheme: ThemePreference) => {
+    setThemeState(newTheme)
+    setResolvedTheme(resolveTheme(newTheme))
+    if (newTheme === 'system') {
+      localStorage.removeItem('theme')
+    } else {
+      localStorage.setItem('theme', newTheme)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!mounted) return
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+    const handler = () => {
+      if (theme === 'system') {
+        setResolvedTheme(resolveTheme('system'))
+      }
+    }
+    mediaQuery.addEventListener('change', handler)
+    return () => mediaQuery.removeEventListener('change', handler)
+  }, [theme, mounted])
+
+  return (
+    <ThemeContext.Provider value={{ theme, resolvedTheme, setTheme, mounted }}>
+      {children}
+    </ThemeContext.Provider>
+  )
+}
+
+export function useTheme() {
+  const context = useContext(ThemeContext)
+  if (!context) {
+    throw new Error('useTheme must be used within a ThemeProvider')
+  }
+  return context
+}
+```
+
+The layout wraps everything in the provider:
+
+```tsx
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en">
+      <body>
+        <ThemeProvider>
+          <Header />
+          <main>{children}</main>
+          <Footer />
+        </ThemeProvider>
+      </body>
+    </html>
+  )
+}
+```
+
+This is straightforward React. But there are a few things worth noticing:
+
+- **Three pieces of state** manage what is conceptually one value: `theme`, `resolvedTheme`, and `mounted`. The `mounted` flag exists solely to avoid hydration mismatches — the server doesn't know the user's theme preference, so we default to a safe value and flip a flag after the first client render.
+- **Two `useEffect` calls** handle initialization (reading localStorage) and subscribing to OS-level theme changes (`matchMedia`). Both run after the component mounts, meaning there's a brief flash where state hasn't been initialized yet.
+- **The Provider wrapper** is required in the layout. Every component that reads the theme must be a descendant of `ThemeProvider`. If you accidentally render `useTheme()` outside the provider, you get a runtime error.
+- **No access outside React.** If you need the current theme in a plain function, an event handler attached outside React, or a third-party script, you're out of luck — you can only read from context inside the React tree.
+
+None of these are deal-breakers. For many use cases, this pattern is perfectly fine. But for global singletons like a theme preference, is there a leaner approach that doesn't require the usual trinity of `createContext`, `useState`, and `useEffect`?
+
+## What is useSyncExternalStore?
+
+`useSyncExternalStore` is a React hook that lets a component subscribe to an external data source — anything that isn't managed by React's own state system. It shipped with React 18 and takes three arguments:
+
+```ts
+const snapshot = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
+```
+
+- **`subscribe(callback)`** — Register a callback that React will call whenever the store changes. Return a cleanup function to unsubscribe.
+- **`getSnapshot()`** — Return the current value of the store. React calls this to read the value and to check whether it has changed after a notification.
+- **`getServerSnapshot()`** — Return the value to use during server-side rendering and hydration. This must return the same value on every call during SSR.
+
+The mental model is: you manage state however you want (a plain variable, localStorage, a WebSocket, the browser's `matchMedia` API) and give React a way to subscribe to changes and read the current value. React handles the rest — scheduling re-renders, avoiding tearing in concurrent mode, and using the server snapshot during SSR.
+
+The key insight is that the store lives outside React's component tree. There's no Provider, no Context, no `useState`. The store is just a module with some state and a way to notify subscribers.
+
+## The external store approach
+
+Here's the same theme provider, rewritten with `useSyncExternalStore`. The store logic is plain TypeScript — no React imports — and the hook is a thin wrapper on top.
+
+### The store
+
+```ts
+type ThemePreference = 'light' | 'dark' | 'system'
+type ResolvedTheme = 'light' | 'dark'
+
+let themePreference: ThemePreference = 'system'
+const listeners = new Set<() => void>()
+let storeInitialized = false
+let mediaCleanup: (() => void) | null = null
+
+function resolveTheme(theme: ThemePreference): ResolvedTheme {
+  if (theme === 'system') {
+    return window.matchMedia('(prefers-color-scheme: dark)').matches
+      ? 'dark'
+      : 'light'
+  }
+  return theme
+}
+
+function emit() {
+  for (const listener of listeners) {
+    listener()
+  }
+}
+
+function initStoreFromStorage() {
+  if (storeInitialized || typeof window === 'undefined') return
+  storeInitialized = true
+
+  const stored = localStorage.getItem('theme') as ThemePreference | null
+  if (stored && ['light', 'dark', 'system'].includes(stored)) {
+    themePreference = stored
+  }
+  applyTheme(themePreference)
+}
+
+function attachMediaListener() {
+  if (mediaCleanup) return
+  const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+  const handler = () => {
+    if (themePreference === 'system') {
+      applyTheme('system')
+      emit()
+    }
+  }
+  mediaQuery.addEventListener('change', handler)
+  mediaCleanup = () => {
+    mediaQuery.removeEventListener('change', handler)
+    mediaCleanup = null
+  }
+}
+```
+
+The state is a plain `let` variable at module scope. `listeners` is a `Set` of callbacks that React will register through the `subscribe` function. `emit()` notifies all subscribers when the state changes. Initialization from `localStorage` and the `matchMedia` listener are handled lazily — they run the first time a component subscribes, not on module load.
+
+### Subscribe, snapshot, and server snapshot
+
+These are the three functions that `useSyncExternalStore` needs:
+
+```ts
+type ThemeSnapshot = {
+  theme: ThemePreference
+  resolvedTheme: ResolvedTheme
+  hydrated: boolean
+}
+
+const defaultServerThemeSnapshot: ThemeSnapshot = {
+  theme: 'system',
+  resolvedTheme: 'light',
+  hydrated: false,
+}
+
+let cachedSnapshot: ThemeSnapshot | null = null
+
+function subscribe(onStoreChange: () => void) {
+  if (typeof window === 'undefined') return () => {}
+
+  initStoreFromStorage()
+  attachMediaListener()
+
+  listeners.add(onStoreChange)
+  return () => {
+    listeners.delete(onStoreChange)
+    if (listeners.size === 0 && mediaCleanup) {
+      mediaCleanup()
+    }
+  }
+}
+
+function getSnapshot(): ThemeSnapshot {
+  const resolvedTheme = resolveTheme(themePreference)
+  const next: ThemeSnapshot = {
+    theme: themePreference,
+    resolvedTheme,
+    hydrated: true,
+  }
+  if (
+    cachedSnapshot &&
+    cachedSnapshot.theme === next.theme &&
+    cachedSnapshot.resolvedTheme === next.resolvedTheme
+  ) {
+    return cachedSnapshot
+  }
+  cachedSnapshot = next
+  return next
+}
+
+function getServerSnapshot(): ThemeSnapshot {
+  return defaultServerThemeSnapshot
+}
+```
+
+A few things to note here:
+
+- **`subscribe`** lazily initializes the store and the media query listener on first call, then adds the callback to the listener set. The cleanup function removes it, and tears down the media listener when no subscribers remain.
+- **`getSnapshot`** returns a cached object reference when the values haven't changed. This is important — `useSyncExternalStore` uses `Object.is` to compare snapshots. If you return a new object every call, React will re-render subscribers on every emit, even if nothing actually changed.
+- **`getServerSnapshot`** returns a static object. During SSR, there's no `localStorage` or `matchMedia`, so we return a safe default. The `hydrated: false` flag tells consuming components that this is the server value — equivalent to the old `mounted` state, but derived from which snapshot function ran rather than a separate `useEffect`.
+
+### Mutations
+
+Writing to the store is a plain function that updates the variable, persists to localStorage, and calls `emit()`:
+
+```ts
+function setThemeInStore(newTheme: ThemePreference) {
+  themePreference = newTheme
+
+  if (newTheme === 'system') {
+    localStorage.removeItem('theme')
+  } else {
+    localStorage.setItem('theme', newTheme)
+  }
+
+  applyTheme(newTheme)
+  cachedSnapshot = null
+  emit()
+}
+```
+
+Setting `cachedSnapshot = null` forces `getSnapshot` to create a new reference on the next read, which tells React the value actually changed.
+
+### The hook
+
+With all the store logic in place, the hook itself is minimal:
+
+```tsx
+import { useMemo, useSyncExternalStore } from 'react'
+
+export function useTheme() {
+  const snapshot = useSyncExternalStore(
+    subscribe,
+    getSnapshot,
+    getServerSnapshot,
+  )
+
+  return useMemo(
+    () => ({
+      theme: snapshot.theme,
+      resolvedTheme: snapshot.resolvedTheme,
+      setTheme: setThemeInStore,
+      mounted: snapshot.hydrated,
+    }),
+    [snapshot.theme, snapshot.resolvedTheme, snapshot.hydrated],
+  )
+}
+```
+
+And the layout no longer needs a wrapper:
+
+```tsx
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en">
+      <body>
+        <Header />
+        <main>{children}</main>
+        <Footer />
+      </body>
+    </html>
+  )
+}
+```
+
+No `<ThemeProvider>`. No context boundary. Components call `useTheme()` wherever they want, and it just works.
+
+### Imperative access
+
+Because the store is a plain module, you can also export functions for non-React code:
+
+```ts
+export function setTheme(newTheme: ThemePreference) {
+  setThemeInStore(newTheme)
+}
+
+export function getTheme(): ThemeSnapshot {
+  if (typeof window === 'undefined') {
+    return defaultServerThemeSnapshot
+  }
+  initStoreFromStorage()
+  return getSnapshot()
+}
+```
+
+These work in event handlers attached outside React, in third-party scripts, or anywhere else in your application. With Context, reading or writing the theme outside the React tree simply isn't possible.
+
+## Benefits of the external store approach
+
+### No Provider wrapper
+
+The most immediately visible win. The root layout goes from wrapping everything in `<ThemeProvider>` to just rendering children directly. This is a small thing for one provider, but it compounds — if you have theme, locale, auth, and feature flag providers, the nesting gets deep fast. With external stores, none of them need wrappers.
+
+More importantly, there's no tree position constraint. With Context, `useTheme()` throws if you render it outside the provider boundary. With an external store, the hook works anywhere. You can't accidentally misconfigure the tree.
+
+### Built-in SSR and hydration support
+
+The `getServerSnapshot` parameter gives you a clean, declarative way to handle server rendering. During SSR, React calls `getServerSnapshot` instead of `getSnapshot`, so you return a deterministic default without touching browser APIs.
+
+Compare this to the Context version, where hydration safety requires a `mounted` state variable that starts as `false`, a `useEffect` that flips it to `true` after mount, and every consumer checking `mounted` before trusting the theme value. With `useSyncExternalStore`, the server snapshot returns `hydrated: false`, and the client snapshot returns `hydrated: true` — the distinction is inherent in the API rather than bolted on with an effect.
+
+### Usable outside React
+
+This one was the practical motivation for the refactoring. The inline script that prevents flash-of-wrong-theme on page load, analytics event handlers, and other non-React code all need to know the current theme or change it. With Context, the only option is to duplicate the logic or reach into the DOM. With the store approach, you import `getTheme()` or `setTheme()` and call them directly.
+
+### Cleaner separation of concerns
+
+The store module is plain TypeScript. The only React import is in the `useTheme` hook itself — two lines that call `useSyncExternalStore` and `useMemo`. Everything else — the state, the persistence logic, the media query listener, the mutation function — is framework-agnostic.
+
+This makes the store logic easier to reason about in isolation. It's also more portable: if you ever need the same theme logic in a non-React context (a web component, a Svelte app, a plain script), the store works as-is. Only the hook is React-specific.
+
+## Drawbacks of the external store approach
+
+### More boilerplate
+
+The Context version is about 50 lines of fairly readable React code. The external store version is longer — you need the listener set, the `emit` function, `subscribe` with its cleanup logic, `getSnapshot` with its caching, `getServerSnapshot`, and the mutation function. For a simple boolean toggle, this is arguably over-engineered.
+
+The boilerplate is mostly structural though. Once you've written one external store, the pattern repeats. The subscribe/emit/snapshot shape is the same whether you're managing theme, locale, or any other singleton. But for a team that's never seen this pattern, the first encounter requires more upfront understanding than Context does.
+
+### Module-level singleton state
+
+The store lives at module scope — a plain `let` variable and a `Set` of listeners. There is exactly one instance per JavaScript bundle. This is the right model for global singletons like theme preferences, but it has consequences:
+
+- **Testing is harder.** You can't spin up isolated store instances per test without adding a `resetStore()` function or restructuring the module. With Context, you just render a fresh `<ThemeProvider>` and each test gets clean state.
+- **Subtree scoping isn't possible.** If you needed different parts of your app to have independent theme state (unlikely for theme, but relevant for other use cases), a module-level store can't do that. Context naturally scopes to the tree segment wrapped by the Provider.
+
+### Snapshot caching is your responsibility
+
+This is the subtlest gotcha. `useSyncExternalStore` compares the return value of `getSnapshot` using `Object.is`. If your snapshot is a primitive (a string, a number), this works automatically. But if it's an object — like our `ThemeSnapshot` with `theme`, `resolvedTheme`, and `hydrated` fields — you need to return the same reference when the values haven't changed.
+
+In the theme store, this is handled with a `cachedSnapshot` variable:
+
+```ts
+let cachedSnapshot: ThemeSnapshot | null = null
+
+function getSnapshot(): ThemeSnapshot {
+  const resolvedTheme = resolveTheme(themePreference)
+  const next = { theme: themePreference, resolvedTheme, hydrated: true }
+  if (
+    cachedSnapshot &&
+    cachedSnapshot.theme === next.theme &&
+    cachedSnapshot.resolvedTheme === next.resolvedTheme
+  ) {
+    return cachedSnapshot
+  }
+  cachedSnapshot = next
+  return next
+}
+```
+
+If you forget this and return a new object every time, every subscriber re-renders on every emit — even when nothing changed. React won't warn you about it, though Next.js will. You'll just see unnecessary re-renders that are hard to track down.
+
+### Steeper conceptual overhead
+
+The Context pattern maps directly to React's component model: a Provider renders, children consume. The external store pattern introduces a different mental model — module-level state, a pub/sub notification system, and a contract between the store and React that happens through three function references.
+
+For developers who are used to thinking in terms of components and hooks, the subscribe/snapshot/emit pattern can feel unfamiliar. It's not difficult once you've internalized it, but it is a different way of thinking about state that requires some ramp-up time.
+
+## When to use which
+
+Neither approach is universally better. Here's a rough decision framework:
+
+**Use Context + useState when:**
+
+- The state is scoped to a subtree, not global (form state, accordion groups, modal context)
+- Multiple independent instances of the same state can coexist in the tree
+- The team is more comfortable with the standard React patterns
+- The state doesn't need to be accessed outside React
+
+**Use useSyncExternalStore when:**
+
+- The state is a true global singleton (theme, locale, auth status, feature flags)
+- You need imperative read/write access outside the React tree
+- You want to eliminate Provider wrappers from your layout
+- The state bridges React and non-React code (inline scripts, third-party integrations)
+- You're building a shared library where consumers shouldn't need to set up Providers
+
+## Conclusion
+
+The Context + useState pattern remains the right default for most React state management. It's well-understood, well-documented, and maps naturally to the component tree. For scoped state that lives and dies with a section of your UI, it's hard to beat.
+
+But for global singletons — the kind of state where there's exactly one instance, it needs to be accessible everywhere, and it might need to work outside React — `useSyncExternalStore` offers a cleaner model. No Provider nesting, built-in SSR support, imperative access, and a clear separation between the store logic and the rendering framework.
+
+The trade-off is more upfront boilerplate and a less familiar pattern. Whether that's worth it depends on your use case and your team. For this site's theme provider, it was a clear win: the layout got simpler, the SSR story got cleaner, and the theme became accessible to every part of the application — not just the parts inside the React tree.
+
+## Further Reading
+
+- [React Docs: useSyncExternalStore](https://react.dev/reference/react/useSyncExternalStore) — The official documentation, including examples for subscribing to browser APIs and external stores.
+- [React Docs: createContext](https://react.dev/reference/react/createContext) — The standard Context API documentation, for comparison.
+- [useSyncExternalStore — The underrated React API](https://thisweekinreact.com/articles/useSyncExternalStore-the-underrated-react-api) — Sebastien Lorber's deep dive into practical use cases beyond library internals.
+- [React 18 Working Group: useMutableSource -> useSyncExternalStore](https://github.com/reactwg/react-18/discussions/86) — The original discussion on why this hook exists and the tearing problem it solves in concurrent rendering.

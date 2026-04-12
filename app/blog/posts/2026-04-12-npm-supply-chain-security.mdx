@@ -1,0 +1,258 @@
+---
+title: 'Zero trust: protecting yourself from npm supply chain attacks'
+publishedAt: '2026-04-12'
+summary: 'Practical security practices for package managers to defend against supply chain attacks: disabling post-install scripts, install cooldowns, lockfile validation, deterministic installs, and safe upgrade strategies.'
+---
+
+## Introduction
+
+In September 2025, security researchers detected something unprecedented in the npm registry: a self-replicating worm. Dubbed **Shai-Hulud** after the sandworms of Dune, it was the first malware of its kind to propagate autonomously through the open-source supply chain. The attack started with a single compromised maintainer account publishing a malicious version of `rxnt-authentication`. From there, the worm harvested npm tokens and cloud credentials (AWS, GCP, Azure) via postinstall scripts, then used the stolen tokens to publish infected versions of the compromised developer's other packages — which in turn infected more developers, who infected more packages. Within days, over 500 packages were compromised, including `@ctrl/tinycolor` (2.2M weekly downloads) and `ngx-bootstrap` (300K weekly downloads). CISA issued a formal alert. A second wave, Shai-Hulud 2.0, hit in November 2025 with an even more aggressive approach: it moved execution to the preinstall phase, eliminating the need for any human interaction, and affected over 25,000 GitHub repositories.
+
+Six months later, on March 31, 2026, the ecosystem was hit again. An attacker compromised the npm account of the lead Axios maintainer — a library with over 100 million weekly downloads — and published two malicious versions: `axios@1.14.1` and `axios@0.30.4`. Both injected a hidden dependency called `plain-crypto-js` whose postinstall script silently downloaded a cross-platform remote access trojan from an attacker-controlled server. The operation was methodical: a clean, benign version of `plain-crypto-js` was published 18 hours earlier to establish a credible publication history. The malicious versions were live for about three hours before npm pulled them, but any project that ran `npm install` during that window — and used the default caret version range (`^1.14.0`) — was silently backdoored. Microsoft attributed the attack to Sapphire Sleet, a North Korean state actor.
+
+Both attacks exploited the same fundamental trust assumptions: that install scripts are safe to run, that the latest version is the right version, and that your lockfile reflects what you actually intended to install. The rest of this post covers five practical defenses against these attack vectors, focused on npm and pnpm.
+
+## Disable post-install scripts
+
+Post-install scripts are the single most exploited attack vector in npm supply chain compromises. Shai-Hulud, Axios, and the 2018 event-stream incident all used lifecycle scripts — `postinstall`, `preinstall`, or `install` — to execute arbitrary code on the developer's machine the moment a package was installed. No confirmation prompt, no sandboxing. If a dependency has a postinstall script and you run `npm install`, that script runs with your user's full permissions.
+
+The fix is straightforward: disable lifecycle scripts by default and only allow them for packages that genuinely need them (native addons like `esbuild` or `fsevents` that compile platform-specific binaries).
+
+### npm
+
+Set two global configuration flags to disable scripts and block git-based dependency URLs (which can ship their own `.npmrc` that re-enables scripts):
+
+```bash
+npm config set ignore-scripts true
+npm config set allow-git none
+```
+
+The `allow-git` flag requires npm CLI 11.10.0+. Together, these ensure that no package — direct or transitive — can execute code during installation.
+
+When you add a package that legitimately needs build scripts, you can run them explicitly after installation:
+
+```bash
+npm install esbuild --ignore-scripts
+cd node_modules/esbuild && npm run postinstall
+```
+
+### pnpm
+
+pnpm 10 disables postinstall scripts by default. You control which packages are allowed to run build scripts through `pnpm-workspace.yaml`:
+
+```yaml
+onlyBuiltDependencies:
+  - esbuild
+  - fsevents
+
+ignoredBuiltDependencies:
+  - sharp
+```
+
+As of pnpm 10.26+, `allowBuilds` replaces both settings with a single map:
+
+```yaml
+allowBuilds:
+  esbuild: true
+  fsevents: true
+  sharp: false
+```
+
+To make unreviewed build scripts a hard error in CI rather than a warning, enable `strictDepBuilds`:
+
+```yaml
+strictDepBuilds: true
+```
+
+With this flag, `pnpm install` exits with a non-zero code if any dependency tries to run a lifecycle script that hasn't been explicitly allowed — turning silent warnings into pipeline failures.
+
+### pnpm trust policy
+
+pnpm 10.21+ introduced `trustPolicy`, which detects when a package's **publish-time trust level has decreased** compared to earlier releases. If a package was previously published via a Trusted Publisher (GitHub Actions OIDC) and a new version suddenly appears without provenance or signatures, that's a strong signal that something has changed about who is publishing — exactly the pattern you'd see in an account takeover like the Axios compromise.
+
+```yaml
+trustPolicy: no-downgrade
+
+trustPolicyExclude:
+  - 'chokidar@4.0.3'
+
+# Ignore the check for packages published more than 30 days ago,
+# useful for older packages that pre-date provenance support
+trustPolicyIgnoreAfter: 43200
+```
+
+Trust levels from strongest to weakest:
+
+1. **Trusted Publisher** — published via a configured Trusted Publisher (e.g. GitHub Actions OIDC)
+2. **Provenance** — published with an npm provenance attestation
+3. **Signatures** — package registry signature present
+4. **No evidence** — no trust signals at all
+
+When `trustPolicy: no-downgrade` is enabled, pnpm refuses to install any package version whose trust evidence is weaker than a previously published version of that same package. Had this been in place when `axios@1.14.1` was published — manually via the CLI from a compromised account, without provenance — the install would have been blocked.
+
+## Install with cooldown
+
+The Axios attack was live for about three hours. Shai-Hulud's initial wave was detected within a day. In both cases, the malicious versions were caught and unpublished relatively quickly. The problem is that npm's resolution model defaults to the latest version matching a semver range, so anyone who ran `npm install` during that window got the compromised package automatically.
+
+A cooldown period delays the installation of newly published versions by a configurable number of days, giving the community time to discover and flag malicious releases before they reach your project.
+
+### npm
+
+Set a persistent minimum release age so that every `npm install` skips versions published less than the specified number of days ago:
+
+```bash
+npm config set min-release-age 3
+```
+
+Or configure it per-project in `.npmrc`:
+
+```ini
+min-release-age=3
+```
+
+### pnpm
+
+In `pnpm-workspace.yaml` (pnpm 10.16+):
+
+```yaml
+minimumReleaseAge: 20160  # 14 days, in minutes
+
+minimumReleaseAgeExclude:
+  - '@types/react'
+  - typescript
+```
+
+The exclude list is useful for packages where you need immediate access to new versions — type definitions that track a framework release, for example.
+
+### Dependabot and Renovate
+
+If you use automated dependency update bots, configure them with cooldowns too. Dependabot supports a `cooldown` option that delays version update PRs by a configurable number of days. Renovate has `minimumReleaseAge` with the same purpose. Snyk's automated dependency upgrade PRs include a built-in 21-day cooldown by default.
+
+The key insight is that cooldowns compose with other defenses. A three-day cooldown alone wouldn't have stopped every attack, but combined with deterministic installs and disabled scripts, it adds another layer that makes exploitation significantly harder.
+
+## Lockfile injection
+
+In 2019, Liran Tal disclosed a class of attacks targeting the lockfiles themselves. The threat model: an attacker submits a pull request that modifies `package-lock.json` or `yarn.lock` to point an existing dependency's `resolved` URL to an attacker-controlled source — a GitHub gist, a private server, or a modified tarball. They update the SHA-512 integrity hash to match. The change is buried in a lockfile diff that most reviewers skip over. On the next `npm install`, the malicious code is fetched and installed.
+
+This works because npm and Yarn allow packages to be resolved from arbitrary URLs, and lockfiles are treated as the source of truth for resolution. A carefully crafted lockfile modification can redirect any dependency to any location without changing `package.json`.
+
+### Validating lockfiles with lockfile-lint
+
+`lockfile-lint` validates that your lockfiles adhere to security policies:
+
+```bash
+npm install --save-dev lockfile-lint
+```
+
+Run it as a pre-install check or in CI:
+
+```json
+{
+  "scripts": {
+    "lint:lockfile": "lockfile-lint --path package-lock.json --type npm --allowed-hosts npm --validate-https"
+  }
+}
+```
+
+This ensures that all resolved URLs point to the npm registry and use HTTPS. Any dependency pointing to an unexpected host or using an insecure protocol will fail the check.
+
+### pnpm's lockfile resilience
+
+pnpm is not susceptible to the same class of lockfile injection attacks because its lockfile format (`pnpm-lock.yaml`) doesn't maintain mutable tarball source URLs in the same way. It also won't install packages that appear only in the lockfile without a corresponding declaration in `package.json` — an important safeguard against phantom dependencies injected via lockfile PRs.
+
+pnpm 10.26+ adds `blockExoticSubdeps` to close another related vector: transitive dependencies pulling code from git repositories or raw tarball URLs rather than the registry:
+
+```yaml
+blockExoticSubdeps: true
+```
+
+With this enabled, only your direct dependencies (those in `package.json`) are allowed to use exotic sources. All transitive dependencies must come from the configured registry.
+
+## Deterministic installations
+
+`npm install` does something that surprises a lot of developers: when it detects inconsistencies between `package.json` and `package-lock.json`, it resolves the difference by fetching versions that match the semver range in `package.json` — effectively overriding the lockfile. This means the lockfile you committed might not be the lockfile your CI server uses. In the worst case, this pulls in a newly published, compromised version that your lockfile was specifically guarding against.
+
+The fix is to use deterministic installation commands that treat the lockfile as the single source of truth and abort if it doesn't match `package.json`.
+
+### npm
+
+```bash
+npm ci
+```
+
+`npm ci` deletes `node_modules` entirely and installs exactly what the lockfile specifies. If `package.json` and `package-lock.json` are out of sync, it fails rather than silently resolving the difference. This should be the default in every CI pipeline.
+
+### pnpm
+
+```bash
+pnpm install --frozen-lockfile
+```
+
+Same principle: if the lockfile doesn't match `package.json`, the install fails.
+
+### Other package managers
+
+```bash
+# Yarn
+yarn install --immutable --immutable-cache
+
+# Bun
+bun install --frozen-lockfile
+```
+
+### Commit your lockfiles
+
+This should go without saying, but it still catches people: lockfiles must be committed to version control. The deterministic installation commands above are useless if there's no lockfile to enforce. Make sure `package-lock.json`, `pnpm-lock.yaml`, `yarn.lock`, or `bun.lock` is tracked in git and not in your `.gitignore`.
+
+## Safe package upgrade strategies
+
+After the Axios compromise, Microsoft's remediation guidance included an important note: remove the caret (`^`) and tilde (`~`) from your version ranges and pin to exact versions. The default `^1.14.0` range is what allowed npm to automatically pull `1.14.1` — the malicious version — without any developer action.
+
+But pinning versions only solves half the problem. You still need to upgrade dependencies regularly for security patches. The question is how to do it safely.
+
+### The anti-pattern
+
+```bash
+npm update
+npx npm-check-updates -u
+```
+
+Both commands blindly upgrade all dependencies to their latest matching versions. If a maintainer account has been compromised and a malicious version is the latest, this pulls it in directly. The `colors` and `node-ipc` incidents in 2022 — where maintainers intentionally sabotaged their own packages — demonstrated this risk from a different angle: even intentional changes by legitimate maintainers can be destructive.
+
+### Safe alternatives
+
+**Interactive upgrades** let you review each update individually:
+
+```bash
+npx npm-check-updates --interactive
+pnpm up -i
+bun update --interactive
+```
+
+This shows you what would change and lets you select which packages to upgrade one at a time.
+
+**Automated dependency PRs** via Dependabot, Renovate, or Snyk create individual pull requests for each dependency update. Combined with CI checks and a cooldown period, this gives you:
+
+- A diff showing exactly what changed
+- CI running against the updated dependency before you merge
+- Time for the community to flag problematic releases
+- An audit trail of when and why each dependency was upgraded
+
+The combination of cooldowns (so you don't pull a just-published malicious version) with per-dependency PRs (so you review each change) and deterministic installs (so CI and production use the exact same versions) creates a defense-in-depth strategy where each layer compensates for the gaps in the others.
+
+## Conclusion
+
+No single practice on this list is a silver bullet. Disabling postinstall scripts wouldn't have helped if the attack vector was a lockfile injection. A cooldown period wouldn't matter if you're running `npm install` instead of `npm ci` and the lockfile gets overridden anyway. Deterministic installs don't protect you if the lockfile itself has been tampered with.
+
+The value is in the layering. Disable scripts so compromised packages can't execute code during installation. Add a cooldown so you're never the first to install a brand-new release. Validate your lockfiles so PRs can't silently redirect dependencies. Use deterministic installs so your CI builds are reproducible. Upgrade dependencies deliberately, not blindly.
+
+The npm ecosystem's trust model was designed for convenience, and that convenience has real costs. These practices shift the defaults from "trust everything" to "verify first" — which, given the trajectory of supply chain attacks over the past year, seems like a reasonable trade.
+
+## Further Reading
+
+- [npm Security Best Practices](https://github.com/lirantal/npm-security-best-practices) — Liran Tal's comprehensive collection of security practices for npm, pnpm, and Bun, covering everything from postinstall scripts to provenance attestations.
+- [CISA Alert: Widespread Supply Chain Compromise Impacting npm Ecosystem](https://www.cisa.gov/news-events/alerts/2025/09/23/widespread-supply-chain-compromise-impacting-npm-ecosystem) — CISA's formal guidance on the Shai-Hulud worm and recommended mitigations.
+- [Axios Post Mortem](https://github.com/axios/axios/issues/10636) — The maintainer's account of the March 2026 compromise, including timeline and remediation steps.
+- [Microsoft: Mitigating the Axios npm supply chain compromise](https://www.microsoft.com/en-us/security/blog/2026/04/01/mitigating-the-axios-npm-supply-chain-compromise/) — Microsoft Threat Intelligence's technical analysis, attribution to Sapphire Sleet, and Defender detection guidance.
+- [ReversingLabs: Shai-Hulud npm supply chain attack](https://www.reversinglabs.com/blog/shai-hulud-worm-npm) — The first detailed analysis of the self-replicating worm and its propagation mechanism.
+- [lockfile-lint](https://github.com/lirantal/lockfile-lint) — CLI tool for validating lockfile integrity against security policies.

@@ -1,11 +1,7 @@
 {
   "compilerOptions": {
     "target": "ESNext",
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
+    "lib": ["dom", "dom.iterable", "esnext"],
     "strict": true,
     "forceConsistentCasingInFileNames": true,
     "noEmit": true,
@@ -16,12 +12,8 @@
     "isolatedModules": true,
     "jsx": "react-jsx",
     "paths": {
-      "content-collections": [
-        "./.content-collections/generated"
-      ],
-      "app/*": [
-        "./app/*"
-      ]
+      "content-collections": ["./.content-collections/generated"],
+      "app/*": ["./app/*"]
     },
     "incremental": true,
     "plugins": [
@@ -41,7 +33,5 @@
     ".next/dev/types/**/*.ts",
     ".content-collections/generated"
   ],
-  "exclude": [
-    "node_modules"
-  ]
+  "exclude": ["node_modules"]
 }

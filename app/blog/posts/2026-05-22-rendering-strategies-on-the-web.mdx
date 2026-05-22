@@ -1,0 +1,339 @@
+---
+title: 'Rendering Strategies on the Web: CSR, SSG, ISR, SSR, and RSC'
+publishedAt: '2026-05-22'
+summary: 'A practical comparison of the five rendering strategies you actually choose between in a modern React app — Client-Side Rendering, Static Site Generation, Incremental Static Regeneration as the hybrid middle ground, classic Server-Side Rendering with hydration, and Server-Side Rendering with React Server Components — including where each one wins and where it hurts.'
+---
+
+## Introduction
+
+A few weeks ago I was tweaking the home page of this site and noticed something I take for granted at this point: the file is just an `async` function that returns JSX, no `useState`, no `useEffect`, no client-side data fetching. The HTML you see when you load the page is rendered on a server, then served to the browser, and the only JavaScript that ships for that route is for the small interactive bits like the theme toggle in the header.
+
+Seven or eight years ago, the same page could have been a `create-react-app` shell — an empty `<div id="root" />`, a 200kb bundle, a network round trip to fetch data, and a flash of "Loading…" before anything painted. The mechanics have changed, but the choice hasn't gone away. If anything, it's gotten harder: in 2026 the question "where does my page get rendered?" has at least five answers, and each one comes with a different cost model.
+
+This post is a tour of those five strategies — Client-Side Rendering, Static Site Generation, Incremental Static Regeneration, classic Server-Side Rendering with hydration, and Server-Side Rendering with React Server Components. I'll walk through what each one actually does, show real code, and lay out where each one wins and where it hurts. I won't go deep into hydration internals or streaming mechanics — there's a separate post on [HTTP streaming](/blog/2026-01-12-http-streaming-benefits-and-drawbacks) for that. This is the higher-level decision: when you start a new project, which model do you reach for first?
+
+## A quick mental model
+
+Before getting into specifics, three axes are worth keeping in your head as you read the rest of this post.
+
+**When does HTML get built?** 
+
+With CSR, it never really does — the server returns an empty shell and the browser assembles the page. With SSG and ISR, HTML is built ahead of time. With classic SSR and RSC, it's built on every request.
+
+**What ships to the browser?** 
+
+CSR ships an empty shell plus a JS bundle. SSG and classic SSR ship prerendered HTML *plus* the same JS bundle. RSC ships prerendered HTML and a much smaller JS bundle that only contains the parts of the page that are actually interactive.
+
+**Where does data fetching live?** 
+
+CSR fetches in the browser after mount. SSG fetches in a build script. Classic SSR fetches in a request handler and passes the result into the React tree as props. RSC fetches directly inside the server component that uses the data, with no separate handler in the middle.
+
+Every concrete trade-off in the rest of the post is downstream of these three questions.
+
+## Client-Side Rendering (CSR)
+
+CSR is the model that Single Page Applications (SPAs) shipped with. The server returns an HTML file with an empty `<div id="root" />` and a script tag. The browser downloads the JS bundle, evaluates it, mounts e.g. React, and then — and only then — does the page actually exist as DOM. Any data the page needs is fetched after mount, usually in a `useEffect`.
+
+This was the default in `create-react-app`, and it's still the default in the unmodified Vite + React template. It's a perfectly reasonable choice for plenty of apps.
+
+```tsx
+// app.tsx (Vite + React, classic CSR)
+import { useEffect, useState } from 'react'
+
+export function App() {
+  const [user, setUser] = useState<User | null>(null)
+
+  useEffect(() => {
+    fetch('/api/me')
+      .then((r) => r.json())
+      .then(setUser)
+  }, [])
+
+  if (!user) return <p>Loading…</p>
+  return <h1>Hello, {user.name}</h1>
+}
+```
+
+What you see in a browser: a brief blank screen, then "Loading…", then the actual content. The path from the user clicking a link to seeing "Hello, name" includes the HTML round trip, the JS bundle download, JS parsing, React mounting, the API round trip, and finally a render. None of those steps can run in parallel — they're a strict sequence.
+
+**Wins:**
+
+- The mental model is the simplest of the five. There's no server runtime, no build-time data fetching, no boundary between server and client.
+- Hosting is trivial — drop the build output on any CDN and you're done.
+- For highly-interactive surfaces behind auth (dashboards, editors, internal tools), the trade-offs barely matter. Nobody is indexing your web application, and the user is happy to absorb a one-second loading state on first paint if they spend the next hour inside the app.
+- Subsequent navigations inside the SPA are instant — no server round trip, just a client-side route change.
+
+**Drawbacks:**
+
+- First Contentful Paint is slow by definition. Every user pays the cost of the full bundle load plus the data round trip before they see anything meaningful.
+- SEO is bad without help. Crawlers can execute JavaScript, but ranking signals suffer when the page is empty in the initial HTML.
+- The entire app bundle blocks first paint. Code-splitting helps but doesn't eliminate the problem.
+- Every user pays the data-fetching latency, every time.
+
+CSR is not dead — it's just no longer the right default for content-shaped pages.
+
+## Static Site Generation (SSG)
+
+SSG flips the problem. Instead of building HTML in the browser on every visit, you build it once, at deploy time, and serve the resulting flat file from a CDN. This is what powers most documentation sites, marketing pages, and — relevant to the reader — this blog. The post you're reading was rendered into HTML when I ran the build in the pipeline, and the file sitting on the CDN is exactly that HTML.
+
+In Next.js App Router, SSG is the default when `generateStaticParams` covers all dynamic params and no request-time API is touched. Here's the actual pattern from this site:
+
+```tsx
+// app/blog/[slug]/page.tsx
+import { allPosts } from 'content-collections'
+
+export async function generateStaticParams() {
+  return allPosts.map((post) => ({ slug: post._meta.path }))
+}
+
+export default async function Post({
+  params,
+}: {
+  params: Promise<{ slug: string }>
+}) {
+  const { slug } = await params
+  const post = allPosts.find((p) => p._meta.path === slug)
+  // …render MDX
+}
+```
+
+`generateStaticParams` tells Next which paths to prerender. At build time, Next walks that list, executes the page component once per path, and writes the resulting HTML to disk. At request time there's no React, no Node, no rendering — just a static file response from the CDN edge.
+
+**Wins:**
+
+- The cheapest possible serve. A static HTML file out of a CDN is as fast and as cheap as the web gets.
+- Best TTFB of any of the five strategies, since the response is already sitting at the edge.
+- SEO is trivial — the content is in the HTML on first byte.
+- Can be hosted anywhere. No Node runtime, no server, no infrastructure beyond a bucket and a CDN.
+
+**Drawbacks:**
+
+- Data is frozen at build time. Any change to content requires a new build and a new deploy.
+- Build times scale with content. 10,000 product pages × 200ms each is 33 minutes of build. At some point you can't afford to rebuild the world.
+- No per-user personalization. Every visitor sees the same HTML.
+
+The "rebuild every time content changes" problem is exactly what ISR exists to solve.
+
+## Incremental Static Regeneration (ISR)
+
+ISR is SSG with a TTL. The first request to a page generates and caches the HTML. Subsequent requests serve the cached version directly. Once the TTL expires (or once you explicitly invalidate the page), the next request serves the *stale* cached version while triggering a background regeneration, and the freshly generated HTML replaces the cache for everyone after that. The end user almost never waits — they get the static-fast response. The cache, not the request, absorbs the regeneration cost.
+
+There are two flavors:
+
+- **Time-based revalidation** — `revalidate: 3600` means "after an hour, refresh on the next request."
+- **On-demand revalidation** — `revalidatePath('/products/42')`, typically called from a CMS webhook or a deploy hook. Refreshes exactly the affected pages without a full rebuild.
+
+In Next.js App Router, both fit naturally:
+
+```tsx
+// app/products/[id]/page.tsx (Next.js App Router, ISR)
+export const revalidate = 3600 // time-based: refresh every hour
+
+export async function generateStaticParams() {
+  const products = await getTopProducts()
+  return products.map((p) => ({ id: p.id }))
+}
+
+export default async function ProductPage({
+  params,
+}: {
+  params: Promise<{ id: string }>
+}) {
+  const { id } = await params
+  const product = await fetch(`https://api.example.com/products/${id}`, {
+    next: { revalidate: 3600 },
+  }).then((r) => r.json())
+  return <h1>{product.name}</h1>
+}
+```
+
+Notice that `generateStaticParams` only returns the hot subset — top products. Cold product pages aren't pre-rendered at build time; they're generated on first request, then cached. Build time stays bounded regardless of catalog size.
+
+For on-demand invalidation, a route handler does the work:
+
+```tsx
+// app/api/revalidate/route.ts
+import { revalidatePath } from 'next/cache'
+
+export async function POST(req: Request) {
+  const { path, secret } = await req.json()
+  if (secret !== process.env.REVALIDATE_SECRET) {
+    return new Response('unauthorized', { status: 401 })
+  }
+  revalidatePath(path)
+  return Response.json({ revalidated: true })
+}
+```
+
+A CMS publish event hits this endpoint, the affected path is invalidated, and the next request regenerates the page. No deploy required.
+
+**Wins:**
+
+- Most requests are served at SSG speed from the CDN. Only the cache miss pays the cost.
+- Content stays fresh without a full rebuild and deploy.
+- Build times stay bounded — `generateStaticParams` can return the hot subset, and the long tail is generated lazily.
+- Per-page invalidation is a one-line operation.
+
+**Drawbacks:**
+
+- Still no per-user personalization. The cache is shared across all visitors.
+- Stale-while-revalidate means at least one user sees old content per cycle. That's usually fine, but it's not zero.
+- Requires a host that supports the regeneration model. Vercel and Netlify do; pure static CDNs don't. Self-hosted Next.js works but needs a persistent filesystem or a shared cache store.
+- Debugging stale content gets harder — the answer involves cache age, revalidation triggers, and CDN edge propagation, not just "is the code right?"
+
+ISR is the right default for content sites that aren't truly static but also aren't per-user — product catalogs, news, frequently-edited blogs, CMS-backed marketing pages.
+
+## Classic Server-Side Rendering with hydration
+
+Classic SSR is the model that dominated the React ecosystem from roughly 2018 through the App Router release. Every initial request hits a server, after that navigation is client side. The server runs the React tree to a string, attaches data as props, and ships the resulting HTML to the browser. The browser then downloads the JS bundle and *hydrates* the static markup — React mounts on top of the existing DOM, attaches event handlers, and reconciles.
+
+This is the model behind Next.js Pages Router with `getServerSideProps`, behind every hand-rolled `renderToString` + `hydrateRoot` setup, and behind frameworks like Remix or TanStack Start.
+
+```tsx
+// pages/dashboard.tsx (Next.js Pages Router, classic SSR)
+import type { GetServerSideProps } from 'next'
+
+export const getServerSideProps: GetServerSideProps = async (ctx) => {
+  const user = await getUserFromSession(ctx.req)
+  return { props: { user } }
+}
+
+export default function Dashboard({ user }: { user: User }) {
+  return <h1>Hello, {user.name}</h1>
+}
+```
+
+The server runs `getServerSideProps`, fetches the user, renders the component to HTML, and sends the response. The browser paints immediately, then loads the JS bundle and hydrates. From the user's perspective, the page is visible long before it's actually interactive.
+
+**Wins:**
+
+- Fast First Contentful Paint — the HTML arrives ready to paint.
+- SEO-friendly out of the box.
+- Data can be per-request: cookies, sessions, geolocation, anything tied to the incoming HTTP request is available.
+
+**Drawbacks:**
+
+- The JS bundle is still the full app. The HTML and the JS overlap entirely — you pay for both.
+- Hydration is expensive on slow devices. The browser has to walk the entire tree, attach handlers, and reconcile, all before the page is interactive.
+- The "double data fetch" problem: the server fetched the user, then serializes the result into the HTML as JSON, then the client re-parses it. Subsequent client-side state updates often re-fetch the same data.
+- Every request hits a server. You need Node infrastructure, and you need to think about caching SSR responses if traffic is high (see the [Cache-Control](/blog/2026-02-22-caching-with-cache-control-header) post for that).
+
+For long-running pages with multiple data sources, you can layer streaming on top — the [HTTP Streaming](/blog/2026-01-12-http-streaming-benefits-and-drawbacks) post covers that pattern in detail.
+
+## SSR with React Server Components (RSC)
+
+RSC is the model the App Router introduced. The framing shift is subtle but significant: server components are components that *only* render on the server. They never ship JavaScript to the client. They can `await` data directly inside the component body. The component itself is the data layer.
+
+In classic SSR, every component runs in both runtimes — once on the server to produce HTML, once on the client to hydrate. With RSC, server components have no client runtime at all. Only components marked with `'use client'` ship JavaScript. The result is a much smaller client bundle and a fundamentally different shape for data fetching.
+
+```tsx
+// app/dashboard/page.tsx (Next.js App Router, RSC)
+import { cookies } from 'next/headers'
+
+async function getUser() {
+  const cookieStore = await cookies()
+  const res = await fetch('https://api.example.com/me', {
+    headers: { cookie: cookieStore.toString() },
+  })
+  return res.json() as Promise<User>
+}
+
+export default async function DashboardPage() {
+  const user = await getUser()
+  return <h1>Hello, {user.name}</h1>
+}
+```
+
+There's no `getServerSideProps`. There's no separate handler. The data fetch lives in the component that uses it, and the entire thing runs on the server. The browser receives HTML and nothing else for this part of the page.
+
+Interactivity splits cleanly via `'use client'`:
+
+```tsx
+// app/dashboard/sign-out.tsx
+'use client'
+export function SignOutButton() {
+  return <button onClick={() => signOut()}>Sign out</button>
+}
+```
+
+`DashboardPage` is server-only. `SignOutButton` is the only thing in this flow that ships JavaScript. If the rest of the page is server components, that button is the entire client bundle for the route.
+
+**Wins:**
+
+- Dramatically smaller client bundle. Only `'use client'` components ship JavaScript. For content-heavy pages with islands of interactivity, this can mean 80% less JS than classic SSR.
+- Data fetching is co-located with the component that uses it. No props plumbing, no separate handler, no serialization-deserialization dance.
+- No server-to-client handoff for data. The HTML the server renders is the HTML the client uses — there's no "the client also fetches this" step.
+- Pairs naturally with Suspense streaming. Slow data sources don't block fast ones.
+
+**Drawbacks:**
+
+- The conceptual shift is real. The server/client boundary becomes a first-class thing every developer on the team has to understand. Mistakes are easy: passing a function as a prop from a server to a client component, or importing a client component into a server component and expecting `useState` to work in both contexts.
+- No `useState`, no `useEffect`, no event handlers in server components. Anything reactive lives behind `'use client'`.
+- `'use client'` boundaries are infectious in subtle ways. Everything imported by a client component is also a client component, including transitively imported utilities.
+- Debugging crosses two runtimes. Stack traces split between server logs and browser devtools.
+- Framework lock-in. RSC requires bundler and framework support. Today that's mostly Next.js, with a few others starting to ship support.
+
+RSC is still maturing — the ergonomics aren't fully settled, and the ecosystem of libraries that gracefully handle the server/client boundary is still catching up. But the bundle-size wins are real, the data-fetching model is genuinely simpler once you've internalized it, and this is where the React team is investing.
+
+## Side-by-side comparison
+
+Putting all five next to each other:
+
+<Table
+  data={{
+    headers: ['', 'CSR', 'SSG', 'ISR', 'Classic SSR', 'RSC'],
+    rows: [
+      ['TTFB', 'Fast (empty shell)', 'Fastest (CDN)', 'Fast (CDN, mostly)', 'Server-bound', 'Server-bound'],
+      ['First paint', 'Slow', 'Fast', 'Fast', 'Fast', 'Fast'],
+      ['JS bundle', 'Full app', 'Full app', 'Full app', 'Full app', 'Only client components'],
+      ['SEO', 'Needs prerender', 'Excellent', 'Excellent', 'Excellent', 'Excellent'],
+      ['Per-user data', 'Yes (after mount)', 'No', 'No', 'Yes', 'Yes'],
+      ['Data freshness', 'Per request', 'Build time only', 'TTL or on-demand', 'Per request', 'Per request'],
+      ['Hosting', 'Any static host', 'Any static host', 'ISR-aware host', 'Node runtime', 'Node runtime + framework'],
+    ],
+  }}
+/>
+
+A few things to notice. CSR is the only strategy where first paint is slow but the JS bundle is "full app" without help — you get the worst of both worlds on first load, in exchange for trivial hosting. RSC is the only strategy where the JS bundle shrinks. SSG and ISR are the only strategies you can put on a pure static CDN. And per-user data only works in the three request-time strategies — anything cached must be shared.
+
+## When to use which
+
+Most apps are made of multiple surfaces, and the right answer for each surface is usually different. Here's a rough decision framework.
+
+**Use CSR when:**
+
+- The app is fully behind auth and SEO doesn't matter.
+- The surface is highly interactive: editors, dashboards, internal tools, design tools.
+- You want a static host and no Node infrastructure.
+- Subsequent navigations matter more than first paint.
+
+**Use SSG when:**
+
+- Content changes on a deploy cadence, not a request cadence (marketing, docs, blogs with infrequent updates).
+- You want the cheapest, most cacheable serve possible.
+- The full content set is small enough that build times stay sane.
+
+**Use ISR when:**
+
+- Content changes more often than you deploy, but it's still shared across all users.
+- The catalog is large enough that pre-rendering everything at build time isn't viable.
+- A CMS or external system needs to publish changes without triggering a deploy.
+- You want SSG's serve cost with a fresh-enough cache.
+
+**Use classic SSR when:**
+
+- You're already on Next.js Pages Router or a non-React framework that doesn't support RSC.
+- Per-request data matters (auth, geo, A/B test bucketing).
+- The team isn't ready to take on the RSC mental model.
+
+**Use RSC when:**
+
+- You want the smallest possible client bundle for a content-heavy page with islands of interactivity.
+- You can adopt Next.js App Router (or another RSC-aware framework).
+- Your team is willing to learn the server/client boundary and the constraints that come with it.
+
+## Conclusion
+
+There's no single right answer to "how should I render?", and any framework that claims otherwise is selling you something. Most real apps use more than one strategy: this blog is SSG for the post pages, RSC for the home and listing pages, and small client islands for the theme toggle and other interactive bits in the header. The interesting design decision isn't picking one strategy for the whole app — it's deciding which strategy applies to which surface, and being honest about the trade-offs of each.
+
+If you want to go a layer deeper, two posts on this site cover the next level of detail: [HTTP streaming](/blog/2026-01-12-http-streaming-benefits-and-drawbacks) for how SSR and RSC can deliver content progressively, and [Cache-Control](/blog/2026-02-22-caching-with-cache-control-header) for how to make the request-time strategies almost as cheap to serve as the build-time ones.

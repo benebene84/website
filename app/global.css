@@ -3,13 +3,13 @@
 :root {
   --sh-class: #2d5e9d;
   --sh-identifier: #354150;
-  --sh-sign: #8996a3;
+  --sh-sign: #647082;
   --sh-string: #007f7a;
   --sh-keyword: #e02518;
-  --sh-comment: #a19595;
+  --sh-comment: #787070;
   --sh-jsxliterals: #6266d1;
-  --sh-property: #e25a1c;
-  --sh-entity: #e25a1c;
+  --sh-property: #c2410c;
+  --sh-entity: #c2410c;
 }
 
 /* Configure Tailwind v4 to use class-based dark mode */

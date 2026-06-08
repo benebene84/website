@@ -48,6 +48,7 @@ export default function RootLayout({
       lang="en"
       className={cx('scroll-smooth', geistSans.variable, geistMono.variable)}
       suppressHydrationWarning
+      data-scroll-behavior="smooth"
     >
       <head>
         <script

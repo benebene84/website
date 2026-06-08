@@ -6,9 +6,9 @@ summary: 'A practical comparison of the five rendering strategies you actually c
 
 ## Introduction
 
-A few weeks ago I was tweaking the home page of this site and noticed something I take for granted at this point: the file is just an `async` function that returns JSX, no `useState`, no `useEffect`, no client-side data fetching. The HTML you see when you load the page is rendered on a server, then served to the browser, and the only JavaScript that ships for that route is for the small interactive bits like the theme toggle in the header.
+"Where does my page get rendered?" sounds like it should have one answer. In 2026 it has at least five: Client-Side Rendering, Static Site Generation, Incremental Static Regeneration, classic Server-Side Rendering with hydration, and Server-Side Rendering with React Server Components. They produce roughly the same page for the user, but each one ships a different amount of JavaScript, builds HTML at a different moment, and fetches data in a different place — so the "right" choice depends entirely on the page.
 
-Seven or eight years ago, the same page could have been a `create-react-app` shell — an empty `<div id="root" />`, a 200kb bundle, a network round trip to fetch data, and a flash of "Loading…" before anything painted. The mechanics have changed, but the choice hasn't gone away. If anything, it's gotten harder: in 2026 the question "where does my page get rendered?" has at least five answers, and each one comes with a different cost model.
+Seven or eight years ago there was less to weigh. The strategy tended to follow the tool you picked: a content site reached for a static site generator, while anything with a login or a dashboard reached for `create-react-app` and got an empty `<div id="root" />`, a 200kb bundle, data fetched after mount, and a flash of "Loading…" before anything painted. Today a single framework can do all five, so the decision is yours to make on every route rather than something the toolchain settles for you.
 
 This post is a tour of those five strategies — Client-Side Rendering, Static Site Generation, Incremental Static Regeneration, classic Server-Side Rendering with hydration, and Server-Side Rendering with React Server Components. I'll walk through what each one actually does, show real code, and lay out where each one wins and where it hurts. I won't go deep into hydration internals or streaming mechanics — there's a separate post on [HTTP streaming](/blog/2026-01-12-http-streaming-benefits-and-drawbacks) for that. This is the higher-level decision: when you start a new project, which model do you reach for first?
 
@@ -16,15 +16,15 @@ This post is a tour of those five strategies — Client-Side Rendering, Static S
 
 Before getting into specifics, three axes are worth keeping in your head as you read the rest of this post.
 
-**When does HTML get built?** 
+**When does HTML get built?**
 
 With CSR, it never really does — the server returns an empty shell and the browser assembles the page. With SSG and ISR, HTML is built ahead of time. With classic SSR and RSC, it's built on every request.
 
-**What ships to the browser?** 
+**What ships to the browser?**
 
 CSR ships an empty shell plus a JS bundle. SSG and classic SSR ship prerendered HTML *plus* the same JS bundle. RSC ships prerendered HTML and a much smaller JS bundle that only contains the parts of the page that are actually interactive.
 
-**Where does data fetching live?** 
+**Where does data fetching live?**
 
 CSR fetches in the browser after mount. SSG fetches in a build script. Classic SSR fetches in a request handler and passes the result into the React tree as props. RSC fetches directly inside the server component that uses the data, with no separate handler in the middle.
 
@@ -32,7 +32,7 @@ Every concrete trade-off in the rest of the post is downstream of these three qu
 
 ## Client-Side Rendering (CSR)
 
-CSR is the model that Single Page Applications (SPAs) shipped with. The server returns an HTML file with an empty `<div id="root" />` and a script tag. The browser downloads the JS bundle, evaluates it, mounts e.g. React, and then — and only then — does the page actually exist as DOM. Any data the page needs is fetched after mount, usually in a `useEffect`.
+CSR is the model that Single Page Applications (SPAs) shipped with. The server returns an HTML file with an empty `<div id="root" />` and a script tag. The browser downloads the JS bundle, evaluates it, mounts React, and then — and only then — does the page actually exist as DOM. Any data the page needs is fetched after mount, usually in a `useEffect`.
 
 This was the default in `create-react-app`, and it's still the default in the unmodified Vite + React template. It's a perfectly reasonable choice for plenty of apps.
 
@@ -54,7 +54,7 @@ export function App() {
 }
 ```
 
-What you see in a browser: a brief blank screen, then "Loading…", then the actual content. The path from the user clicking a link to seeing "Hello, name" includes the HTML round trip, the JS bundle download, JS parsing, React mounting, the API round trip, and finally a render. None of those steps can run in parallel — they're a strict sequence.
+What you see in a browser: a brief blank screen, then "Loading…", then the actual content. The path from the user clicking a link to seeing "Hello, Ada" includes the HTML round trip, the JS bundle download, JS parsing, React mounting, the API round trip, and finally a render. None of those steps can run in parallel — they're a strict sequence.
 
 **Wins:**
 
@@ -65,7 +65,7 @@ What you see in a browser: a brief blank screen, then "Loading…", then the act
 
 **Drawbacks:**
 
-- First Contentful Paint is slow by definition. Every user pays the cost of the full bundle load plus the data round trip before they see anything meaningful.
+- First Contentful Paint (FCP) is slow by definition. Every user pays the cost of the full bundle load plus the data round trip before they see anything meaningful.
 - SEO is bad without help. Crawlers can execute JavaScript, but ranking signals suffer when the page is empty in the initial HTML.
 - The entire app bundle blocks first paint. Code-splitting helps but doesn't eliminate the problem.
 - Every user pays the data-fetching latency, every time.
@@ -185,7 +185,7 @@ ISR is the right default for content sites that aren't truly static but also are
 
 ## Classic Server-Side Rendering with hydration
 
-Classic SSR is the model that dominated the React ecosystem from roughly 2018 through the App Router release. Every initial request hits a server, after that navigation is client side. The server runs the React tree to a string, attaches data as props, and ships the resulting HTML to the browser. The browser then downloads the JS bundle and *hydrates* the static markup — React mounts on top of the existing DOM, attaches event handlers, and reconciles.
+Classic SSR is the model that dominated the React ecosystem from roughly 2018 through the App Router release. The initial request hits a server; later navigations are client-side, though in the Pages Router they still round-trip to the server to re-run `getServerSideProps` for the new page. The server runs the React tree to a string, attaches data as props, and ships the resulting HTML to the browser. The browser then downloads the JS bundle and *hydrates* the static markup — React mounts on top of the existing DOM, attaches event handlers, and reconciles.
 
 This is the model behind Next.js Pages Router with `getServerSideProps`, behind every hand-rolled `renderToString` + `hydrateRoot` setup, and behind frameworks like Remix or TanStack Start.
 
@@ -207,7 +207,7 @@ The server runs `getServerSideProps`, fetches the user, renders the component to
 
 **Wins:**
 
-- Fast First Contentful Paint — the HTML arrives ready to paint.
+- Fast FCP — the HTML arrives ready to paint.
 - SEO-friendly out of the box.
 - Data can be per-request: cookies, sessions, geolocation, anything tied to the incoming HTTP request is available.
 
@@ -293,6 +293,8 @@ Putting all five next to each other:
     ],
   }}
 />
+
+One caveat on the RSC column: the numbers above describe the request-time, dynamic case, since that's the "SSR with RSC" model this post is about. RSC can also be rendered statically (the App Router does this by default when a route touches no request-time API), in which case its TTFB and freshness look like SSG or ISR — but the bundle-size win stays the same either way.
 
 A few things to notice. CSR is the only strategy where first paint is slow but the JS bundle is "full app" without help — you get the worst of both worlds on first load, in exchange for trivial hosting. RSC is the only strategy where the JS bundle shrinks. SSG and ISR are the only strategies you can put on a pure static CDN. And per-user data only works in the three request-time strategies — anything cached must be shared.
 

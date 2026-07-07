@@ -8,7 +8,7 @@ import { ViewTransition } from 'react'
 export const metadata: Metadata = {
   title: 'About Me | Benedikt Sperl',
   description:
-    "Hi, I'm Benedikt Sperl – Frontend Architect and Frontend Lead based in Munich, Germany.",
+    "Hi, I'm Benedikt Sperl – Software Architect and Engineering Lead based in Munich, Germany.",
 }
 
 const keyRoles = [
@@ -63,7 +63,7 @@ export default function AboutMe() {
                   src={beneImage}
                   width={160}
                   height={160}
-                  alt="Benedikt Sperl - Frontend Architect and Frontend Lead"
+                  alt="Benedikt Sperl - Software Architect and Engineering Lead"
                   className="h-40 w-40 rounded-sm object-cover"
                   placeholder="blur"
                   priority
@@ -74,7 +74,7 @@ export default function AboutMe() {
                 <p className="text-text-secondary sm:text-lg">
                   Hi, I'm{' '}
                   <strong className="text-text-primary">Benedikt Sperl</strong>{' '}
-                  – Frontend Architect and Frontend Lead based in Munich,
+                  – Software Architect and Engineering Lead based in Munich,
                   Germany.
                 </p>
                 <p className="text-text-secondary">
@@ -89,7 +89,7 @@ export default function AboutMe() {
             {/* Journey */}
             <section className="mb-16">
               <h2 className="mb-4 font-semibold text-lg tracking-tight">
-                From Social Sciences to Frontend Architecture
+                From Social Sciences to Software Architecture
               </h2>
               <div className="space-y-3 text-text-secondary leading-relaxed">
                 <p>

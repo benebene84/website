@@ -6,7 +6,7 @@ import { Headline } from './components/ui'
 const professionalExperience = [
   {
     company: 'WOLF',
-    role: 'Frontend Lead',
+    role: 'Lead Engineer Frontend',
     duration: '03-2024 - present',
     description: 'Managing and leading the development of the frontend',
     highlights: [
@@ -74,10 +74,12 @@ export default function Page() {
               Hi, I'm <h1 className="inline">Benedikt Sperl</h1>!
             </Headline>
             <p className="mt-4 max-w-xl text-lg text-text-secondary leading-relaxed">
-              <strong className="text-text-primary">Frontend Architect</strong>{' '}
-              and <strong className="text-text-primary">Frontend Lead</strong>{' '}
-              based in Munich, Germany. I specialize in crafting
-              high-performance web applications with a strong focus on{' '}
+              <strong className="text-text-primary">Software Architect</strong>{' '}
+              and{' '}
+              <strong className="text-text-primary">Engineering Lead</strong>{' '}
+              with a strong focus on Frontend, based in Munich, Germany. I
+              specialize in crafting high-performance web applications with a
+              strong focus on{' '}
               <strong className="text-text-primary">UX design</strong>,{' '}
               <strong className="text-text-primary">accessibility</strong>, and{' '}
               <strong className="text-text-primary">automation</strong>.

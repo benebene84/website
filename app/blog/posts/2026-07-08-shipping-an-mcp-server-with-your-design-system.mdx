@@ -1,0 +1,292 @@
+---
+title: 'Shipping an MCP server with your design system'
+publishedAt: '2026-07-08'
+summary: 'How to give AI coding agents accurate, version-correct knowledge of your component library by shipping an MCP server inside the npm package itself — building a JSON index from your existing docs, exposing it over a small stdio server with a couple of tools, and bundling the whole thing so it adds zero infrastructure and zero weight to consumers.'
+---
+
+## Introduction
+
+If you maintain a design system, you have probably watched an AI coding agent confidently write UI that does not exist. It imports a `Button` from the wrong path, passes a `color="danger"` prop when your API only accepts `variant="destructive"`, invents a `size="huge"` that was never a thing, or reaches for a component you deprecated two majors ago. The agent is not being careless — it is pattern-matching against every component library it has ever seen, and it has no idea which version of *your* library the app in front of it actually has installed.
+
+It is worth being precise about how far your existing types already get you here, because they get you surprisingly far. The `.d.ts` files shipped in `node_modules` are, after all, a machine-readable description of your API — an agent that reads them can often get prop names right, respect a `variant` union, and know which props are required. Types are the cheapest, most accurate contract you have, and a lot of "the agent wrote wrong props" problems are really "the agent never looked at the types" problems. If you do nothing else, good types pull a lot of weight.
+
+But types can only take you so far. They describe the *shape* of a component, not how to *use* it. A type cannot tell an agent when to reach for a `Dialog` versus a `Popover`, that a `DatePicker` must be wrapped in a `Field` for its label to be announced, which of two visually similar buttons is the idiomatic choice, or what a real, compilable example looks like. That knowledge lives in your docs — the "when to use", the "do & don't", the worked examples — and none of it survives the trip into a `.d.ts`. If you want an agent to produce *idiomatic* UI and not just type-checking UI, you need to get that prose and those examples in front of it too.
+
+You can paste your docs into a rules file, but that copy goes stale the moment you ship a release, and it balloons the context on every request whether the agent needs Button or not. What you actually want is for the agent to *ask* — "what components exist?", "how do I use the Dialog?" — and get back structured, accurate answers pulled from the exact version of the package the project depends on.
+
+That is precisely what the [Model Context Protocol](https://modelcontextprotocol.io) (MCP) is for. MCP is a small standard that lets an agent talk to an external process over JSON-RPC and call *tools* it exposes. The process can run locally over stdio (standard in/out), which is how editors like Cursor and Claude Code launch MCP servers today. So the plan is: ship a tiny MCP server *inside your design-system package* that serves your component docs. When someone runs `pnpm add @acme/design-system`, they get the server for free, and it always describes the version they installed.
+
+This post walks through the whole thing generically — the "why", building a JSON index from the docs you already have, the server and its tools, and finally bundling and shipping it as part of the npm package so it costs consumers nothing.
+
+## Why ship it inside the package
+
+The instinct for "AI needs to know about our components" is often to stand up a hosted docs service with an API. That works, but for a design system it solves the wrong problem and creates a few new ones. Bundling the server into the package instead has three properties that are hard to beat.
+
+**Versioning solves itself.** The docs index that ships in `node_modules` *is*, by definition, the docs for the version installed. An agent querying it can never suggest a prop that does not exist in the code the app compiles against. There is no "which version of the docs am I looking at?" — the answer is always "the one you have." Docs update on every release, automatically, with the code.
+
+**Zero infrastructure.** There is no server to host, no endpoint to secure, no deploy pipeline for the docs. If consumers install the package, they need nothing extra to run the server. A hosted "always latest" service can be a nice fast-follow, but it should not be the thing standing between an agent and your Button props.
+
+**It is the native fit for the clients.** Cursor and Claude Code both launch local stdio MCP servers from a config file committed in the app repo. A package that already lives in `node_modules` is trivially launchable with `npx`. You are meeting the tools where they already are.
+
+The rest of the design falls out of this decision. There are three layers, and only one of them contains real logic.
+
+## The three layers
+
+<Table
+  data={{
+    headers: ['Layer', 'When it runs', 'Job'],
+    rows: [
+      ['Indexer', 'Build time (in CI, on release)', 'Read your components, types, and docs; emit a single versioned JSON snapshot.'],
+      ['Server', 'Runtime, on the dev machine (stdio)', 'Load the JSON once and answer tool calls. A thin query layer.'],
+      ['Clients', 'In the consuming app', "Cursor / Claude Code launch the server via a committed config and call its tools."],
+    ],
+  }}
+/>
+
+The indexer is where all the work is; the server is deliberately dumb. That split matters because the hard part — turning source and prose into structured data — is the same whether you later serve it over stdio, over HTTP, or bake it into a rules file. Get the index right and everything downstream is easy.
+
+```
+components/*, *.model.ts, docs/*.mdx
+             │  (indexer, build time)
+             ▼
+   dist/mcp/index.json   ── bundled into the npm package
+             │  (server, runtime, stdio)
+             ▼
+   Cursor / Claude Code  ── npx @acme/design-system-mcp
+```
+
+## Building the index
+
+The index is a single JSON file, generated at build time and stamped with the package version. Start by pinning down its shape — this type is the contract between the indexer and the server, and it is worth keeping small and boring.
+
+```ts
+// scripts/mcp-index.types.ts
+export type McpIndex = {
+  version: string        // package.json version — the version this index describes
+  generatedFrom: string  // git sha (from CI) or "local"
+  components: ComponentDoc[]
+}
+
+export type ComponentDoc = {
+  name: string           // dir name, e.g. "button"
+  displayName: string    // "Button"
+  exportName: string     // named export, e.g. "Button"
+  importPath: string     // "@acme/design-system"
+  description: string    // first paragraph of the docs
+  props: PropDoc[]
+  variants: Record<string, string[]>  // { variant: [...], size: [...] }
+  sections: DocSection[] // "## When to use", "## Do & don't", ...
+  examples: CodeExample[]
+}
+
+export type PropDoc = {
+  name: string
+  type: string           
+  required: boolean
+  options?: string[]      // enumerated values for small string-literal unions
+}
+
+export type DocSection = { heading: string; markdown: string }
+export type CodeExample = { title: string; language: string; code: string }
+```
+
+The important realization is that you are almost certainly not writing new documentation. A mature design system already has most of this lying around — you are just *structuring what exists*. Here is where each field tends to come from:
+
+- **`name` / `exportName` / `importPath`** — the component directory and its `index.ts` barrel (`export { default as Button }`).
+- **`description` / `sections` / `examples`** — your existing docs. If you write component docs in MDX (Storybook, a docs site, or plain files), the first paragraph is the description, each `## ` heading becomes a section, and every fenced code block is an example. "When to use", "Do & don't", and "Accessibility" sections are already written like agent guidance — they just need to be parsed, not authored.
+- **`props` / `variants`** — the types. This is the one part that benefits from real tooling: use the TypeScript compiler API to resolve your public `*Props` type and read the props off it, and collect variant maps from your `as const` style objects.
+
+A couple of decisions pay off here. First, only include **props you own**. A component that wraps a headless primitive can inherit dozens of props from it; surfacing all of them buries the handful your team actually designed. Filter to members declared under your own source tree. Second, take each prop's type from the **source annotation** rather than the checker's fully-expanded type. For small unions (say, ≤ 24 members) it *is* useful to enumerate the options, so the agent knows `variant` can be `"primary" | "secondary" | "destructive"`.
+
+The indexer itself is then mostly glue: glob the components, run each source through the extractors, and write the result. Read your compiler options from the repo's real `tsconfig.json` so path aliases and JSX settings match the actual build instead of being duplicated.
+
+```ts
+// scripts/generate-mcp-index.ts
+import { mkdirSync, writeFileSync } from 'node:fs'
+import { readPackageJson } from './pkg'
+import { collectComponents } from './collect'
+import type { McpIndex } from './mcp-index.types'
+
+const pkg = readPackageJson()
+
+const index: McpIndex = {
+  version: pkg.version,
+  generatedFrom: process.env.GITHUB_SHA ?? 'local',
+  components: collectComponents(), // globs sources + docs, runs the extractors
+}
+
+mkdirSync('dist/mcp', { recursive: true })
+writeFileSync('dist/mcp/index.json', JSON.stringify(index))
+console.log(`Indexed ${index.components.length} components (v${index.version})`)
+```
+
+The output is a few hundred kilobytes of JSON that fully describes your public API. That file is the entire knowledge base — everything else just reads it.
+
+## The server and its tools
+
+With a good index, the server is genuinely small. It is a Node ESM script built on the official `@modelcontextprotocol/sdk`, talking over stdio. On startup it reads `index.json` once into memory, then registers a couple of tools and connects the transport.
+
+Two small but important details. Locate the index relative to the module (`import.meta.url`) rather than the current working directory, since the agent will launch it from the consuming app's root — with a fallback path so it still works when you run it from source during development. And report the server's version from the *installed* `package.json` at runtime, matched by name, rather than trusting a value baked into the index. Release pipelines that build before bumping the version can otherwise leave the two off by one; the manifest is what `npm publish` ships and what the git tag reflects, so it is the authoritative source.
+
+```ts
+// mcp/server.ts
+#!/usr/bin/env node
+import { existsSync, readFileSync } from 'node:fs'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
+import { z } from 'zod'
+import type { ComponentDoc, McpIndex } from './mcp-index.types'
+
+function loadIndex(): McpIndex {
+  const here = dirname(fileURLToPath(import.meta.url))
+  // Bundled next to the server in the package; fall back to the built path in dev.
+  const candidates = [
+    join(here, 'index.json'),
+    join(here, '..', 'dist', 'mcp', 'index.json'),
+  ]
+  const found = candidates.find(existsSync)
+  if (!found) throw new Error('index.json not found — run `pnpm generate:mcp` first.')
+  return JSON.parse(readFileSync(found, 'utf8')) as McpIndex
+}
+
+const index = loadIndex()
+const byName = new Map(index.components.map((c) => [c.name.toLowerCase(), c]))
+
+const server = new McpServer({ name: 'acme-design-system', version: index.version })
+const text = (body: string) => ({ content: [{ type: 'text' as const, text: body }] })
+```
+
+The tools are where the design thinking goes. The pattern that works well is **discovery first, detail second**: one cheap tool to enumerate what exists, and one to pull the full docs for a single component. This mirrors how a developer explores an unfamiliar library, and it keeps each response small enough that the agent is not drowning in context it did not ask for.
+
+```ts
+server.registerTool(
+  'list_components',
+  {
+    title: 'List components',
+    description:
+      'List all design-system components with a one-line description. Call this first to discover what is available.',
+    inputSchema: {},
+  },
+  async () => {
+    const items = index.components.map(
+      (c) => `- **${c.displayName}** (\`${c.name}\`) — ${c.description || 'No description.'}`,
+    )
+    return text(`${items.length} components:\n\n${items.join('\n')}`)
+  },
+)
+
+server.registerTool(
+  'get_component',
+  {
+    title: 'Get component docs',
+    description:
+      "Get full docs for one component: import, props, variants, when-to-use, do & don't, examples. Use before writing UI with a component.",
+    inputSchema: { name: z.string().describe('Component name, e.g. "button" or "Button".') },
+  },
+  async ({ name }) => {
+    const c = byName.get(name.toLowerCase())
+    if (!c) {
+      const names = index.components.map((x) => x.name).join(', ')
+      return { ...text(`Unknown component "${name}". Available: ${names}`), isError: true }
+    }
+    return text(renderComponent(c))
+  },
+)
+```
+
+Notice that both tools return **markdown**, not raw JSON. The consumer of these responses is a language model about to write code, and it does better with a rendered doc — an import line, a props table, the "when to use" prose, a couple of examples — than with a nested object it has to interpret. The `renderComponent` helper is just string assembly over the `ComponentDoc`:
+
+```ts
+function renderComponent(c: ComponentDoc): string {
+  const out = [`# ${c.displayName}`, '', c.description, '']
+  out.push('## Import', '', '```tsx', `import { ${c.exportName} } from '${c.importPath}'`, '```', '')
+
+  if (c.props.length > 0) {
+    out.push('## Props', '', '| Prop | Type | Required | Options |', '| --- | --- | --- | --- |')
+    for (const p of c.props) {
+      const opts = p.options?.map((o) => `\`${o}\``).join(', ') ?? ''
+      out.push(`| \`${p.name}\` | \`${p.type}\` | ${p.required ? 'yes' : 'no'} | ${opts} |`)
+    }
+    out.push('')
+  }
+
+  for (const [key, values] of Object.entries(c.variants)) {
+    out.push(`- **${key}**: ${values.map((v) => `\`${v}\``).join(', ')}`)
+  }
+  for (const s of c.sections) out.push(`## ${s.heading}`, '', s.markdown, '')
+
+  return out.join('\n').trim()
+}
+```
+
+Finally, connect the transport. One gotcha worth internalizing: over stdio, **stdout is reserved for the JSON-RPC protocol**. Any logging must go to stderr, or you will corrupt the message stream and the client will fail to connect.
+
+```ts
+const transport = new StdioServerTransport()
+await server.connect(transport)
+console.error(`acme-mcp ready — v${index.version}, ${index.components.length} components`)
+```
+
+That is a complete, useful server. Once it works, obvious extensions suggest themselves — a `search` tool over all the docs, a `get_examples` tool, a `list_icons` or `get_tokens` tool so the agent stops inventing icon names and colors, or even a `validate_usage` tool that checks generated JSX against the real API. All of them are just more read queries against the same index.
+
+## Building and shipping the npm package
+
+This is the part that turns a script into a releasable feature. Three additions to `package.json` do most of the work.
+
+```jsonc
+{
+  "bin": { "acme-mcp": "dist/mcp/server.js" },
+  "files": ["dist"], // dist/mcp rides along in the published tarball
+  "scripts": {
+    "generate:mcp": "node --experimental-strip-types scripts/generate-mcp-index.ts",
+    "build:mcp": "pnpm generate:mcp && esbuild mcp/server.ts --bundle --platform=node --format=esm --outfile=dist/mcp/server.js --banner:js='#!/usr/bin/env node' && chmod +x dist/mcp/server.js"
+  }
+}
+```
+
+The `bin` entry gives every consumer a `node_modules/.bin/acme-mcp` shim, which is what makes `npx acme-mcp` resolve to *their* installed copy. Since `dist` is already in `files`, `npm publish` includes the server and index automatically — no packaging changes needed.
+
+The one non-obvious choice is **bundling the server with esbuild rather than just transpiling it with `tsc`**. If you transpile `server.ts` one-to-one, its `import ... from '@modelcontextprotocol/sdk'` stays a bare specifier resolved at runtime — which forces the SDK to be a runtime `dependency` of your package. That SDK pulls in a large transitive tree (it ships HTTP, SSE, and OAuth transports you are not using), and all of it would land in every consumer's install and audit for a tool most of them never run. Bundling inlines only the stdio-reachable slice into a single self-contained file and tree-shakes the rest away. Keep the SDK, esbuild, and zod as **devDependencies**; nothing extra reaches your consumers. The shebang banner plus `chmod +x` make the output directly executable by `npx`.
+
+Then hook `build:mcp` into your normal package build so the server and index are rebuilt on every release, and CI needs no changes — if it already runs `pnpm build` and publishes `dist`, it now publishes the MCP server too.
+
+Before the first real release, smoke-test the server locally with the official inspector:
+
+```bash
+pnpm build:mcp
+npx @modelcontextprotocol/inspector node dist/mcp/server.js
+```
+
+Confirm `list_components` returns your full set and `get_component` returns a usable doc, then ship a beta and try it from a real consuming app.
+
+## Bundle safety
+
+The natural worry is: "if I ship a few hundred KB of docs and a bundled server in my package, won't that bloat everyone's app?" It will not, and it is worth being precise about why, because the two things people conflate are different.
+
+- **Install size** is the set of files in `node_modules` on disk. The index and server live here — a small, one-time cost, with zero runtime impact.
+- **Bundle size** is only what is reachable via `import` from the entry point the app actually uses. Bundlers tree-shake everything else.
+
+The server reads the JSON through `fs` at runtime and is invoked as a separate `bin`. Nothing in your library's import graph — nothing reachable from your `main` entry — ever touches `dist/mcp/*`. So no application bundler pulls it in. The single invariant that guarantees this: **never `import` the MCP files from your library's entry point.** Keep the docs payload and the server off the import graph and the bundle-size question answers itself.
+
+## Wiring it up in a consuming app
+
+Consumers opt in with a small config committed to their repo, so the whole team gets it. For Cursor, that is `.cursor/mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "acme": { "command": "npx", "args": ["-y", "acme-mcp"] }
+  }
+}
+```
+
+Claude Code uses the same shape in `.mcp.json` at the repo root. Because `npx acme-mcp` resolves the locally installed `@acme/design-system` bin, the served docs always match the version in that project's lockfile — upgrade the package and the agent's knowledge upgrades with it, automatically. 
+It is worth adding a one-line nudge to the app's agent rules too: *"Use the `acme` MCP tools (`list_components`, `get_component`) before writing UI with the design system."*
+
+## Conclusion
+
+Shipping an MCP server inside your design system turns "the AI keeps writing components wrong" into a solved problem, and it does so with remarkably little machinery: a build-time indexer that structures docs you already have, a thin stdio server exposing a couple of read tools, and a bundling step that keeps the whole thing off your consumers' dependency graph. Agents get version-correct, on-standard knowledge of your components; you host nothing and maintain no second copy of the docs.
+
+Start with the two tools here — discovery and detail — because they deliver most of the value on their own. Once that is in the hands of your consumers, the roadmap is just more queries over the same index: search, examples, design tokens, icon catalogs, and eventually active validation of generated code. The index is the asset; everything else is a thin layer on top of it.

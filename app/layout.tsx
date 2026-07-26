@@ -15,11 +15,11 @@ export const metadata: Metadata = {
     template: '%s | Benedikt Sperl',
   },
   description:
-    'Frontend Architect / Frontend Lead with a passion for web development, UX design, accessibility, performance optimization and automation. I love building user interfaces and products people like to interact with.',
+    'Software Architect / Engineering Lead with a passion for web development, UX design, accessibility, performance optimization and automation. I love building user interfaces and products people like to interact with.',
   openGraph: {
     title: 'Benedikt Sperl',
     description:
-      'Benedikt Sperl is a Frontend Architect / Frontend Lead with a passion for web development, UX design, accessibility, performance optimization and automation. He loves building user interfaces and products people like to interact with.',
+      'Benedikt Sperl is a Software Architect / Engineering Lead with a passion for web development, UX design, accessibility, performance optimization and automation. He loves building user interfaces and products people like to interact with.',
     url: baseUrl,
     siteName: 'Benedikt Sperl',
     locale: 'de_DE',
@@ -60,9 +60,9 @@ export default function RootLayout({
               '@type': 'Person',
               '@id': 'https://www.benedikt-sperl.de/#person',
               name: 'Benedikt Sperl',
-              jobTitle: 'Frontend Architect / Frontend Lead',
+              jobTitle: 'Software Architect / Engineering Lead',
               description:
-                'Frontend Architect / Frontend Lead with a passion for web development, UX design, accessibility, performance optimization and automation.',
+                'Software Architect / Engineering Lead with a passion for web development, UX design, accessibility, performance optimization and automation.',
               url: baseUrl,
               image: `${baseUrl}/images/bene.jpg`,
               sameAs: [
@@ -80,7 +80,7 @@ export default function RootLayout({
                 {
                   '@type': 'Organization',
                   name: 'WOLF',
-                  jobTitle: 'Frontend Lead',
+                  jobTitle: 'Engineering Lead Frontend',
                   startDate: '2024-03',
                   description:
                     'Managing and leading the development of the frontend',

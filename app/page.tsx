@@ -56,6 +56,7 @@ const skills = [
   'React',
   'Next.js',
   'Node.js',
+  'Astro',
   'Performance',
   'Accessibility',
   'UX Design',

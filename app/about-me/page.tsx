@@ -1,15 +1,17 @@
 import { Headline } from 'app/components/ui'
 import { PageContainer } from 'app/components/ui/page-container'
 import beneImage from 'app/images/bene.jpg'
+import { createMetadata } from 'app/utils/metadata'
 import type { Metadata } from 'next'
 import Image from 'next/image'
 import { ViewTransition } from 'react'
 
-export const metadata: Metadata = {
-  title: 'About Me | Benedikt Sperl',
+export const metadata: Metadata = createMetadata({
+  title: 'About Me',
   description:
     "Hi, I'm Benedikt Sperl – Software Architect and Engineering Lead based in Munich, Germany.",
-}
+  path: '/about-me',
+})
 
 const keyRoles = [
   {

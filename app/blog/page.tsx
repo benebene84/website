@@ -1,16 +1,18 @@
 import { Headline } from 'app/components/ui'
 import { PageContainer } from 'app/components/ui/page-container'
 import { formatDate } from 'app/utils/mdx'
+import { createMetadata } from 'app/utils/metadata'
 import { allPosts } from 'content-collections'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { ViewTransition } from 'react'
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createMetadata({
   title: 'Blog',
   description:
     'I blog about my experiences and thoughts on software development.',
-}
+  path: '/blog',
+})
 
 export default function Page() {
   const sortedBlogs = [...allPosts].sort(

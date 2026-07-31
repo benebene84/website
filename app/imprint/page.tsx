@@ -1,10 +1,12 @@
 import { PageContainer } from 'app/components/ui/page-container'
+import { createMetadata } from 'app/utils/metadata'
 import type { Metadata } from 'next'
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createMetadata({
   title: 'Impressum',
   description: 'Impressum und rechtliche Informationen',
-}
+  path: '/imprint',
+})
 
 export default function Imprint() {
   return (

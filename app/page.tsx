@@ -1,7 +1,17 @@
 import { BlogPosts } from 'app/components/posts'
 import { PageContainer } from 'app/components/ui/page-container'
+import { createMetadata } from 'app/utils/metadata'
+import type { Metadata } from 'next'
 import { ViewTransition } from 'react'
 import { Headline } from './components/ui'
+
+export const metadata: Metadata = createMetadata({
+  title: 'Benedikt Sperl – Software Architect & Engineering Lead, Munich',
+  description:
+    'Benedikt Sperl is a Software Architect and Engineering Lead based in Munich, Germany, with a passion for web development, UX design, accessibility, performance optimization and automation.',
+  path: '/',
+  absoluteTitle: true,
+})
 
 const professionalExperience = [
   {

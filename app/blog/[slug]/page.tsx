@@ -3,6 +3,7 @@ import { PageContainer } from 'app/components/ui/page-container'
 import { ShareButton } from 'app/components/ui/share'
 import { baseUrl } from 'app/sitemap'
 import { formatDate } from 'app/utils/mdx'
+import { createMetadata } from 'app/utils/metadata'
 import { allPosts } from 'content-collections'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
@@ -30,30 +31,15 @@ export async function generateMetadata(props: {
     summary: description,
     image,
   } = post
-  const ogImage = image ?? `${baseUrl}/og?title=${encodeURIComponent(title)}`
 
-  return {
+  return createMetadata({
     title,
     description,
-    openGraph: {
-      title,
-      description,
-      type: 'article',
-      publishedTime,
-      url: `${baseUrl}/blog/${post._meta.path}`,
-      images: [
-        {
-          url: ogImage,
-        },
-      ],
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title,
-      description,
-      images: [ogImage],
-    },
-  }
+    path: `/blog/${post._meta.path}`,
+    image: image ? `${baseUrl}${image}` : undefined,
+    type: 'article',
+    publishedTime,
+  })
 }
 
 export default async function Blog(props: {
@@ -84,10 +70,12 @@ export default async function Blog(props: {
                 description: post.summary,
                 image: post.image
                   ? `${baseUrl}${post.image}`
-                  : `/og?title=${encodeURIComponent(post.title)}`,
+                  : `${baseUrl}/og?title=${encodeURIComponent(post.title)}`,
                 url: `${baseUrl}/blog/${post._meta.path}`,
+                mainEntityOfPage: `${baseUrl}/blog/${post._meta.path}`,
                 author: {
                   '@type': 'Person',
+                  '@id': `${baseUrl}/#person`,
                   name: 'Benedikt Sperl',
                 },
               }),

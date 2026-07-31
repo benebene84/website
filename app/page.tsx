@@ -11,6 +11,7 @@ export const metadata: Metadata = createMetadata({
     'Benedikt Sperl is a Software Architect and Engineering Lead based in Munich, Germany, with a passion for web development, UX design, accessibility, performance optimization and automation.',
   path: '/',
   absoluteTitle: true,
+  image: '/images/benedikt-sperl.jpg',
 })
 
 const professionalExperience = [

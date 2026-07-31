@@ -8,18 +8,20 @@ import { geistMono, geistSans } from './fonts'
 import { baseUrl } from './sitemap'
 import { cx } from './utils/cx'
 
+const jobTitle = 'Software Architect and Engineering Lead'
+
+const bio = `${jobTitle} based in Munich, Germany, with a passion for web development, UX design, accessibility, performance optimization and automation.`
+
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
   title: {
     default: 'Benedikt Sperl',
     template: '%s | Benedikt Sperl',
   },
-  description:
-    'Software Architect / Engineering Lead with a passion for web development, UX design, accessibility, performance optimization and automation. I love building user interfaces and products people like to interact with.',
+  description: `${bio} I love building user interfaces and products people like to interact with.`,
   openGraph: {
     title: 'Benedikt Sperl',
-    description:
-      'Benedikt Sperl is a Software Architect / Engineering Lead with a passion for web development, UX design, accessibility, performance optimization and automation. He loves building user interfaces and products people like to interact with.',
+    description: `Benedikt Sperl is a ${bio} He loves building user interfaces and products people like to interact with.`,
     url: baseUrl,
     siteName: 'Benedikt Sperl',
     locale: 'de_DE',
@@ -60,11 +62,16 @@ export default function RootLayout({
               '@type': 'Person',
               '@id': 'https://www.benedikt-sperl.de/#person',
               name: 'Benedikt Sperl',
-              jobTitle: 'Software Architect / Engineering Lead',
-              description:
-                'Software Architect / Engineering Lead with a passion for web development, UX design, accessibility, performance optimization and automation.',
+              jobTitle,
+              description: `Benedikt Sperl is a ${bio}`,
               url: baseUrl,
               image: `${baseUrl}/images/bene.jpg`,
+              address: {
+                '@type': 'PostalAddress',
+                addressLocality: 'Munich',
+                addressRegion: 'Bavaria',
+                addressCountry: 'DE',
+              },
               sameAs: [
                 'https://github.com/benebene84',
                 'https://www.linkedin.com/in/benedikt-sperl/',
@@ -76,34 +83,49 @@ export default function RootLayout({
                 contactType: 'personal',
                 availableLanguage: ['en', 'de'],
               },
-              worksFor: [
-                {
+              worksFor: {
+                '@type': 'OrganizationRole',
+                roleName: 'Engineering Lead Frontend',
+                startDate: '2024-03',
+                description:
+                  'Managing and leading the development of the frontend',
+                worksFor: {
                   '@type': 'Organization',
-                  name: 'WOLF',
-                  jobTitle: 'Engineering Lead Frontend',
-                  startDate: '2024-03',
-                  description:
-                    'Managing and leading the development of the frontend',
+                  name: 'WOLF GmbH',
                 },
+              },
+              alumniOf: [
                 {
-                  '@type': 'Organization',
-                  name: 'BSH Home Appliances',
-                  jobTitle: 'Frontend Architect',
-                  startDate: '2019-01',
+                  '@type': 'OrganizationRole',
+                  roleName: 'Frontend Architect',
+                  startDate: '2020-06',
                   endDate: '2024-02',
                   description:
                     'Managed the transformation of a monolith e-commerce architecture into a modern multi application frontend based on React and Next.Js',
+                  alumniOf: {
+                    '@type': 'Organization',
+                    name: 'BSH Home Appliances',
+                  },
+                },
+                {
+                  '@type': 'CollegeOrUniversity',
+                  name: 'Ludwig-Maximilians-Universität München',
+                  sameAs: 'https://www.lmu.de/',
                 },
               ],
               knowsAbout: [
                 'Web Development',
                 'Frontend Architecture',
+                'TypeScript',
                 'React',
                 'Next.js',
+                'Node.js',
+                'Astro',
                 'UX Design',
                 'Accessibility',
                 'Performance Optimization',
                 'Automation',
+                'CI/CD',
               ],
               knowsLanguage: ['en', 'de'],
             }),

@@ -5,9 +5,9 @@ import { Headline } from './components/ui'
 
 const professionalExperience = [
   {
-    company: 'WOLF',
-    role: 'Lead Engineer Frontend',
-    duration: '03-2024 - present',
+    company: 'WOLF GmbH',
+    role: 'Engineering Lead Frontend',
+    duration: '03/2024 – present',
     description: 'Managing and leading the development of the frontend',
     highlights: [
       'Technical Leadership: Define the architecture for the frontend, choosing frameworks, libraries, and best practices for scalability, performance, and maintainability.',
@@ -19,7 +19,7 @@ const professionalExperience = [
   {
     company: 'BSH Home Appliances',
     role: 'Frontend Architect',
-    duration: '06-2020 - 02-2024',
+    duration: '06/2020 – 02/2024',
     description:
       'Managed the transformation of a monolith e-commerce architecture into a modern multi application frontend based on React and Next.Js',
     highlights: [
@@ -31,7 +31,7 @@ const professionalExperience = [
   {
     company: 'BSH Home Appliances',
     role: 'Senior UX & Digital Solutions Specialist',
-    duration: '05/2019 - 06/2020',
+    duration: '05/2019 – 06/2020',
     description: 'Identified, tested and implemented global UX/UI improvements',
     highlights: [
       'Website and Conversion Optimization',
@@ -41,7 +41,7 @@ const professionalExperience = [
   {
     company: 'BSH Home Appliances',
     role: 'Global Brand Website Manager - Bosch Home Appliances',
-    duration: '08/2015 - 05/2019',
+    duration: '08/2015 – 05/2019',
     description: 'SPOC for the Global Bosch website',
     highlights: [
       'Website and Conversion Optimization',
@@ -79,11 +79,13 @@ export default function Page() {
               and{' '}
               <strong className="text-text-primary">Engineering Lead</strong>{' '}
               with a strong focus on Frontend, based in Munich, Germany. I
-              specialize in crafting high-performance web applications with a
-              strong focus on{' '}
+              specialize in crafting web applications with a strong focus on{' '}
               <strong className="text-text-primary">UX design</strong>,{' '}
-              <strong className="text-text-primary">accessibility</strong>, and{' '}
-              <strong className="text-text-primary">automation</strong>.
+              <strong className="text-text-primary">accessibility</strong>,{' '}
+              <strong className="text-text-primary">
+                performance optimization
+              </strong>
+              , and <strong className="text-text-primary">automation</strong>.
             </p>
           </section>
 

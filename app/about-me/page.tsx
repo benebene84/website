@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 
 const keyRoles = [
   {
-    company: 'BSH Home Appliances Group',
+    company: 'BSH Home Appliances',
     period: '2015–2024',
     achievements: [
       'Key player in the global relaunch of 14 e-commerce brands across 30 countries',

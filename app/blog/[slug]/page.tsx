@@ -1,14 +1,20 @@
 import { CustomMDX } from 'app/components/mdx'
+import { Breadcrumbs, RelatedPosts } from 'app/components/ui'
 import { PageContainer } from 'app/components/ui/page-container'
 import { ShareButton } from 'app/components/ui/share'
 import { baseUrl } from 'app/sitemap'
 import { formatDate } from 'app/utils/mdx'
-import { createMetadata } from 'app/utils/metadata'
+import { createMetadata, siteName } from 'app/utils/metadata'
+import { getRelatedPosts } from 'app/utils/related-posts'
 import { allPosts } from 'content-collections'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { ViewTransition } from 'react'
 import { Comments } from './comments'
+
+// Without this, unknown slugs render the not-found page with a 200 status,
+// which Google reports as a soft 404.
+export const dynamicParams = false
 
 export async function generateStaticParams() {
   return allPosts.map((post) => ({
@@ -52,6 +58,21 @@ export default async function Blog(props: {
     notFound()
   }
 
+  const url = `${baseUrl}/blog/${post._meta.path}`
+  const relatedPosts = getRelatedPosts(post)
+  const breadcrumbs = [
+    { name: 'Home', href: '/' },
+    { name: 'Blog', href: '/blog' },
+    { name: post.title, href: `/blog/${post._meta.path}` },
+  ]
+
+  const author = {
+    '@type': 'Person',
+    '@id': `${baseUrl}/#person`,
+    name: siteName,
+    url: `${baseUrl}/about-me`,
+  }
+
   return (
     <ViewTransition>
       <main className="page-animate-in" id="main">
@@ -63,24 +84,46 @@ export default async function Blog(props: {
             dangerouslySetInnerHTML={{
               __html: JSON.stringify({
                 '@context': 'https://schema.org',
-                '@type': 'BlogPosting',
-                headline: post.title,
-                datePublished: post.publishedAt,
-                dateModified: post.publishedAt,
-                description: post.summary,
-                image: post.image
-                  ? `${baseUrl}${post.image}`
-                  : `${baseUrl}/og?title=${encodeURIComponent(post.title)}`,
-                url: `${baseUrl}/blog/${post._meta.path}`,
-                mainEntityOfPage: `${baseUrl}/blog/${post._meta.path}`,
-                author: {
-                  '@type': 'Person',
-                  '@id': `${baseUrl}/#person`,
-                  name: 'Benedikt Sperl',
-                },
+                '@graph': [
+                  {
+                    '@type': 'BlogPosting',
+                    '@id': `${url}#post`,
+                    headline: post.title,
+                    datePublished: post.publishedAt,
+                    dateModified: post.publishedAt,
+                    description: post.summary,
+                    image: post.image
+                      ? `${baseUrl}${post.image}`
+                      : `${baseUrl}/og?title=${encodeURIComponent(post.title)}`,
+                    url,
+                    inLanguage: 'en',
+                    keywords: post.tags,
+                    mainEntityOfPage: { '@type': 'WebPage', '@id': url },
+                    author,
+                    publisher: author,
+                    isPartOf: {
+                      '@type': 'Blog',
+                      '@id': `${baseUrl}/blog#blog`,
+                      name: `${siteName} – Blog`,
+                      url: `${baseUrl}/blog`,
+                    },
+                  },
+                  {
+                    '@type': 'BreadcrumbList',
+                    '@id': `${url}#breadcrumb`,
+                    itemListElement: breadcrumbs.map((item, index) => ({
+                      '@type': 'ListItem',
+                      position: index + 1,
+                      name: item.name,
+                      item: new URL(item.href, baseUrl).toString(),
+                    })),
+                  },
+                ],
               }),
             }}
           />
+
+          <Breadcrumbs items={breadcrumbs} />
 
           <article>
             {/* Article header */}
@@ -130,6 +173,8 @@ export default async function Blog(props: {
               />
             </footer>
           </article>
+
+          <RelatedPosts posts={relatedPosts} />
 
           <div className="mt-12">
             <Comments />

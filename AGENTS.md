@@ -37,7 +37,7 @@ There is no test framework configured. No unit tests, integration tests, or e2e 
 app/                        # Next.js App Router
   blog/
     [slug]/page.tsx         # Dynamic blog post page
-    posts/*.mdx             # MDX blog posts (date-prefixed: YYYY-MM-DD-slug.mdx)
+    posts/*.mdx             # MDX blog posts (filename is the URL slug)
     demos/*.tsx             # Interactive blog demos (client components)
   components/
     ui/                     # Design system primitives (Window, Dock, MenuBar, etc.)
@@ -83,7 +83,7 @@ import { Comments } from './comments'
 - **Functions/variables:** camelCase (`formatDate`, `baseUrl`)
 - **Types/interfaces:** PascalCase (`WindowProps`, `WindowVariant`)
 - **CSS custom properties:** kebab-case with semantic names (`--color-text-primary`, `--color-bg-secondary`)
-- **Blog post files:** date-prefixed MDX (`YYYY-MM-DD-slug.mdx`)
+- **Blog post files:** kebab-case MDX named after the URL slug (`responsive-variants.mdx`), with no date prefix. The publish date lives in `publishedAt` only. Renaming a post file changes its URL, so add a 301 to `datedPostUrls`-style redirects in `next.config.ts`.
 
 ### Styling
 

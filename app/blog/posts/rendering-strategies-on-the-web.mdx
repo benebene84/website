@@ -11,7 +11,7 @@ tags: ['Rendering', 'Frontend Architecture', 'Next.js', 'Performance', 'React']
 
 Seven or eight years ago there was less to weigh. The strategy tended to follow the tool you picked: a content site reached for a static site generator, while anything with a login or a dashboard reached for `create-react-app` and got an empty `<div id="root" />`, a 200kb bundle, data fetched after mount, and a flash of "Loading…" before anything painted. Today a single framework can do all five, so the decision is yours to make on every route rather than something the toolchain settles for you.
 
-This post is a tour of those five strategies — Client-Side Rendering, Static Site Generation, Incremental Static Regeneration, classic Server-Side Rendering with hydration, and Server-Side Rendering with React Server Components. I'll walk through what each one actually does, show real code, and lay out where each one wins and where it hurts. I won't go deep into hydration internals or streaming mechanics — there's a separate post on [HTTP streaming](/blog/2026-01-12-http-streaming-benefits-and-drawbacks) for that. This is the higher-level decision: when you start a new project, which model do you reach for first?
+This post is a tour of those five strategies — Client-Side Rendering, Static Site Generation, Incremental Static Regeneration, classic Server-Side Rendering with hydration, and Server-Side Rendering with React Server Components. I'll walk through what each one actually does, show real code, and lay out where each one wins and where it hurts. I won't go deep into hydration internals or streaming mechanics — there's a separate post on [HTTP streaming](/blog/http-streaming-benefits-and-drawbacks) for that. This is the higher-level decision: when you start a new project, which model do you reach for first?
 
 ## A quick mental model
 
@@ -217,9 +217,9 @@ The server runs `getServerSideProps`, fetches the user, renders the component to
 - The JS bundle is still the full app. The HTML and the JS overlap entirely — you pay for both.
 - Hydration is expensive on slow devices. The browser has to walk the entire tree, attach handlers, and reconcile, all before the page is interactive.
 - The "double data fetch" problem: the server fetched the user, then serializes the result into the HTML as JSON, then the client re-parses it. Subsequent client-side state updates often re-fetch the same data.
-- Every request hits a server. You need Node infrastructure, and you need to think about caching SSR responses if traffic is high (see the [Cache-Control](/blog/2026-02-22-caching-with-cache-control-header) post for that).
+- Every request hits a server. You need Node infrastructure, and you need to think about caching SSR responses if traffic is high (see the [Cache-Control](/blog/caching-with-cache-control-header) post for that).
 
-For long-running pages with multiple data sources, you can layer streaming on top — the [HTTP Streaming](/blog/2026-01-12-http-streaming-benefits-and-drawbacks) post covers that pattern in detail.
+For long-running pages with multiple data sources, you can layer streaming on top — the [HTTP Streaming](/blog/http-streaming-benefits-and-drawbacks) post covers that pattern in detail.
 
 ## SSR with React Server Components (RSC)
 
@@ -339,4 +339,4 @@ Most apps are made of multiple surfaces, and the right answer for each surface i
 
 There's no single right answer to "how should I render?", and any framework that claims otherwise is selling you something. Most real apps use more than one strategy: this blog is SSG for the post pages, RSC for the home and listing pages, and small client islands for the theme toggle and other interactive bits in the header. The interesting design decision isn't picking one strategy for the whole app — it's deciding which strategy applies to which surface, and being honest about the trade-offs of each.
 
-If you want to go a layer deeper, two posts on this site cover the next level of detail: [HTTP streaming](/blog/2026-01-12-http-streaming-benefits-and-drawbacks) for how SSR and RSC can deliver content progressively, and [Cache-Control](/blog/2026-02-22-caching-with-cache-control-header) for how to make the request-time strategies almost as cheap to serve as the build-time ones.
+If you want to go a layer deeper, two posts on this site cover the next level of detail: [HTTP streaming](/blog/http-streaming-benefits-and-drawbacks) for how SSR and RSC can deliver content progressively, and [Cache-Control](/blog/caching-with-cache-control-header) for how to make the request-time strategies almost as cheap to serve as the build-time ones.

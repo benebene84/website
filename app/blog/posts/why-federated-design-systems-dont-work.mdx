@@ -1,0 +1,142 @@
+---
+title: "Why federated design systems don't work"
+publishedAt: "2026-08-05"
+summary: "Federated design systems are appealing because they promise a shared system without hiring anyone to build it. But a resource everyone owns is a resource nobody owns, and without a named owner on both the design and the engineering side, the system decays into the union of everyone's special cases."
+tags: ["Design Systems", "Frontend Architecture", "Career"]
+---
+
+## Introduction
+
+Sooner or later, every organization with more than a handful of product teams has the same conversation. The products have drifted apart, the same button has been built five times in five different ways, and someone finally says out loud that we should have a design system. Everyone agrees immediately, because it is obviously true.
+
+Then comes the harder question: who builds and maintains it? And the answer that emerges — for reasons that are entirely understandable — is "all of us."
+
+That is a federated design system. There is no dedicated team. Components are contributed by the product teams that happen to need them, decisions are made in a guild or a working group or a shared Slack channel, and ownership is distributed across everyone who uses it. On paper it is elegant, and the arguments for it are genuinely good ones.
+
+It needs no headcount. This is the real reason, and it is worth being honest about it rather than dressing it up. Nobody has to write a business case, survive a budget round, or convince a director that three engineers and a designer should spend a year building something that ships no features. The expertise is also already distributed: the people who know what a good data table looks like are the people who have shipped one under real conditions, and they are sitting in the product teams, not in a hypothetical central team. It sounds right, too. "Everyone owns the system" is empowering and anti-bureaucratic, and nobody wants to be the ivory-tower gatekeeper team that tells people no. And it appears to scale for free: more teams means more contributors.
+
+The catch is that the entire model is funded out of capacity that does not exist. Every team on that list is already committed to a roadmap for the next two quarters. Federation does not create time — it distributes an unfunded obligation and hopes it lands somewhere with slack in it. There is no slack. The system gets whatever is left over, and there is never anything left over.
+
+## What federation actually is
+
+The vocabulary is worth attributing. Nathan Curtis named the three team models — solitary, central, and federated — in [Team Models for Scaling a Design System](https://medium.com/eightshapes-llc/team-models-for-scaling-a-design-system-2cf9d03be6a0) in 2015, and our industry has been using his terms ever since. Nearly a decade later he published [The Fallacy of Federated Design Systems](https://medium.com/@nathanacurtis/the-fallacy-of-federated-design-systems-23b9a9a05542), which opens with a team that was disbanded and replaced by a federated model in which nobody was relieved of any other responsibilities, and states plainly that favoring federated "was and is wrong."
+
+Before going further, one distinction does most of the work in this article.
+
+A **contribution model** answers the question "who is allowed to contribute?" A federated model answers this beautifully: anyone. Any team can add a component, propose a token, improve a doc.
+
+An **ownership model** answers a different question: "who is accountable when it degrades?" Federation is not an answer to that question at all. It is the absence of one, phrased as though it were an answer.
+
+Almost every failure below comes from an organization adopting the first and believing it has adopted the second.
+
+## Nobody owns the commons
+
+The classic framing is Hardin's pasture. A commons is open to all herders. Each one gains the full benefit of adding another animal, while the cost of overgrazing is shared across everybody. Every individual decision is rational, and the collective outcome is a ruined field. One clarification, because it matters later: Hardin was not really describing a commons. He described an _open-access regime_ — a resource with no community, no rules, and nobody minding it. Actual historical commons had boundaries, stewards, and sanctions, which is why many of them lasted for centuries. That distinction is the whole argument of this article in miniature. An unowned design system is not a commons. It is an open-access regime with a contribution guide.
+
+A design system is that pasture with uncanny precision.
+
+Teams graze constantly, and they should — that is what the system is for. But grazing also means adding a one-off variant to unblock a launch, forking a `Card` because the padding is wrong for this one screen, or contributing a component with exactly the props this quarter's feature needed without any thought put into other use-cases. Each of those decisions is locally correct. The benefit lands on the contributing team now; the cost is thin, deferred, and paid by everyone else later.
+
+The reseeding is the invisible half. Generalizing a component before merging it. Writing the documentation. Fixing the focus bug you did not introduce. Migrating three other teams off the API you are deprecating. Answering the same question in Slack for the eleventh time. None of that work produces anything the contributing team's stakeholders will ever see in a demo.
+
+This is the mechanism behind "when everyone is responsible, no one is responsible," and it is worth being specific about why, because it is a structural problem and not a character flaw. Ask where responsibility is actually encoded in a company. It lives in team objectives, in roadmaps, in on-call rotations, in performance reviews, in someone's job title. In a federated design system, "the design system is healthy" appears in none of those places. There is no name next to it. A responsibility that exists in nobody's objectives is not a responsibility, it is a hope.
+
+The scheduling problem finishes the job. Design system work is important and never urgent. Product work is urgent, always, by construction. When the two collide — and they collide every single sprint — the important-but-not-urgent work loses. Not usually. Always. And it loses quietly, because nothing visibly breaks on the day you skip it. The damage only becomes legible a year later, when it is expensive.
+
+Hardin concluded that the commons was doomed. He was not entirely right, and the reason he was wrong turns out to matter a lot here. I will come back to it.
+
+## The design-engineering divide
+
+The second failure is specific to design systems rather than shared code in general, and in my experience it is the one that kills them faster.
+
+A design system is a single artifact that lives in two crafts. There is a Figma library and there is a code library, and they describe the same thing in two languages. Keeping them aligned is not a natural byproduct of people doing their jobs. It is a deliberate, continuous act of coordination that somebody has to perform, in both directions, forever.
+
+In a federated model, nobody performs it, because it is nobody's job. More importantly, nobody drives the architectural and organizational questions that decide what the system even is:
+
+- Is this a new component, or a variant of an existing one?
+- Should this new visual treatment be a token, a variant, or a prop?
+- We now have three date pickers. Which one is the real one, and who tells the other two teams to migrate?
+- What is the naming convention for the new semantic color layer — and does it match on both sides of the divide?
+
+None of these have technically correct answers. They are judgment calls that need to be made _consistently, over years, by someone holding the whole picture in their head_. That is what an owner is. That is essentially the entire job.
+
+What you get without one is drift. Figma has four button variants and the code has seven, three of which are undocumented. Designers design against a library that no longer matches production, engineers implement designs that reference components which do not exist, and every handover starts with a negotiation. Both crafts will tell you the company has a design system. Neither of them trusts it.
+
+Two forces make this worse.
+
+**Decision latency.** With no arbiter, decisions default to consensus, and consensus without a tiebreaker is slow by construction. A question a dedicated owner settles in an afternoon instead goes to a working group or a community of practice that meets every two weeks, half of whom did not read the ADR because they were shipping. Six weeks later there is a decision, or more commonly there is a request for more discussion. Meanwhile, the team that asked had a launch date. So they build it locally. Once routing around the system is faster than using it, that stays true, and everyone learns it.
+
+**Conway's law.** Organizations produce systems that mirror their own communication structures. The observation is usually applied to services and modules, but it bites hardest here, because a design system is fundamentally a _shared vocabulary_. A vocabulary written by a large group with no editor is not a language, it is a pile of dialects. If the organization has no coherent point of view about its own UI, the system will not have one either. It will look exactly like what it is: the sum of eight teams' local decisions, published as one package.
+
+## Contribution is the cheap part
+
+Federation optimizes for the moment of contribution and quietly ignores the decade that follows it.
+
+Donating a component takes a week or two. Owning one takes as long as it exists: review, documentation, accessibility, tests, semver discipline, migration guides, deprecations, Slack questions, bug reports from use cases you never imagined, and keeping the thing working across major version updates.
+
+Contribution is the visible, finite, enjoyable part. Everything after it is invisible, unbounded, and thankless. Federation is a model that reliably supplies the first and structurally starves the second. Two consequences follow directly.
+
+**The quality floor drops to the lowest common denominator.** The properties that make a design system worth having are cross-cutting invariants: keyboard navigation, focus management, screen reader announcements, RTL support, theming, browser support, bundle size, test coverage. Invariants only hold if somebody enforces them. In a federated model each contributing team ships to _their product's_ bar, under _their_ deadline, and so the system's quality bar is not the average across contributors — it is the minimum. Accessibility goes first, every time, because it is the invariant that no contributing team's stakeholder is checking. That is a particular shame, because as I have [written about before](/blog/keeping-accessibility-in-mind), the design system is the highest-leverage place in the entire organization to get accessibility right: one correct `Dialog` fixes focus trapping for every product at once. A federated system squanders exactly that leverage, because the shared component ends up only as accessible as the most rushed team that last touched it.
+
+**Abstraction by committee.** A component donated by the checkout team encodes checkout's assumptions, which is fine and expected — a contributor's job is to solve their own problem. Turning "the thing checkout needed" into "the thing the organization needs" is a completely different job. It requires somebody who has seen all the use cases and is willing to reject some of them. Without that person you get one of two outcomes, and both are bad. Either the component accumulates props until it has forty of them and every consumer configures a different subset, at which point you have shipped a configuration language rather than an abstraction. Or the teams whose props were not merged build their own, and now there are five versions of it locally. Federated systems trend inevitably toward the union of everyone's special cases, when the entire value of a design system is that it is a _deliberate, opinionated subset_. As I argued in the post on [building reusable component libraries](/blog/component-libraries), flexibility is a designed property. You do not get it by accretion.
+
+## The doom loop
+
+None of this collapses dramatically. It often goes like this:
+
+1. A team hits a bug, or needs a variant that does not exist. They file an issue.
+2. Nobody owns triage, so it sits for three weeks. Or it gets a friendly "PRs welcome!" — and the team has a launch on Thursday.
+3. They copy the component into their own repo and change the two lines they needed. This takes twenty minutes and is completely reasonable.
+4. The fork diverges. Upgrading now costs real work with no visible payoff, so it never happens.
+5. That team has effectively left the federation. Their improvements happen in the fork, where nobody else benefits from them.
+6. The next team evaluating the system finds fewer components, older patterns, and unanswered issues — and hears from the team in step three that they forked and it was fine. So they fork too.
+
+Every individual step is rational. The aggregate is a design system that exists in a repository and nowhere else.
+
+The asset being destroyed here is trust. A design system works because teams believe that using it is faster than not using it. That belief is empirical, and it is tested constantly. Once it is falsified a few times, no governance document brings it back. You get one credibility budget, and unowned systems spend all of it on unanswered issues.
+
+Underneath everything sits the incentive structure. Nobody has ever been promoted for deprecating a component. Federation assumes that altruism scales — that people will consistently do unrewarded, invisible work for the collective good, indefinitely, while under deadline pressure from the people who actually write their reviews. Some will, for a while. Usually one or two unusually principled engineers or designers hold the whole thing together on personal conviction, until they burn out or leave, at which point it collapses all at once and everybody is surprised. This is the same pattern I have complained about in the context of [delivery excellence](/blog/too-many-managers-not-enough-delivery-excellence): our industry is remarkably bad at valuing the unglamorous work that everything else is built on top of.
+
+## When federation does work
+
+Hardin thought the commons was doomed. Elinor Ostrom won a Nobel Prize for demonstrating that it is not — real communities have governed shared forests, fisheries, and irrigation systems sustainably for centuries. But they do not do it by accident. She identified the conditions under which it works, and they include clearly defined boundaries about who may use the resource, collective decision-making by those affected, _monitoring_ of how the resource is used, graduated sanctions for overuse, accessible conflict resolution, and a recognized right to organize.
+
+Read that list as a design system specification and it stops being social science and turns into a job description. Monitoring is someone tracking adoption and actually reviewing what gets merged. Conflict resolution is someone deciding whether this is a new component or a variant. Boundaries and sanctions are a real contribution process with a quality gate that is allowed to say no. Commons survive when they are _governed_, and governance requires a governor.
+
+So the model that works is federation as a contribution layer on top of an ownership layer. A small core — two or three people is often enough — owns the architecture, the quality bar, the roadmap, and the final yes or no. Federation supplies the domain expertise, the volume of work, and the real use cases that a central team would never discover on its own. That is the model behind every design system you can name and admire.
+
+There is also an honest exception, and it is about size. The tragedy of the commons is a function of group size. One product, five engineers, one designer, shared taste, everybody in the same channel: coordination is cheap, monitoring happens automatically because everyone sees every pull request, and conflicts get resolved in a hallway in four minutes. Federation genuinely works there. It also happens to be the situation where you barely need governance, because you are already effectively one team. The failure mode begins at the size where you no longer personally know everyone touching the system — and organizations typically reach for federation precisely _because_ they have grown past that point.
+
+## The honest math
+
+Which brings us back to the reason federation was chosen in the first place: we do not want to hire on top.
+
+The cost is not avoided. It is made invisible and paid at a much worse exchange rate. Eight teams each donating "ten percent" is nominally 0.8 of a full-time engineer — uncoordinated, constantly interrupted, spread across people who each context-switch into unfamiliar code for a few hours at a time. Call it 0.3 of a person's actual output in a good quarter. Then add the components built twice because nobody knew the other team was building one, the rework when the contributed abstraction turns out to be wrong, the forks that eventually need reconciling, the QA time spent on inconsistencies, and the accessibility remediation that arrives as an audit finding two years later with a deadline attached.
+
+The organization is already paying more than a dedicated team would cost. It is simply paying in a currency that no budget line tracks. The real decision is not "should we spend money on this." It is "should we keep paying invisibly, at a bad rate, for a worse outcome."
+
+If a dedicated team is genuinely out of reach, the minimum viable version of ownership is much smaller than people assume:
+
+- **A name on each side of the divide.** One accountable designer and one accountable engineer, each with real allocation — even fifty percent — written into their objectives. Not a volunteer, not "the guild." A person whose performance review contains the sentence "did the design system get better this quarter."
+- **Budget the time, do not donate it.** Capacity taken out of the roadmap explicitly and defended. Donated time is the first thing cut, in every single planning session.
+- **A decision process with a decider.** RFCs are good. Consensus-only RFCs are not. Somebody has to be able to end a discussion.
+- **Contribution tiers.** Core components that are owned and supported, community components accepted with weaker guarantees, and experimental ones. This lets federation stay genuinely open without dragging the quality floor down with it.
+- **Measure adoption.** What percentage of each product's UI is built from the system? It is the only honest signal of whether any of this is working, and it is the number that justifies the headcount next year.
+
+Notice what is not on that list: another working group, another contribution guide, another Slack channel, another RFC template. Organizations reach for process when what is actually missing is ownership, because process is free and headcount is not. **It does not work. A guild or community of practice without a budget is a book club.**
+
+## Conclusion
+
+Federated design systems do not fail because the people in them are lazy, or because the idea is naive. They fail because the model asks a group with no budget, no mandate, and no tiebreaker to maintain shared infrastructure in time they do not have, and then rewards none of it. The tragedy of the commons was never a story about bad actors. It is a story about good actors inside a structure that makes the collectively destructive choice the individually correct one.
+
+Federation is an excellent contribution model. It is not an ownership model, and no governance document will convert it into one.
+
+So put a name on it — one on each side of the design-engineering divide, with the time genuinely carved out — or accept that what you are running is not a design system, but a folder of components that used to be one.
+
+## Further reading
+
+- [The Tragedy of the Commons](https://doi.org/10.1126/science.162.3859.1243) — Garrett Hardin's 1968 essay in _Science_, and the origin of the pasture parable. Worth reading for the mechanism rather than for its conclusions, which have not aged well.
+- [Ostrom's design principles](https://ostromworkshop.indiana.edu/courses-teaching/teaching-tools/ostrom-design/index.html) — The Ostrom Workshop at Indiana University summarizes the eight principles from _Governing the Commons_ (1990) that separate shared resources which survive from ones that collapse. Read them as a checklist for design system governance.
+- [The Fallacy of Federated Design Systems](https://medium.com/@nathanacurtis/the-fallacy-of-federated-design-systems-23b9a9a05542) — Nathan Curtis retracting his own most influential idea, with evidence from more than eighty design systems behind it. If you read one thing from this list, read this.
+- [Team Models for Scaling a Design System](https://medium.com/eightshapes-llc/team-models-for-scaling-a-design-system-2cf9d03be6a0) — The 2015 original that named the solitary, central and federated models. Still the best description of what each one actually looks like day to day.
+- [The Salesforce Team Model for Scaling a Design System](https://articles.centercentre.com/the-salesforce-team-model-for-scaling-a-design-system/) — A concrete account of the hybrid that works: a central team acting as librarian and facilitator, with federated contributors across the organization keeping it accurate.

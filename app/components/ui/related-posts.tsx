@@ -26,7 +26,7 @@ export function RelatedPosts({ posts }: { posts: Post[] }) {
                   {post.title}
                 </span>
                 <span className="shrink-0 font-mono text-sm text-text-muted tabular-nums">
-                  {formatDate(post.publishedAt, false)}
+                  {formatDate(post.publishedAt)}
                 </span>
               </div>
               {post.summary && (

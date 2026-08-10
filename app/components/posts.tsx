@@ -27,7 +27,7 @@ export function BlogPosts({ limit }: { limit?: number }) {
               {post.title}
             </span>
             <span className="shrink-0 font-mono text-text-muted text-xs tabular-nums">
-              {formatDate(post.publishedAt, false)}
+              {formatDate(post.publishedAt)}
             </span>
           </div>
         </Link>

@@ -129,7 +129,7 @@ export default async function Blog(props: {
             {/* Article header */}
             <header className="mb-10">
               <time className="mb-4 block font-mono text-sm text-text-muted">
-                {formatDate(post.publishedAt, true)}
+                {formatDate(post.publishedAt)}
               </time>
               <h1
                 className="mb-3 text-balance font-semibold text-3xl tracking-tight sm:text-4xl"

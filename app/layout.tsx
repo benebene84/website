@@ -7,9 +7,12 @@ import { SkipLink } from './components/ui/skip-link'
 import { geistMono, geistSans } from './fonts'
 import { baseUrl } from './sitemap'
 import { cx } from './utils/cx'
-import { siteName } from './utils/metadata'
-
-const jobTitle = 'Software Architect and Engineering Lead'
+import {
+  authorImagePath,
+  authorSameAs,
+  jobTitle,
+  siteName,
+} from './utils/metadata'
 
 const bio = `${jobTitle} based in Munich, Germany, with a passion for web development, UX design, accessibility, performance optimization and automation.`
 
@@ -71,22 +74,18 @@ export default function RootLayout({
               '@context': 'https://schema.org',
               '@type': 'Person',
               '@id': `${baseUrl}/#person`,
-              name: 'Benedikt Sperl',
+              name: siteName,
               jobTitle,
               description: `Benedikt Sperl is a ${bio}`,
               url: baseUrl,
-              image: `${baseUrl}/images/bene.jpg`,
+              image: `${baseUrl}${authorImagePath}`,
               address: {
                 '@type': 'PostalAddress',
                 addressLocality: 'Munich',
                 addressRegion: 'Bavaria',
                 addressCountry: 'DE',
               },
-              sameAs: [
-                'https://github.com/benebene84',
-                'https://www.linkedin.com/in/benedikt-sperl/',
-                'https://www.npmjs.com/~benebene84',
-              ],
+              sameAs: [...authorSameAs],
               contactPoint: {
                 '@type': 'ContactPoint',
                 email: 'benedikt.sperl@gmail.com',

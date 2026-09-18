@@ -1,3 +1,4 @@
+import { getModifiedAt } from 'app/utils/mdx'
 import { allPosts } from 'content-collections'
 
 export const baseUrl = 'https://www.benedikt-sperl.de'
@@ -5,11 +6,11 @@ export const baseUrl = 'https://www.benedikt-sperl.de'
 export default async function sitemap() {
   const posts = allPosts.map((post) => ({
     url: `${baseUrl}/blog/${post._meta.path}`,
-    lastModified: post.publishedAt,
+    lastModified: getModifiedAt(post),
   }))
 
   const latestPost = allPosts
-    .map((post) => post.publishedAt)
+    .map((post) => getModifiedAt(post))
     .sort()
     .at(-1)
 

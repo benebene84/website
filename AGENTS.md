@@ -83,7 +83,7 @@ import { Comments } from './comments'
 - **Functions/variables:** camelCase (`formatDate`, `baseUrl`)
 - **Types/interfaces:** PascalCase (`WindowProps`, `WindowVariant`)
 - **CSS custom properties:** kebab-case with semantic names (`--color-text-primary`, `--color-bg-secondary`)
-- **Blog post files:** kebab-case MDX named after the URL slug (`responsive-variants.mdx`), with no date prefix. The publish date lives in `publishedAt` only. Renaming a post file changes its URL, so add a 301 to `datedPostUrls`-style redirects in `next.config.ts`.
+- **Blog post files:** kebab-case MDX named after the URL slug (`responsive-variants.mdx`), with no date prefix. The publish date lives in `publishedAt`; `updatedAt` is optional and only set when the article body actually changed. Renaming a post file changes its URL, so add a 301 to `datedPostUrls`-style redirects in `next.config.ts`.
 
 ### Styling
 
@@ -110,6 +110,7 @@ Blog posts live in `app/blog/posts/` as `.mdx` files with this frontmatter schem
 ---
 title: 'Post Title'
 publishedAt: 'YYYY-MM-DD'
+updatedAt: 'YYYY-MM-DD'  # optional; only when the article body actually changed
 summary: 'A brief description of the post.'
 image: '/optional/og-image.png'  # optional, falls back to auto-generated OG
 ---

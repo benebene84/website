@@ -1,13 +1,21 @@
 import { CustomMDX } from 'app/components/mdx'
-import { Breadcrumbs, RelatedPosts } from 'app/components/ui'
+import { AuthorBio, Breadcrumbs, RelatedPosts } from 'app/components/ui'
 import { PageContainer } from 'app/components/ui/page-container'
 import { ShareButton } from 'app/components/ui/share'
 import { baseUrl } from 'app/sitemap'
-import { formatDate } from 'app/utils/mdx'
-import { createMetadata, siteName } from 'app/utils/metadata'
+import { formatDate, getModifiedAt, hasBeenUpdated } from 'app/utils/mdx'
+import {
+  authorImagePath,
+  authorPath,
+  authorSameAs,
+  createMetadata,
+  jobTitle,
+  siteName,
+} from 'app/utils/metadata'
 import { getRelatedPosts } from 'app/utils/related-posts'
 import { allPosts } from 'content-collections'
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ViewTransition } from 'react'
 import { Comments } from './comments'
@@ -45,6 +53,7 @@ export async function generateMetadata(props: {
     image: image ? `${baseUrl}${image}` : undefined,
     type: 'article',
     publishedTime,
+    modifiedTime: getModifiedAt(post),
   })
 }
 
@@ -60,6 +69,8 @@ export default async function Blog(props: {
 
   const url = `${baseUrl}/blog/${post._meta.path}`
   const relatedPosts = getRelatedPosts(post)
+  const modifiedAt = getModifiedAt(post)
+  const updated = hasBeenUpdated(post)
   const breadcrumbs = [
     { name: 'Home', href: '/' },
     { name: 'Blog', href: '/blog' },
@@ -70,7 +81,10 @@ export default async function Blog(props: {
     '@type': 'Person',
     '@id': `${baseUrl}/#person`,
     name: siteName,
-    url: `${baseUrl}/about-me`,
+    url: `${baseUrl}${authorPath}`,
+    image: `${baseUrl}${authorImagePath}`,
+    jobTitle,
+    sameAs: [...authorSameAs],
   }
 
   return (
@@ -90,7 +104,7 @@ export default async function Blog(props: {
                     '@id': `${url}#post`,
                     headline: post.title,
                     datePublished: post.publishedAt,
-                    dateModified: post.publishedAt,
+                    dateModified: modifiedAt,
                     description: post.summary,
                     image: post.image
                       ? `${baseUrl}${post.image}`
@@ -128,9 +142,30 @@ export default async function Blog(props: {
           <article>
             {/* Article header */}
             <header className="mb-10">
-              <time className="mb-4 block font-mono text-sm text-text-muted">
-                {formatDate(post.publishedAt)}
-              </time>
+              <div className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-sm text-text-muted">
+                <time dateTime={post.publishedAt}>
+                  {formatDate(post.publishedAt)}
+                </time>
+                {updated && (
+                  <>
+                    <span aria-hidden="true">·</span>
+                    <span>
+                      Updated{' '}
+                      <time dateTime={post.updatedAt}>
+                        {formatDate(post.updatedAt)}
+                      </time>
+                    </span>
+                  </>
+                )}
+                <span aria-hidden="true">·</span>
+                <Link
+                  href={authorPath}
+                  rel="author"
+                  className="transition-colors hover:text-accent"
+                >
+                  {siteName}
+                </Link>
+              </div>
               <h1
                 className="mb-3 text-balance font-semibold text-3xl tracking-tight sm:text-4xl"
                 style={{ viewTransitionName: `title-${post._meta.path}` }}
@@ -157,13 +192,8 @@ export default async function Blog(props: {
             </div>
 
             {/* Article footer */}
-            <footer className="mt-12 flex flex-wrap items-center justify-between gap-3 border-border-subtle border-t pt-6">
-              <p className="text-sm text-text-muted">
-                Written by{' '}
-                <span className="font-medium text-text-primary">
-                  Benedikt Sperl
-                </span>
-              </p>
+            <footer className="mt-12 flex flex-wrap items-start justify-between gap-4 border-border-subtle border-t pt-6">
+              <AuthorBio />
               <ShareButton
                 data={{
                   title: post.title,

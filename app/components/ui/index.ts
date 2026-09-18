@@ -1,3 +1,4 @@
+export { AuthorBio } from './author-bio'
 export { type Breadcrumb, Breadcrumbs } from './breadcrumbs'
 export { Footer } from './footer'
 export { Header } from './header'

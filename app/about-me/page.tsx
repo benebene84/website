@@ -1,7 +1,8 @@
 import { Headline } from 'app/components/ui'
 import { PageContainer } from 'app/components/ui/page-container'
 import beneImage from 'app/images/bene.jpg'
-import { createMetadata } from 'app/utils/metadata'
+import { baseUrl } from 'app/sitemap'
+import { createMetadata, siteName } from 'app/utils/metadata'
 import type { Metadata } from 'next'
 import Image from 'next/image'
 import { ViewTransition } from 'react'
@@ -57,6 +58,20 @@ export default function AboutMe() {
     <ViewTransition>
       <main className="page-animate-in" id="main">
         <PageContainer wide>
+          <script
+            type="application/ld+json"
+            // biome-ignore lint/security/noDangerouslySetInnerHtml: <needed for structured data>
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify({
+                '@context': 'https://schema.org',
+                '@type': 'ProfilePage',
+                '@id': `${baseUrl}/about-me#profile`,
+                url: `${baseUrl}/about-me`,
+                name: `${siteName} – About`,
+                mainEntity: { '@id': `${baseUrl}/#person` },
+              }),
+            }}
+          />
           <article>
             {/* Profile */}
             <header className="mb-16 flex flex-col gap-6 sm:flex-row-reverse sm:gap-8">

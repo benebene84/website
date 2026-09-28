@@ -1,0 +1,328 @@
+---
+title: "Enforcing design system tokens with a custom lint plugin"
+publishedAt: "2026-09-28"
+summary: "When most of the UI code is written by agents, it is important to give them some guardrails to follow. A custom lint plugin can help enforce design system tokens in the code that agents generate."
+tags: ["Design Systems", "AI", "Linting", "Biome"]
+---
+
+## Introduction
+
+With more and more of the UI code written by agents, it gets increasingly important to enable agents to iterate on their work and to give them some guardrails to follow. One way I already described is, to enable agents to [call a custom mcp server with your design system documentation](/blog/shipping-an-mcp-server-with-your-design-system).
+
+While this is a great approach to give the agent the right amount of context on demand, it has one weakness: it is _pull_-based. The agent has to decide to ask, and it has to remember what it was told. Documentation tells an agent what it _should_ do, but nothing stops it from doing something else.
+
+Design tokens are where this shows most clearly. If your design system is built on Tailwind, every agent has seen millions of lines of `p-4`, `gap-2`, `rounded-lg` and `bg-blue-500`. Those classes compile, render and look almost right, so nothing fails. But they bypass your spacing scale, ignore your themes and slowly erode the consistency the design system exists to provide. TypeScript cannot help either, because a class name is just a string.
+
+What agents _do_ reliably react to is tool output. They run the linter, read the diagnostics and fix what is reported, over and over, until the output is clean. So instead of hoping an agent remembers that `p-4` should be `p-200`, we can make the linter say it. This post shows how we built a [Biome](https://biomejs.dev) lint plugin that flags Tailwind classes bypassing the design tokens, suggests the token with the same value and, where possible, fixes it automatically. The plugin is generated from the tokens themselves and ships inside the design system package.
+
+## What the rule should do
+
+Before looking at the implementation, here is what the plugin reports:
+
+<Table
+  data={{
+    headers: ["You wrote", "Suggestion"],
+    rows: [
+      [
+        <>
+          <code>p-4</code>, <code>gap-2</code>, <code>-mt-1</code>,{" "}
+          <code>w-10</code>
+        </>,
+        <>
+          <code>p-200</code>, <code>gap-100</code>, <code>-mt-50</code>,{" "}
+          <code>w-500</code> (same pixel value)
+        </>,
+      ],
+      [
+        <>
+          <code>p-[16px]</code>, <code>h-[3rem]</code>
+        </>,
+        <>
+          <code>p-200</code>, <code>h-600</code>
+        </>,
+      ],
+      [
+        <>
+          <code>rounded-lg</code>, <code>text-sm</code>
+        </>,
+        <>
+          <code>rounded-100</code>, <code>text-100</code>
+        </>,
+      ],
+      [
+        <>
+          <code>p-7</code>, <code>rounded-md</code>
+        </>,
+        "Warning with the nearest tokens, no automatic fix",
+      ],
+      [
+        <>
+          <code>bg-red-500</code>, <code>text-white</code>,{" "}
+          <code>bg-[#fff]</code>
+        </>,
+        "Warning to use a design system color token",
+      ],
+    ],
+  }}
+/>
+
+Classes that already use a token (`p-200`, `bg-neutral-500`, `text-foreground-default`) are left alone.
+
+There are three distinct cases here, and the distinction matters a lot for agents:
+
+1. **Exact match.** `p-4` is 16px in Tailwind and `p-200` is 16px in our scale. There is exactly one correct answer, so the plugin offers a fix.
+2. **No exact match.** `p-7` is 28px and we have no 28px token. The right answer is a design decision (24px or 32px?), so the plugin only warns and lists the nearest tokens.
+3. **Not a scale at all.** Raw palette colors and arbitrary colors have no meaningful "nearest token". The plugin warns and points to the semantic color tokens.
+
+The diagnostic message is written for the reader that will act on it, which increasingly is a model:
+
+```
+Prefer design tokens: `-4` is a Tailwind default spacing value (16px). Use the token `-200`
+(--spacing-200, 16px) instead, e.g. `p-4` → `p-200`.
+```
+
+It names the problem, the token, the CSS variable, the pixel value and a concrete example. An agent does not need to look anything up to fix this.
+
+## Why a Biome plugin
+
+Biome 2 introduced linter plugins written in [GritQL](https://docs.grit.io), a declarative query language for matching and rewriting syntax trees. There is no JavaScript rule API like in ESLint. A plugin is a `.grit` file that matches nodes, checks conditions and registers diagnostics, optionally with a rewrite.
+
+For our use case that is perfectly fine, because the actual work is string matching: find string literals that contain a class like `p-4` and replace the value. The simplified shape of the plugin looks like this:
+
+```grit
+language js
+
+or {
+	JsStringLiteralExpression() as $s,
+	JsxString() as $s,
+	JsTemplateChunkElement() as $s
+} where {
+	$s <: r"(?s)(.*?(?:^|[\s\x22\x27\x60:!])-?(?:p|px|py|gap|...))(-(4|2|...))((?:[\s\x22\x27\x60!]|$).*)"($pre, $value, $post),
+	or {
+		and {
+			$value <: "4",
+			register_diagnostic(span=$s, message="Prefer design tokens: ...", severity="warn", fix_kind="unsafe"),
+			$s => join(list=[$pre, "-200", $post], separator="")
+		},
+		...
+	}
+}
+```
+
+It matches three node types: regular string literals, JSX attribute strings and the static chunks of template literals. That covers `className="..."`, `cn(...)`, `clsx(...)` and any other helper that takes class strings, without needing to know about any of them. The regex captures everything before the value (`$pre`), the value itself (`$value`) and everything after it (`$post`). A condition on `$value` picks the right message and replacement, and `join` reassembles the string with the token in place of the Tailwind value.
+
+The catch is that writing this by hand is not realistic. There are dozens of spacing utilities, four sizing scales, radius and font size, every Tailwind default value, every arbitrary `px` and `rem` value that maps to a token, and a color palette. The resulting file has hundreds of cases, and it would be outdated the first time a token changes. So we don't write it. We generate it.
+
+## Generating the plugin from the tokens
+
+The generator is a small Node script that runs as part of the package build. It reads three inputs:
+
+- the `@theme` block of the design system's `styles.css`, which maps Tailwind namespaces to token variables (`--spacing-200: var(--spacing-200)`, `--radius-100: var(--border-radius-100)`, ...),
+- the theme files, which contain the actual values of those variables per theme,
+- Tailwind's own `theme.css` from `node_modules`, which defines the default scale we want to catch.
+
+Both CSS sources are parsed with a deliberately simple custom property parser. We don't need a full CSS parser, just `--name: value;` pairs:
+
+```ts
+export function parseCustomProperties(css: string): Map<string, string> {
+  const properties = new Map<string, string>();
+  for (const match of css.matchAll(/^\s*--([a-z0-9-]+)\s*:\s*([^;]+);/gm)) {
+    properties.set(match[1], match[2].trim());
+  }
+  return properties;
+}
+```
+
+### Resolving tokens to pixels
+
+To compare a Tailwind class to a token, both need a common unit. Everything is converted to pixels, with `rem` based on a 16px root font size. Values that are not a plain length (`calc()`, percentages, other variables) are simply ignored:
+
+```ts
+function toPx(value: string): number | undefined {
+  const match = value.match(/^(-?[\d.]+)(px|rem)?$/);
+  if (!match) return undefined;
+  const amount = Number(match[1]);
+  if (match[2] === "rem") return amount * ROOT_FONT_SIZE_PX;
+  if (match[2] === "px" || amount === 0) return amount;
+  return undefined;
+}
+```
+
+There is one important subtlety with themes. The design system ships several themes, and a token like `--spacing-200` could in theory resolve to different values in each of them. A fix from `p-4` to `p-200` is only correct if `p-200` is 16px _everywhere_. So the generator collects the value of every variable across all theme files and only keeps variables that resolve to the same pixel value in every theme:
+
+```ts
+function readThemePx(): Map<string, number> {
+  const valuesByProperty = new Map<string, Set<number | undefined>>();
+  for (const file of readdirSync(THEMES_DIR).filter((file) =>
+    file.endsWith(".css"),
+  )) {
+    const properties = parseCustomProperties(
+      readFileSync(resolve(THEMES_DIR, file), "utf-8"),
+    );
+    for (const [name, value] of properties) {
+      const values = valuesByProperty.get(name) ?? new Set();
+      values.add(toPx(value));
+      valuesByProperty.set(name, values);
+    }
+  }
+  const themePx = new Map<string, number>();
+  for (const [name, values] of valuesByProperty) {
+    const [px] = values;
+    if (values.size === 1 && px !== undefined) themePx.set(name, px);
+  }
+  return themePx;
+}
+```
+
+With that map, reading the tokens of a namespace is a matter of following the `var()` reference from the `@theme` block. Only numeric keys are considered tokens of a scale (`spacing-200`, not `spacing-base`), and the result is a list of `{ key, cssVar, px }`.
+
+### Describing the scales
+
+Each scale the plugin should cover is described declaratively: which utilities it applies to, which token namespaces are valid for them and which Tailwind values should be caught.
+
+```ts
+const scales: Scale[] = [
+  {
+    label: "spacing",
+    utilities: SPACING_UTILITIES,
+    namespaces: ["spacing"],
+    tailwindValues: spacingValues,
+  },
+  {
+    label: "size",
+    utilities: ["w"],
+    namespaces: ["width", "spacing"],
+    tailwindValues: spacingValues,
+  },
+  {
+    label: "size",
+    utilities: ["h", "min-h", "max-h"],
+    namespaces: ["height", "spacing"],
+    tailwindValues: spacingValues,
+  },
+  {
+    label: "size",
+    utilities: ["size"],
+    namespaces: ["size", "spacing"],
+    tailwindValues: spacingValues,
+  },
+  {
+    label: "radius",
+    utilities: RADIUS_UTILITIES,
+    namespaces: ["radius"],
+    tailwindValues: () => readTailwindNamedValues(tailwindTheme, "radius"),
+  },
+  {
+    label: "font size",
+    utilities: ["text"],
+    namespaces: ["text"],
+    tailwindValues: () => readTailwindNamedValues(tailwindTheme, "text"),
+    hint: "For running text prefer a typography token such as `text-body-medium-regular`, which also sets line height.",
+  },
+];
+```
+
+Width utilities accept both width and spacing tokens, because Tailwind v4 resolves `w-*` against both namespaces. `mergeTokens` combines them by key and sorts them by size.
+
+The Tailwind side comes in two flavours. Named values like `rounded-lg` or `text-sm` are read straight from Tailwind's `theme.css` (`--radius-lg: 0.5rem`). Spacing is different: Tailwind v4 has no spacing scale anymore, just a single `--spacing: 0.25rem` multiplied by whatever number you put in the class. So the generator reads `--spacing` and multiplies it with the commonly used steps:
+
+```ts
+function spacingMultiplierValues(spacingPx: number) {
+  return (tokens: Token[]): TailwindValue[] => {
+    const tokenKeys = new Set(tokens.map((token) => token.key));
+    const maxPx = Math.max(...tokens.map((token) => token.px));
+    return TAILWIND_SPACING_MULTIPLIERS.map((multiplier) => ({
+      value: String(multiplier),
+      px: multiplier * spacingPx,
+    })).filter((value) => !tokenKeys.has(value.value) && value.px <= maxPx);
+  };
+}
+```
+
+Two filters keep the plugin from being annoying. Values whose name collides with a token key are skipped, since those classes already _are_ tokens. And values larger than the largest token are skipped, because suggesting "use the nearest token" for a `w-96` layout width would be noise rather than guidance.
+
+### From values to cases
+
+For every Tailwind value of a scale, the generator looks for a token with the exact same pixel value. If there is one, it becomes a fixable case with a replacement. If not, it becomes a warn-only case listing the nearest tokens, and if two tokens are equally close, both are mentioned:
+
+```ts
+for (const { value, px } of scale.tailwindValues(tokens)) {
+	const exact = tokens.find(token => token.px === px)
+	if (exact) {
+		exactCases.push({ value, replacement: `-${exact.key}`, message: ... })
+		continue
+	}
+	const nearest = nearestTokens(tokens, px)
+	nearestCases.push({ value, message: ... })
+}
+```
+
+Arbitrary values get the same treatment in reverse. For every token, the generator emits its `px` and `rem` spellings, so `p-[16px]` and `p-[1rem]` both become `p-200`. Any other arbitrary length, like `p-[13px]`, falls through to a fallback rule that warns and lists all tokens of the scale.
+
+### Colors
+
+Colors work differently, because there is no pixel value to compare. Instead, the generator reads every palette color from Tailwind's theme (`--color-red-500`, `--color-white`, ...) and removes all color names the design system defines itself. If the design system has its own `neutral` or `primary` palette, `bg-neutral-500` is a valid token and must not be reported:
+
+```ts
+const designSystemColorNamespaces = new Set(
+  [...themeProperties.keys()].flatMap(
+    (name) => name.match(/^color-([a-z]+)/)?.[1] ?? [],
+  ),
+);
+```
+
+What is left are the hues that only exist in Tailwind. Together with a list of color utilities (`bg`, `text`, `border-*`, `ring`, `fill`, `from`, ...) they form one rule for palette colors and one for arbitrary colors like `bg-[#fff]` or `text-[oklch(...)]`. Neither is fixable, since `bg-red-500` could mean "error", "danger" or "brand accent", and only a human (or a well-instructed agent) can pick the right semantic token.
+
+## Shipping it with the design system
+
+The generator writes the plugin into the package build output, so the plugin always matches the tokens of the installed version. A new token or a changed value is picked up with the next release, without anyone touching the plugin. The generated file carries a header that makes that explicit:
+
+```grit
+// @generated by scripts/generate-biome-plugin.ts. Do not edit by hand.
+```
+
+Consumers reference it in their `biome.json`, optionally limited to the folders containing UI code:
+
+```json
+{
+  "plugins": [
+    {
+      "path": "./node_modules/@acme/design-system/dist/biome/prefer-design-tokens.grit",
+      "includes": ["**/src/**"]
+    }
+  ]
+}
+```
+
+Exact matches are offered as _unsafe_ fixes, since changing a class can change the rendered output. `text-sm` for example also sets a line height in Tailwind, which `text-100` does not. To apply only the plugin's fixes without applying unsafe fixes from other rules:
+
+```bash
+npx biome lint --only=plugin --write --unsafe
+```
+
+## Closing the loop for agents
+
+The plugin is useful for humans, but it is built for agents. The last step is to make sure they actually run it. A single line in the project's agent rules does most of the work:
+
+```md
+After changing UI code, run `biome lint` and fix all `prefer-design-tokens` warnings.
+```
+
+If your agent supports hooks, running the linter automatically after every edit makes it even more reliable, because the agent sees the diagnostics without having to remember to ask for them.
+
+Sometimes a raw value is intentional, for example a campaign color that has no token. For these cases a suppression comment with a reason is the escape hatch:
+
+```tsx
+{
+  /* biome-ignore lint/plugin/prefer-design-tokens: brand color required by the campaign */
+}
+<div className="bg-pink-500" />;
+```
+
+The required reason is a feature. It makes exceptions visible in code review and turns "the agent ignored the tokens" into "someone decided to ignore the tokens, and here is why".
+
+## Conclusion
+
+An MCP server tells agents how your design system should be used. A lint rule makes sure they actually do it. The two complement each other: the MCP server provides context on demand, and the linter provides feedback in the loop agents are already running.
+
+The important part is not the Grit syntax, but that the rule is generated from the same source of truth as the tokens themselves. There is no second list to maintain, the suggestions are always correct for the installed version, and the messages contain everything an agent needs to fix the problem on its own. With that, the design tokens stop being a convention people and agents have to remember, and become a constraint the tooling enforces.

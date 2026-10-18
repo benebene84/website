@@ -94,7 +94,7 @@ export default function RootLayout({
               },
               worksFor: {
                 '@type': 'OrganizationRole',
-                roleName: 'Engineering Lead Frontend',
+                roleName: 'Lead Engineer Frontend',
                 startDate: '2024-03',
                 description:
                   'Managing and leading the development of the frontend',

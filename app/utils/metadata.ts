@@ -2,7 +2,7 @@ import { baseUrl } from 'app/sitemap'
 import type { Metadata } from 'next'
 
 export const siteName = 'Benedikt Sperl'
-export const jobTitle = 'Software Architect and Engineering Lead'
+export const jobTitle = 'Software Architect and Lead Engineer'
 export const authorPath = '/about-me'
 export const authorImagePath = '/images/bene.jpg'
 export const authorSameAs = [
@@ -11,7 +11,7 @@ export const authorSameAs = [
   'https://www.npmjs.com/~benebene84',
 ] as const
 export const authorTagline =
-  'Software Architect and Engineering Lead in Munich. Writes about frontend architecture, design systems, and the web.'
+  'Software Architect and Lead Engineer in Munich. Writes about frontend architecture, design systems, and the web.'
 
 type CreateMetadataOptions = {
   title: string

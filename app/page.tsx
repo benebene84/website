@@ -6,9 +6,9 @@ import { ViewTransition } from 'react'
 import { Headline } from './components/ui'
 
 export const metadata: Metadata = createMetadata({
-  title: 'Benedikt Sperl – Software Architect & Engineering Lead, Munich',
+  title: 'Benedikt Sperl – Software Architect & Lead Engineer, Munich',
   description:
-    'Benedikt Sperl is a Software Architect and Engineering Lead based in Munich, Germany, with a passion for web development, UX design, accessibility, performance optimization and automation.',
+    'Benedikt Sperl is a Software Architect and Lead Engineer based in Munich, Germany, with a passion for web development, UX design, accessibility, performance optimization and automation.',
   path: '/',
   absoluteTitle: true,
   image: '/images/benedikt-sperl.jpg',
@@ -17,7 +17,7 @@ export const metadata: Metadata = createMetadata({
 const professionalExperience = [
   {
     company: 'WOLF GmbH',
-    role: 'Engineering Lead Frontend',
+    role: 'Lead Engineer Frontend',
     duration: '03/2024 – present',
     description: 'Managing and leading the development of the frontend',
     highlights: [
@@ -87,8 +87,7 @@ export default function Page() {
             </Headline>
             <p className="mt-4 max-w-xl text-lg text-text-secondary leading-relaxed">
               <strong className="text-text-primary">Software Architect</strong>{' '}
-              and{' '}
-              <strong className="text-text-primary">Engineering Lead</strong>{' '}
+              and <strong className="text-text-primary">Lead Engineer</strong>{' '}
               with a strong focus on Frontend, based in Munich, Germany. I
               specialize in crafting web applications with a strong focus on{' '}
               <strong className="text-text-primary">UX design</strong>,{' '}

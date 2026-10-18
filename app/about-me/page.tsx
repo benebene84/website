@@ -10,7 +10,7 @@ import { ViewTransition } from 'react'
 export const metadata: Metadata = createMetadata({
   title: 'About Me',
   description:
-    "Hi, I'm Benedikt Sperl – Software Architect and Engineering Lead based in Munich, Germany.",
+    "Hi, I'm Benedikt Sperl – Software Architect and Lead Engineer based in Munich, Germany.",
   path: '/about-me',
 })
 
@@ -80,7 +80,7 @@ export default function AboutMe() {
                   src={beneImage}
                   width={160}
                   height={160}
-                  alt="Benedikt Sperl - Software Architect and Engineering Lead"
+                  alt="Benedikt Sperl - Software Architect and Lead Engineer"
                   className="h-40 w-40 rounded-sm object-cover"
                   placeholder="blur"
                   priority
@@ -91,7 +91,7 @@ export default function AboutMe() {
                 <p className="text-text-secondary sm:text-lg">
                   Hi, I'm{' '}
                   <strong className="text-text-primary">Benedikt Sperl</strong>{' '}
-                  – Software Architect and Engineering Lead based in Munich,
+                  – Software Architect and Lead Engineer based in Munich,
                   Germany.
                 </p>
                 <p className="text-text-secondary">

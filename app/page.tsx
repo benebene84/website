@@ -1,7 +1,10 @@
 import { BlogPosts } from 'app/components/posts'
 import { PageContainer } from 'app/components/ui/page-container'
-import { createMetadata } from 'app/utils/metadata'
+import beneImage from 'app/images/bene.jpg'
+import { baseUrl } from 'app/sitemap'
+import { createMetadata, siteName } from 'app/utils/metadata'
 import type { Metadata } from 'next'
+import Image from 'next/image'
 import { ViewTransition } from 'react'
 import { Headline } from './components/ui'
 
@@ -34,45 +37,40 @@ const professionalExperience = [
     description:
       'Managed the transformation of a monolith e-commerce architecture into a modern multi application frontend based on React and Next.Js',
     highlights: [
+      'Key player in the global relaunch of 14 e-commerce brands across 30 countries',
       'Creating a new frontend architecture target picture to split up a monolith e-commerce system into microservices with different frontend applications',
       'Choosing the technology stack for the new frontend with special focus on performance optimizations',
-      'Creation of a reusable mulitbrand component library',
-    ],
-  },
-  {
-    company: 'BSH Home Appliances',
-    role: 'Senior UX & Digital Solutions Specialist',
-    duration: '05/2019 – 06/2020',
-    description: 'Identified, tested and implemented global UX/UI improvements',
-    highlights: [
-      'Website and Conversion Optimization',
-      'UX & UI improvements for digital touchpoints',
-    ],
-  },
-  {
-    company: 'BSH Home Appliances',
-    role: 'Global Brand Website Manager - Bosch Home Appliances',
-    duration: '08/2015 – 05/2019',
-    description: 'SPOC for the Global Bosch website',
-    highlights: [
-      'Website and Conversion Optimization',
-      'Development and Implementation of digital tools',
-      'Planning, Implementation and Analysis of Global Marketing Campaigns',
+      'Creation of a reusable multibrand component library',
     ],
   },
 ]
 
-const skills = [
-  'TypeScript',
-  'React',
-  'Next.js',
-  'Node.js',
-  'Astro',
-  'Performance',
-  'Accessibility',
-  'UX Design',
-  'Architecture',
-  'CI/CD',
+const whatIDo = [
+  {
+    title: '(Frontend) Architecture',
+    description:
+      'Scalable architectures for complex web platforms, built for delivery speed and maintainability.',
+  },
+  {
+    title: 'Microfrontends & Design Systems',
+    description:
+      'Modular frontends and multi-brand component libraries that let large teams ship in parallel.',
+  },
+  {
+    title: 'Performance Engineering',
+    description:
+      'Measurable gains in load time, runtime performance and Core Web Vitals.',
+  },
+  {
+    title: 'DX',
+    description:
+      'Monorepos, tooling and CI/CD that make engineering teams faster, calmer and happier.',
+  },
+  {
+    title: 'AI-Assisted Engineering',
+    description:
+      'LLM integration and AI-driven workflows that accelerate prototyping and raise code quality.',
+  },
 ]
 
 export default function Page() {
@@ -80,40 +78,81 @@ export default function Page() {
     <ViewTransition>
       <main className="page-animate-in" id="main">
         <PageContainer wide>
+          <script
+            type="application/ld+json"
+            // biome-ignore lint/security/noDangerouslySetInnerHtml: <needed for structured data>
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify({
+                '@context': 'https://schema.org',
+                '@type': 'ProfilePage',
+                '@id': `${baseUrl}/#profile`,
+                url: baseUrl,
+                name: `${siteName} – Software Architect & Lead Engineer`,
+                mainEntity: { '@id': `${baseUrl}/#person` },
+              }),
+            }}
+          />
           {/* Hero */}
-          <section className="mb-16">
-            <Headline as="div">
-              Hi, I'm <h1 className="inline">Benedikt Sperl</h1>!
-            </Headline>
-            <p className="mt-4 max-w-xl text-lg text-text-secondary leading-relaxed">
-              <strong className="text-text-primary">Software Architect</strong>{' '}
-              and <strong className="text-text-primary">Lead Engineer</strong>{' '}
-              with a strong focus on Frontend, based in Munich, Germany. I
-              specialize in crafting web applications with a strong focus on{' '}
-              <strong className="text-text-primary">UX design</strong>,{' '}
-              <strong className="text-text-primary">accessibility</strong>,{' '}
-              <strong className="text-text-primary">
-                performance optimization
-              </strong>
-              , and <strong className="text-text-primary">automation</strong>.
-            </p>
+          <section className="mb-16 flex flex-col gap-6 sm:flex-row-reverse sm:justify-between sm:gap-8">
+            <Image
+              src={beneImage}
+              width={160}
+              height={160}
+              alt="Benedikt Sperl"
+              className="size-40 shrink-0 rounded-sm object-cover"
+              placeholder="blur"
+              priority
+            />
+            <div>
+              <Headline as="div">
+                Hi, I'm <h1 className="inline">Benedikt Sperl</h1>!
+              </Headline>
+              <p className="mt-4 max-w-xl text-lg text-text-secondary leading-relaxed">
+                <strong className="text-text-primary">
+                  Software Architect
+                </strong>{' '}
+                and <strong className="text-text-primary">Lead Engineer</strong>{' '}
+                with a strong focus on Frontend, based in Munich, Germany. I
+                specialize in crafting web applications with a strong focus on{' '}
+                <strong className="text-text-primary">UX design</strong>,{' '}
+                <strong className="text-text-primary">accessibility</strong>,{' '}
+                <strong className="text-text-primary">
+                  performance optimization
+                </strong>
+                , and <strong className="text-text-primary">automation</strong>.
+              </p>
+            </div>
           </section>
 
-          {/* Skills */}
-          <section className="mb-16">
-            <h2 className="mb-4 font-semibold text-xl tracking-tight">
-              Skills
+          {/* What I do */}
+          <section className="mb-16" aria-labelledby="what-i-do">
+            <h2
+              id="what-i-do"
+              className="mb-2 font-semibold text-xl tracking-tight"
+            >
+              What I love to do
             </h2>
-            <div className="flex flex-wrap gap-2">
-              {skills.map((skill) => (
-                <span
-                  key={skill}
-                  className="rounded-full bg-tag-bg px-3 py-1 text-sm text-tag-text"
+            <p className="mb-8 max-w-xl text-text-secondary">
+              Frontend architecture at the core. UX and AI as force multipliers.
+            </p>
+            <ol className="grid gap-x-8 gap-y-8 sm:grid-cols-2">
+              {whatIDo.map((item, index) => (
+                <li
+                  key={item.title}
+                  className="flex flex-col gap-2 border-border-subtle border-t pt-4"
                 >
-                  {skill}
-                </span>
+                  <span className="font-mono text-accent text-xs tabular-nums">
+                    {String(index + 1).padStart(2, '0')}
+                  </span>
+                  <h3 className="font-medium text-text-primary">
+                    {item.title}
+                  </h3>
+                  <p className="text-sm text-text-tertiary leading-relaxed">
+                    {item.description}
+                  </p>
+                </li>
               ))}
-            </div>
+            </ol>
           </section>
 
           {/* Recent Articles */}
@@ -125,7 +164,7 @@ export default function Page() {
           </section>
 
           {/* Experience */}
-          <section>
+          <section className="mb-16">
             <h2 className="mb-6 font-semibold text-xl tracking-tight">
               Experience
             </h2>
@@ -162,6 +201,37 @@ export default function Page() {
                   </ul>
                 </div>
               ))}
+            </div>
+          </section>
+
+          {/* Background */}
+          <section aria-labelledby="background">
+            <h2
+              id="background"
+              className="mb-4 font-semibold text-xl tracking-tight"
+            >
+              Background
+            </h2>
+            <div className="max-w-xl space-y-3 text-text-secondary leading-relaxed">
+              <p>
+                People often ask how someone with a degree in Political Science,
+                Sociology and Economics from Ludwig-Maximilians-Universität
+                Munich ends up in software architecture. I started programming
+                at 12 or 13, but studying computer science felt too
+                one-dimensional. I've always cared about more than code:
+                technology, design, society and the ethical questions behind
+                them.
+              </p>
+              <p>
+                My path led through project management in marketing and digital
+                agencies, where I ran campaigns, coordinated IT projects and
+                built landing pages, taking on more technical responsibility
+                with every project. What shaped my career was seeing UX problems
+                that could no longer be fixed once a project had reached a
+                certain stage. That pushed me deeper into development, so I
+                could build products from the ground up that work technically
+                and deliver a great user experience.
+              </p>
             </div>
           </section>
         </PageContainer>

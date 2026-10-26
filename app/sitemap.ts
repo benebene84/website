@@ -21,7 +21,7 @@ export default async function sitemap() {
     { url: `${baseUrl}/blog`, lastModified: latestPost },
   ]
 
-  const staticPages = ['/about-me', '/imprint'].map((route) => ({
+  const staticPages = ['/imprint'].map((route) => ({
     url: `${baseUrl}${route}`,
   }))
 

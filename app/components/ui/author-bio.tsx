@@ -1,5 +1,5 @@
 import beneImage from 'app/images/bene.jpg'
-import { authorTagline, siteName } from 'app/utils/metadata'
+import { authorPath, authorTagline, siteName } from 'app/utils/metadata'
 import Image from 'next/image'
 import Link from 'next/link'
 
@@ -18,7 +18,7 @@ export function AuthorBio() {
       <div className="min-w-0">
         <p className="font-medium text-text-primary">
           <Link
-            href="/about-me"
+            href={authorPath}
             rel="author"
             className="transition-colors hover:text-accent"
           >

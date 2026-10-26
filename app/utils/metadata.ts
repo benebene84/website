@@ -3,7 +3,7 @@ import type { Metadata } from 'next'
 
 export const siteName = 'Benedikt Sperl'
 export const jobTitle = 'Software Architect and Lead Engineer'
-export const authorPath = '/about-me'
+export const authorPath = '/'
 export const authorImagePath = '/images/bene.jpg'
 export const authorSameAs = [
   'https://github.com/benebene84',

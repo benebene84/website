@@ -34,12 +34,14 @@ const nextConfig: NextConfig = {
     useTypeScriptCli: true,
   },
   // `statusCode: 301` rather than `permanent: true`, which would emit a 308.
-  redirects: async () =>
-    datedPostUrls.map((path) => ({
+  redirects: async () => [
+    { source: '/about-me', destination: '/', statusCode: 301 },
+    ...datedPostUrls.map((path) => ({
       source: `/blog/${path}`,
       destination: `/blog/${path.replace(/^\d{4}-\d{2}-\d{2}-/, '')}`,
       statusCode: 301,
     })),
+  ],
 }
 
 export default withContentCollections(nextConfig)

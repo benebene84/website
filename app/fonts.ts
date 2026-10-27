@@ -1,4 +1,13 @@
+import { Newsreader } from 'next/font/google'
 import localFont from 'next/font/local'
+
+/** Display serif — optical sizes for headlines and the wordmark. */
+export const newsreader = Newsreader({
+  subsets: ['latin'],
+  variable: '--font-newsreader',
+  display: 'swap',
+  style: ['normal', 'italic'],
+})
 
 /** Geist via `next/font/local` so we can tune display + fallback metrics (package export is minimal). */
 export const geistSans = localFont({

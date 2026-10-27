@@ -6,7 +6,7 @@ import { createMetadata, siteName } from 'app/utils/metadata'
 import type { Metadata } from 'next'
 import Image from 'next/image'
 import { ViewTransition } from 'react'
-import { Headline } from './components/ui'
+import { Headline, SectionHeading } from './components/ui'
 
 export const metadata: Metadata = createMetadata({
   title: 'Benedikt Sperl – Software Architect & Lead Engineer, Munich',
@@ -77,7 +77,7 @@ export default function Page() {
   return (
     <ViewTransition>
       <main className="page-animate-in" id="main">
-        <PageContainer wide>
+        <PageContainer wide className="flex flex-col gap-16 sm:gap-20">
           <script
             type="application/ld+json"
             // biome-ignore lint/security/noDangerouslySetInnerHtml: <needed for structured data>
@@ -93,61 +93,47 @@ export default function Page() {
             }}
           />
           {/* Hero */}
-          <section className="mb-16 flex flex-col gap-6 sm:flex-row-reverse sm:justify-between sm:gap-8">
+          <section className="flex flex-col gap-8 sm:flex-row-reverse sm:items-start sm:justify-between sm:gap-12">
             <Image
               src={beneImage}
               width={160}
               height={160}
               alt="Benedikt Sperl"
-              className="size-40 shrink-0 rounded-sm object-cover"
+              className="size-36 shrink-0 rounded-sm object-cover sm:size-40"
               placeholder="blur"
               priority
             />
             <div>
               <Headline as="div">
-                Hi, I'm <h1 className="inline">Benedikt Sperl</h1>!
+                Hi, I'm <h1 className="inline">Benedikt Sperl</h1>
               </Headline>
-              <p className="mt-4 max-w-xl text-lg text-text-secondary leading-relaxed">
-                <strong className="text-text-primary">
-                  Software Architect
-                </strong>{' '}
-                and <strong className="text-text-primary">Lead Engineer</strong>{' '}
-                with a strong focus on Frontend, based in Munich, Germany. I
-                specialize in crafting web applications with a strong focus on{' '}
-                <strong className="text-text-primary">UX design</strong>,{' '}
-                <strong className="text-text-primary">accessibility</strong>,{' '}
-                <strong className="text-text-primary">
-                  performance optimization
-                </strong>
-                , and <strong className="text-text-primary">automation</strong>.
+              <p className="text-text-secondary mt-5 max-w-xl leading-relaxed text-pretty">
+                Software Architect and Lead Engineer with a strong focus on
+                Frontend, based in Munich, Germany. I specialize in crafting web
+                applications with a strong focus on UX design, accessibility,
+                performance optimization, and automation.
               </p>
             </div>
           </section>
 
           {/* What I do */}
-          <section className="mb-16" aria-labelledby="what-i-do">
-            <h2
-              id="what-i-do"
-              className="mb-2 font-semibold text-xl tracking-tight"
-            >
-              What I love to do
-            </h2>
-            <p className="mb-8 max-w-xl text-text-secondary">
-              Frontend architecture at the core. UX and AI as force multipliers.
-            </p>
-            <ol className="grid gap-x-8 gap-y-8 sm:grid-cols-2">
+          <section aria-labelledby="what-i-do">
+            <header className="mb-8">
+              <SectionHeading id="what-i-do">What I love to do</SectionHeading>
+            </header>
+            <ol className="grid gap-x-10 gap-y-8 sm:grid-cols-2">
               {whatIDo.map((item, index) => (
                 <li
                   key={item.title}
-                  className="flex flex-col gap-2 border-border-subtle border-t pt-4"
+                  className="border-border-subtle flex flex-col gap-2 border-t pt-5"
                 >
-                  <span className="font-mono text-accent text-xs tabular-nums">
+                  <span className="text-text-muted font-mono text-sm tabular-nums">
                     {String(index + 1).padStart(2, '0')}
                   </span>
-                  <h3 className="font-medium text-text-primary">
+                  <h3 className="text-text-primary font-medium">
                     {item.title}
                   </h3>
-                  <p className="text-sm text-text-tertiary leading-relaxed">
+                  <p className="text-text-secondary leading-relaxed text-pretty">
                     {item.description}
                   </p>
                 </li>
@@ -156,63 +142,65 @@ export default function Page() {
           </section>
 
           {/* Recent Articles */}
-          <section className="mb-16">
-            <h2 className="mb-6 font-semibold text-xl tracking-tight">
+          <section aria-labelledby="recent-articles">
+            <SectionHeading id="recent-articles" className="mb-8">
               Recent Articles
-            </h2>
+            </SectionHeading>
             <BlogPosts limit={5} />
           </section>
 
           {/* Experience */}
-          <section className="mb-16">
-            <h2 className="mb-6 font-semibold text-xl tracking-tight">
+          <section aria-labelledby="experience">
+            <SectionHeading id="experience" className="mb-8">
               Experience
-            </h2>
-            <div className="flex flex-col gap-8">
+            </SectionHeading>
+            <div className="flex flex-col">
               {professionalExperience.map((experience) => (
-                <div
-                  className="flex flex-col gap-3 border-accent border-l-2 pl-4"
+                <article
+                  className="border-border-subtle flex flex-col gap-3 border-t py-6 first:border-t-0 first:pt-0 last:pb-0"
                   key={experience.role}
                 >
-                  <div className="flex flex-col gap-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <strong className="text-lg">{experience.company}</strong>
-                      <span className="rounded-full bg-tag-bg px-2 py-0.5 text-tag-text text-xs">
-                        {experience.role}
-                      </span>
-                    </div>
-                    <span className="font-mono text-sm text-text-tertiary">
+                  <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between sm:gap-6">
+                    <h3 className="text-text-primary font-medium">
+                      {experience.company}
+                    </h3>
+                    <span className="text-text-tertiary font-mono text-sm tabular-nums">
                       {experience.duration}
                     </span>
                   </div>
-                  <p className="text-text-secondary">
+                  <p className="text-text-secondary text-sm">
+                    {experience.role}
+                  </p>
+                  <p className="text-text-secondary leading-relaxed text-pretty">
                     {experience.description}
                   </p>
-                  <ul className="flex flex-col gap-1.5">
+                  <ul className="flex flex-col gap-2">
                     {experience.highlights.map((highlight) => (
                       <li
                         key={highlight}
-                        className="flex gap-2 text-sm text-text-tertiary"
+                        className="text-text-secondary flex gap-3 leading-relaxed text-pretty"
                       >
-                        <span className="text-accent">·</span>
+                        <span
+                          className="text-text-muted select-none"
+                          aria-hidden="true"
+                        >
+                          –
+                        </span>
                         <span>{highlight}</span>
                       </li>
                     ))}
                   </ul>
-                </div>
+                </article>
               ))}
             </div>
           </section>
 
           {/* Background */}
           <section aria-labelledby="background">
-            <h2
-              id="background"
-              className="mb-4 font-semibold text-xl tracking-tight"
-            >
+            <SectionHeading id="background" className="mb-8">
               Background
-            </h2>
-            <div className="max-w-xl space-y-3 text-text-secondary leading-relaxed">
+            </SectionHeading>
+            <div className="text-text-secondary max-w-xl space-y-4 leading-relaxed text-pretty">
               <p>
                 People often ask how someone with a degree in Political Science,
                 Sociology and Economics from Ludwig-Maximilians-Universität

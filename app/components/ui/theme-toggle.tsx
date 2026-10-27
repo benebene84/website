@@ -19,8 +19,7 @@ export function ThemeToggle({ className }: { className?: string }) {
       <button
         type="button"
         className={cx(
-          'flex h-8 w-8 items-center justify-center rounded-lg',
-          'bg-bg-tertiary',
+          'flex h-8 w-8 items-center justify-center rounded-md',
           'text-text-tertiary',
           className,
         )}
@@ -37,8 +36,7 @@ export function ThemeToggle({ className }: { className?: string }) {
       type="button"
       onClick={cycleTheme}
       className={cx(
-        'flex h-8 w-8 items-center justify-center rounded-lg',
-        'bg-bg-tertiary hover:bg-bg-hover',
+        'flex h-8 w-8 items-center justify-center rounded-md',
         'text-text-tertiary hover:text-text-primary',
         'transition-colors duration-150',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring',

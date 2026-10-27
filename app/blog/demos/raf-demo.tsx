@@ -79,28 +79,28 @@ export function RafDemo() {
         <button
           type="button"
           onClick={handleToggle}
-          className="rounded-lg border-border-default bg-bg-secondary px-4 py-2 text-sm text-text-primary transition-colors hover:bg-bg-tertiary"
+          className="border-border-default bg-bg-secondary text-text-primary hover:bg-bg-tertiary rounded-lg px-4 py-2 text-sm transition-colors"
         >
           {isRunning ? 'Pause' : 'Start'} animation
         </button>
         <button
           type="button"
           onClick={handleReset}
-          className="rounded-lg border-border-default bg-bg-secondary px-4 py-2 text-sm text-text-primary transition-colors hover:bg-bg-tertiary"
+          className="border-border-default bg-bg-secondary text-text-primary hover:bg-bg-tertiary rounded-lg px-4 py-2 text-sm transition-colors"
         >
           Reset
         </button>
       </div>
       <div
         ref={trackRef}
-        className="relative h-20 w-full overflow-hidden rounded-lg border border-border-default bg-bg-tertiary"
+        className="border-border-default bg-bg-tertiary relative h-20 w-full overflow-hidden rounded-lg border"
       >
         <div
           ref={boxRef}
-          className="absolute top-4 left-4 h-12 w-12 rounded-lg bg-accent"
+          className="bg-accent absolute top-4 left-4 h-12 w-12 rounded-lg"
         />
       </div>
-      <p className="text-center text-sm text-text-tertiary">
+      <p className="text-text-tertiary text-center text-sm">
         Time-based animation using requestAnimationFrame
       </p>
     </div>

@@ -7,23 +7,23 @@ export default function NotFound() {
       id="main"
     >
       <div className="text-center">
-        <p className="font-bold font-mono text-6xl text-text-muted">404</p>
-        <h1 className="mt-4 font-semibold text-xl tracking-tight">
+        <p className="text-text-muted font-serif text-6xl">404</p>
+        <h1 className="mt-4 font-serif text-xl font-medium tracking-tight">
           Page Not Found
         </h1>
-        <p className="mt-2 text-text-secondary">
+        <p className="text-text-secondary mt-2">
           This page doesn't exist or has been moved.
         </p>
         <div className="mt-6 flex justify-center gap-3">
           <Link
             href="/"
-            className="rounded-lg bg-accent px-4 py-2 font-medium text-sm text-text-inverse transition-colors hover:bg-accent-hover"
+            className="bg-accent text-text-inverse hover:bg-accent-hover rounded-lg px-4 py-2 text-sm font-medium transition-colors"
           >
             Return Home
           </Link>
           <Link
             href="/blog"
-            className="rounded-lg border border-border-default bg-bg-primary px-4 py-2 font-medium text-sm text-text-secondary transition-colors hover:bg-bg-hover"
+            className="border-border-default bg-bg-primary text-text-secondary hover:bg-bg-hover rounded-lg border px-4 py-2 text-sm font-medium transition-colors"
           >
             View Blog
           </Link>

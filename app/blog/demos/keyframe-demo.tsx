@@ -44,14 +44,14 @@ export function KeyframeDemo() {
           setKey((k) => k + 1)
           setTimeout(() => setShowToast(true), 10)
         }}
-        className="rounded-lg border-border-default bg-bg-secondary px-4 py-2 text-sm text-text-primary transition-colors hover:bg-bg-tertiary"
+        className="border-border-default bg-bg-secondary text-text-primary hover:bg-bg-tertiary rounded-lg px-4 py-2 text-sm transition-colors"
       >
         Show toast
       </button>
       {showToast && (
         <div
           key={key}
-          className={`toast-pop-${key} rounded-lg border border-border-default bg-bg-secondary px-4 py-3 text-text-primary`}
+          className={`toast-pop-${key} border-border-default bg-bg-secondary text-text-primary rounded-lg border px-4 py-3`}
         >
           Toast notification
         </div>

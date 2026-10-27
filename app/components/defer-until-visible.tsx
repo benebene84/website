@@ -49,7 +49,7 @@ export function DeferUntilVisible({
       ) : (
         <div
           aria-hidden="true"
-          className="w-full rounded-lg border border-border-subtle bg-bg-secondary"
+          className="border-border-subtle bg-bg-secondary w-full rounded-lg border"
           style={{ minHeight }}
         />
       )}

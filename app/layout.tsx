@@ -4,7 +4,7 @@ import Script from 'next/script'
 import { Footer } from './components/ui/footer'
 import { Header } from './components/ui/header'
 import { SkipLink } from './components/ui/skip-link'
-import { geistMono, geistSans } from './fonts'
+import { geistMono, geistSans, newsreader } from './fonts'
 import { baseUrl } from './sitemap'
 import { cx } from './utils/cx'
 import {
@@ -61,7 +61,12 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={cx('scroll-smooth', geistSans.variable, geistMono.variable)}
+      className={cx(
+        'scroll-smooth',
+        geistSans.variable,
+        geistMono.variable,
+        newsreader.variable,
+      )}
       suppressHydrationWarning
       data-scroll-behavior="smooth"
     >

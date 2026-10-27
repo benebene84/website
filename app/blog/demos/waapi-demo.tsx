@@ -22,7 +22,7 @@ export function WaapiDemo() {
     await animation.finished
 
     if (singleElementRef.current) {
-      singleElementRef.current.innerText += ' - Animation done'
+      singleElementRef.current.textContent += ' - Animation done'
     }
   }
 
@@ -42,7 +42,7 @@ export function WaapiDemo() {
       await anim.finished
 
       if (item) {
-        item.innerText += ' - Animation done'
+        item.textContent += ' - Animation done'
       }
     }
   }
@@ -54,15 +54,15 @@ export function WaapiDemo() {
           <button
             type="button"
             onClick={handleAnimate}
-            className="rounded-lg border-border-default bg-bg-secondary px-4 py-2 text-sm text-text-primary transition-colors hover:bg-bg-tertiary"
+            className="border-border-default bg-bg-secondary text-text-primary hover:bg-bg-tertiary rounded-lg px-4 py-2 text-sm transition-colors"
           >
             Animate single
           </button>
         </div>
-        <div className="flex min-h-24 items-center justify-center rounded-lg border border-border-default bg-bg-tertiary p-4">
+        <div className="border-border-default bg-bg-tertiary flex min-h-24 items-center justify-center rounded-lg border p-4">
           <div
             ref={singleElementRef}
-            className="rounded-lg bg-accent px-4 py-2 text-text-inverse"
+            className="bg-accent text-text-inverse rounded-lg px-4 py-2"
             style={{ opacity: 0 }}
           >
             Single element
@@ -75,29 +75,29 @@ export function WaapiDemo() {
           <button
             type="button"
             onClick={handleSequence}
-            className="rounded-lg border-border-default bg-bg-secondary px-4 py-2 text-sm text-text-primary transition-colors hover:bg-bg-tertiary"
+            className="border-border-default bg-bg-secondary text-text-primary hover:bg-bg-tertiary rounded-lg px-4 py-2 text-sm transition-colors"
           >
             Animate sequence
           </button>
         </div>
-        <div className="flex min-h-24 flex-col items-center justify-center gap-2 rounded-lg border border-border-default bg-bg-tertiary p-4">
+        <div className="border-border-default bg-bg-tertiary flex min-h-24 flex-col items-center justify-center gap-2 rounded-lg border p-4">
           <div
             ref={item1Ref}
-            className="rounded-lg bg-accent px-4 py-2 text-text-inverse"
+            className="bg-accent text-text-inverse rounded-lg px-4 py-2"
             style={{ opacity: 0 }}
           >
             Item 1
           </div>
           <div
             ref={item2Ref}
-            className="rounded-lg bg-accent px-4 py-2 text-text-inverse"
+            className="bg-accent text-text-inverse rounded-lg px-4 py-2"
             style={{ opacity: 0 }}
           >
             Item 2
           </div>
           <div
             ref={item3Ref}
-            className="rounded-lg bg-accent px-4 py-2 text-text-inverse"
+            className="bg-accent text-text-inverse rounded-lg px-4 py-2"
             style={{ opacity: 0 }}
           >
             Item 3

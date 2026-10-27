@@ -13,16 +13,16 @@ export default function Imprint() {
     <main className="page-animate-in" id="main">
       <PageContainer>
         <article lang="de">
-          <h1 className="mb-8 font-semibold text-3xl tracking-tight">
+          <h1 className="mb-8 font-serif text-3xl font-medium tracking-tight">
             Impressum
           </h1>
 
           <div className="prose max-w-none">
             <section className="mb-6">
-              <p className="mb-2 font-medium text-text-primary">
+              <p className="text-text-primary mb-2 font-medium">
                 Angaben gemäß § 5 DDG
               </p>
-              <address className="flex flex-col text-text-secondary not-italic">
+              <address className="text-text-secondary flex flex-col not-italic">
                 <span>Benedikt Sperl</span>
                 <span>Harthauserstraße 119</span>
                 <span>81545 München</span>
@@ -30,10 +30,10 @@ export default function Imprint() {
             </section>
 
             <section className="mb-6">
-              <p className="mb-2 font-medium text-text-primary">
+              <p className="text-text-primary mb-2 font-medium">
                 Vertreten durch:
               </p>
-              <div className="flex flex-col text-text-secondary">
+              <div className="text-text-secondary flex flex-col">
                 <span>Benedikt Sperl</span>
                 <span>
                   E-Mail:{' '}
@@ -48,24 +48,24 @@ export default function Imprint() {
             </section>
 
             <section className="mb-6">
-              <p className="mb-2 font-medium text-text-primary">
+              <p className="text-text-primary mb-2 font-medium">
                 Verantwortlich für den Inhalt nach § 55 Abs. 2 RStV:
               </p>
-              <address className="flex flex-col text-text-secondary not-italic">
+              <address className="text-text-secondary flex flex-col not-italic">
                 <span>Benedikt Sperl</span>
                 <span>Harthauserstraße 119</span>
                 <span>81545 München</span>
               </address>
             </section>
 
-            <section className="rounded-lg border border-border-default bg-bg-secondary p-4">
-              <h2 className="mb-3 font-semibold text-lg text-text-primary">
+            <section className="border-border-default bg-bg-secondary rounded-lg border p-4">
+              <h2 className="text-text-primary mb-3 text-lg font-semibold">
                 Haftungsausschluss
               </h2>
-              <h3 className="mb-2 font-medium text-text-primary">
+              <h3 className="text-text-primary mb-2 font-medium">
                 Haftung für Links
               </h3>
-              <p className="text-sm text-text-secondary leading-relaxed">
+              <p className="text-text-secondary text-sm leading-relaxed">
                 Unser Angebot enthält Links zu externen Webseiten Dritter, auf
                 deren Inhalte wir keinen Einfluss haben. Deshalb können wir für
                 diese fremden Inhalte auch keine Gewähr übernehmen. Für die

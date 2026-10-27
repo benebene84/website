@@ -12,21 +12,21 @@ export function BlogPosts({ limit }: { limit?: number }) {
     .slice(0, limit)
 
   return (
-    <div className="flex flex-col divide-y divide-border-subtle">
+    <div className="divide-border-subtle flex flex-col divide-y">
       {sortedBlogs.map((post) => (
         <Link
           key={post._meta.path}
           href={`/blog/${post._meta.path}`}
-          className="group py-4 transition-colors first:pt-0 last:pb-0"
+          className="group py-5 transition-colors first:pt-0 last:pb-0"
         >
           <div className="flex flex-col gap-0.5 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4">
             <span
-              className="font-medium text-text-primary transition-colors group-hover:text-accent"
+              className="text-text-primary font-medium underline-offset-4 transition-colors group-hover:underline"
               style={{ viewTransitionName: `title-${post._meta.path}` }}
             >
               {post.title}
             </span>
-            <span className="shrink-0 font-mono text-text-muted text-xs tabular-nums">
+            <span className="text-text-muted shrink-0 font-mono text-sm tabular-nums">
               {formatDate(post.publishedAt)}
             </span>
           </div>
@@ -37,7 +37,7 @@ export function BlogPosts({ limit }: { limit?: number }) {
       {limit && allPosts.length > limit && (
         <Link
           href="/blog"
-          className="flex items-center gap-2 pt-4 font-medium text-accent text-sm transition-colors hover:text-accent-hover"
+          className="text-text-primary flex items-center gap-2 pt-4 text-sm transition-opacity hover:opacity-60"
         >
           <span>View all {allPosts.length} articles</span>
           <ArrowRight size={14} aria-hidden="true" />

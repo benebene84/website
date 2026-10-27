@@ -22,7 +22,7 @@ function Table({
   const headers = data.headers.map((header) => (
     <th
       key={header}
-      className="border-border-default border-b px-4 py-3 text-left font-semibold text-text-primary"
+      className="border-border-default text-text-primary border-b px-4 py-3 text-left font-semibold"
     >
       {header}
     </th>
@@ -34,7 +34,7 @@ function Table({
         <td
           // biome-ignore lint/suspicious/noArrayIndexKey: <we only have the index as key>
           key={rowIndex}
-          className={`border-border-subtle border-b px-4 py-3 text-text-secondary ${
+          className={`border-border-subtle text-text-secondary border-b px-4 py-3 ${
             index === data.rows.length - 1 ? 'border-b-0' : ''
           }`}
         >
@@ -91,11 +91,28 @@ function RoundedImage({ alt, ...props }: { alt: string } & ImageProps) {
 
 function Code({
   children,
+  className,
   ...props
-}: { children: string } & React.HTMLAttributes<HTMLDivElement>) {
+}: { children: string } & React.HTMLAttributes<HTMLElement>) {
+  const isInline = !className?.includes('language-') && !children.includes('\n')
+
+  if (isInline) {
+    return (
+      <code className={className} {...props}>
+        {children}
+      </code>
+    )
+  }
+
   const codeHTML = highlight(children)
-  // biome-ignore lint/security/noDangerouslySetInnerHtml: <i am passing the code>
-  return <code dangerouslySetInnerHTML={{ __html: codeHTML }} {...props} />
+  return (
+    <code
+      className={className}
+      // biome-ignore lint/security/noDangerouslySetInnerHtml: highlighted code from sugar-high
+      dangerouslySetInnerHTML={{ __html: codeHTML }}
+      {...props}
+    />
+  )
 }
 
 function slugify(str: string) {
@@ -109,24 +126,47 @@ function slugify(str: string) {
     .replace(/--+/g, '-')
 }
 
-function createHeading(level: number) {
-  const Heading = ({ children }: { children: string }) => {
-    const slug = slugify(children)
-    return React.createElement(
-      `h${level}`,
-      { id: slug },
-      children,
-      React.createElement('a', {
-        href: `#${slug}`,
-        key: `link-${slug}`,
-        className: 'anchor',
-      }),
-    )
-  }
+function Heading({
+  level,
+  children,
+}: {
+  level: 1 | 2 | 3 | 4 | 5 | 6
+  children: string
+}) {
+  const slug = slugify(children)
+  return React.createElement(
+    `h${level}`,
+    { id: slug },
+    children,
+    React.createElement('a', {
+      href: `#${slug}`,
+      className: 'anchor',
+    }),
+  )
+}
 
-  Heading.displayName = `Heading${level}`
+function H1({ children }: { children: string }) {
+  return <Heading level={1}>{children}</Heading>
+}
 
-  return Heading
+function H2({ children }: { children: string }) {
+  return <Heading level={2}>{children}</Heading>
+}
+
+function H3({ children }: { children: string }) {
+  return <Heading level={3}>{children}</Heading>
+}
+
+function H4({ children }: { children: string }) {
+  return <Heading level={4}>{children}</Heading>
+}
+
+function H5({ children }: { children: string }) {
+  return <Heading level={5}>{children}</Heading>
+}
+
+function H6({ children }: { children: string }) {
+  return <Heading level={6}>{children}</Heading>
 }
 
 function CustomList({ children }: { children: React.ReactNode }) {
@@ -142,12 +182,12 @@ function CustomOrderedList({ children }: { children: React.ReactNode }) {
 }
 
 const components = {
-  h1: createHeading(1),
-  h2: createHeading(2),
-  h3: createHeading(3),
-  h4: createHeading(4),
-  h5: createHeading(5),
-  h6: createHeading(6),
+  h1: H1,
+  h2: H2,
+  h3: H3,
+  h4: H4,
+  h5: H5,
+  h6: H6,
   Image: RoundedImage,
   a: CustomLink,
   code: Code,

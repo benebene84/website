@@ -14,20 +14,20 @@ export function Header() {
       className={cx(
         'sticky top-0 z-50 w-full',
         'border-border-subtle border-b',
-        'bg-bg-primary/85 backdrop-blur-xl',
+        'bg-bg-primary',
       )}
     >
       <div className="mx-auto flex h-14 max-w-3xl items-center justify-between px-6 lg:px-8">
         {/* Wordmark */}
         <Link
           href="/"
-          className="hidden font-medium text-text-primary tracking-tight transition-colors hover:text-accent sm:block"
+          className="text-text-primary hidden font-serif font-medium tracking-tight transition-opacity hover:opacity-60 sm:block"
         >
           Benedikt Sperl
         </Link>
         <Link
           href="/"
-          className="block font-medium text-text-primary tracking-tight transition-colors hover:text-accent sm:hidden"
+          className="text-text-primary block font-serif font-medium tracking-tight transition-opacity hover:opacity-60 sm:hidden"
         >
           BS
         </Link>
@@ -39,7 +39,7 @@ export function Header() {
               <Link
                 key={item.href}
                 href={item.href}
-                className="text-sm text-text-secondary transition-colors hover:text-text-primary"
+                className="text-text-secondary hover:text-text-primary text-sm transition-colors"
               >
                 {item.label}
               </Link>
@@ -47,14 +47,14 @@ export function Header() {
           </nav>
 
           {/* Separator */}
-          <div className="h-5 w-px bg-border-subtle" />
+          <div className="bg-border-subtle h-5 w-px" />
 
           <div className="flex items-center gap-2">
             <a
               href="/rss"
               target="_blank"
               rel="noopener noreferrer"
-              className="rounded-md p-2 text-text-tertiary transition-colors hover:text-text-primary"
+              className="text-text-tertiary hover:text-text-primary rounded-md p-2 transition-colors"
               aria-label="RSS Feed"
             >
               <Rss size={16} aria-hidden="true" />

@@ -142,7 +142,7 @@ export default async function Blog(props: {
           <article>
             {/* Article header */}
             <header className="mb-10">
-              <div className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-sm text-text-muted">
+              <div className="text-text-muted mb-4 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-sm">
                 <time dateTime={post.publishedAt}>
                   {formatDate(post.publishedAt)}
                 </time>
@@ -161,20 +161,20 @@ export default async function Blog(props: {
                 <Link
                   href={authorPath}
                   rel="author"
-                  className="transition-colors hover:text-accent"
+                  className="hover:text-accent transition-colors"
                 >
                   {siteName}
                 </Link>
               </div>
               <h1
-                className="mb-3 text-balance font-semibold text-3xl tracking-tight sm:text-4xl"
+                className="font-serif text-3xl font-medium tracking-tight text-balance sm:text-4xl"
                 style={{ viewTransitionName: `title-${post._meta.path}` }}
               >
                 {post.title}
               </h1>
               {post.summary && (
                 <p
-                  className="text-lg text-text-tertiary"
+                  className="text-text-secondary mt-5 leading-relaxed text-pretty"
                   style={{
                     viewTransitionName: `summary-${post._meta.path}`,
                   }}
@@ -184,7 +184,7 @@ export default async function Blog(props: {
               )}
             </header>
 
-            <hr className="mb-10 border-border-subtle" />
+            <hr className="border-border-subtle mb-10" />
 
             {/* Article content */}
             <div className="prose max-w-none">
@@ -192,7 +192,7 @@ export default async function Blog(props: {
             </div>
 
             {/* Article footer */}
-            <footer className="mt-12 flex flex-wrap items-start justify-between gap-4 border-border-subtle border-t pt-6">
+            <footer className="border-border-subtle mt-12 flex flex-wrap items-start justify-between gap-4 border-t pt-6">
               <AuthorBio />
               <ShareButton
                 data={{

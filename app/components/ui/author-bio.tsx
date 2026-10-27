@@ -16,16 +16,16 @@ export function AuthorBio() {
         placeholder="blur"
       />
       <div className="min-w-0">
-        <p className="font-medium text-text-primary">
+        <p className="text-text-primary font-medium">
           <Link
             href={authorPath}
             rel="author"
-            className="transition-colors hover:text-accent"
+            className="hover:text-accent transition-colors"
           >
             {siteName}
           </Link>
         </p>
-        <p className="mt-0.5 text-sm text-text-secondary">{authorTagline}</p>
+        <p className="text-text-secondary mt-0.5 text-sm">{authorTagline}</p>
       </div>
     </div>
   )

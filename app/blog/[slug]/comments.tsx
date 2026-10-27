@@ -30,7 +30,7 @@ export function Comments() {
     return (
       <div
         aria-hidden="true"
-        className="min-h-[120px] w-full rounded-lg border border-border-subtle bg-bg-secondary"
+        className="border-border-subtle bg-bg-secondary min-h-[120px] w-full rounded-lg border"
       />
     )
   }

@@ -21,8 +21,8 @@ const links = [
 export function Footer() {
   return (
     <footer className="border-border-subtle border-t">
-      <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-8 lg:px-8">
-        <p className="text-sm text-text-muted">
+      <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-10 lg:px-8">
+        <p className="text-text-muted text-sm">
           {new Date().getFullYear()} Benedikt Sperl
         </p>
         <div className="flex items-center gap-4">
@@ -33,7 +33,7 @@ export function Footer() {
                 href={link.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sm text-text-muted transition-colors hover:text-text-primary"
+                className="text-text-muted hover:text-text-primary text-sm transition-colors"
               >
                 {link.label}
               </a>
@@ -41,7 +41,7 @@ export function Footer() {
               <Link
                 key={link.href}
                 href={link.href}
-                className="text-sm text-text-muted transition-colors hover:text-text-primary"
+                className="text-text-muted hover:text-text-primary text-sm transition-colors"
               >
                 {link.label}
               </Link>

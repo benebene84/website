@@ -27,13 +27,13 @@ export default function Page() {
           {/* Header */}
           <header className="mb-12">
             <Headline as="h1">Blog</Headline>
-            <p className="mt-3 text-lg text-text-secondary">
+            <p className="text-text-secondary mt-4 max-w-xl leading-relaxed text-pretty">
               Thoughts on web development, frontend architecture, and design.
             </p>
           </header>
 
           {/* Article list */}
-          <div className="flex flex-col divide-y divide-border-subtle">
+          <div className="divide-border-subtle flex flex-col divide-y">
             {sortedBlogs.map((post) => (
               <Link
                 key={post._meta.path}
@@ -42,20 +42,20 @@ export default function Page() {
               >
                 <div className="flex flex-col gap-0.5 sm:flex-row sm:items-baseline sm:justify-between">
                   <span
-                    className="font-medium text-text-primary transition-colors group-hover:text-accent"
+                    className="text-text-primary font-medium underline-offset-4 transition-colors group-hover:underline"
                     style={{
                       viewTransitionName: `title-${post._meta.path}`,
                     }}
                   >
                     {post.title}
                   </span>
-                  <span className="shrink-0 font-mono text-sm text-text-muted tabular-nums">
+                  <span className="text-text-muted shrink-0 font-mono text-sm tabular-nums">
                     {formatDate(post.publishedAt)}
                   </span>
                 </div>
                 {post.summary && (
                   <p
-                    className="mt-1 line-clamp-1 text-sm text-text-tertiary"
+                    className="text-text-tertiary mt-1 line-clamp-1 text-sm"
                     style={{
                       viewTransitionName: `summary-${post._meta.path}`,
                     }}

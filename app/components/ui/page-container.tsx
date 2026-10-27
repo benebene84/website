@@ -14,7 +14,7 @@ export function PageContainer({
   return (
     <div
       className={cx(
-        'mx-auto w-full px-6 py-12 sm:py-16 lg:px-8',
+        'mx-auto w-full px-6 py-16 sm:py-20 lg:px-8',
         wide ? 'max-w-3xl' : 'max-w-2xl',
         className,
       )}

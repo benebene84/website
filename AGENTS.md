@@ -1,6 +1,6 @@
 # AGENTS.md
 
-This is a personal portfolio and blog site built with Next.js 16 (App Router), React 19, and TypeScript. It uses a macOS-inspired design system with light and dark (Tokyo Night) themes.
+This is a personal portfolio and blog site built with Next.js 16 (App Router), React 19, and TypeScript. It uses a cool, near-monochrome gallery palette: Newsreader for display, Geist for body, ink on white in light mode and charcoal in dark.
 
 ## Tech Stack
 
@@ -108,11 +108,11 @@ Blog posts live in `app/blog/posts/` as `.mdx` files with this frontmatter schem
 
 ```yaml
 ---
-title: 'Post Title'
-publishedAt: 'YYYY-MM-DD'
-updatedAt: 'YYYY-MM-DD'  # optional; only when the article body actually changed
-summary: 'A brief description of the post.'
-image: '/optional/og-image.png'  # optional, falls back to auto-generated OG
+title: "Post Title"
+publishedAt: "YYYY-MM-DD"
+updatedAt: "YYYY-MM-DD" # optional; only when the article body actually changed
+summary: "A brief description of the post."
+image: "/optional/og-image.png" # optional, falls back to auto-generated OG
 ---
 ```
 

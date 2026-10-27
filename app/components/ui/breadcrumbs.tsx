@@ -9,7 +9,7 @@ export type Breadcrumb = {
 export function Breadcrumbs({ items }: { items: Breadcrumb[] }) {
   return (
     <nav aria-label="Breadcrumb" className="mb-6">
-      <ol className="flex flex-wrap items-center gap-1 text-sm text-text-muted">
+      <ol className="text-text-muted flex flex-wrap items-center gap-1 text-sm">
         {items.map((item, index) => {
           const isLast = index === items.length - 1
 
@@ -18,7 +18,7 @@ export function Breadcrumbs({ items }: { items: Breadcrumb[] }) {
               {index > 0 && (
                 <ChevronRight
                   aria-hidden="true"
-                  className="size-3.5 shrink-0 text-text-muted"
+                  className="text-text-muted size-3.5 shrink-0"
                 />
               )}
               {isLast ? (
@@ -28,7 +28,7 @@ export function Breadcrumbs({ items }: { items: Breadcrumb[] }) {
               ) : (
                 <Link
                   href={item.href}
-                  className="transition-colors hover:text-accent"
+                  className="hover:text-accent transition-colors"
                 >
                   {item.name}
                 </Link>

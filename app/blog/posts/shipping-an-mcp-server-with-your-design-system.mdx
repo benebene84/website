@@ -1,6 +1,7 @@
 ---
 title: 'Shipping an MCP server with your design system'
 publishedAt: '2026-07-08'
+updatedAt: '2026-10-27'
 summary: 'How to give AI coding agents accurate, version-correct knowledge of your component library by shipping an MCP server inside the npm package itself — building a JSON index from your existing docs, exposing it over a small stdio server with a couple of tools, and bundling the whole thing so it adds zero infrastructure and zero weight to consumers.'
 tags: ['Design Systems', 'Tooling']
 ---
@@ -9,15 +10,17 @@ tags: ['Design Systems', 'Tooling']
 
 If you maintain a design system, you have probably watched an AI coding agent confidently write UI that does not exist. It imports a `Button` from the wrong path, passes a `color="danger"` prop when your API only accepts `variant="destructive"`, invents a `size="huge"` that was never a thing, or reaches for a component you deprecated two majors ago. The agent is not being careless — it is pattern-matching against every component library it has ever seen, and it has no idea which version of *your* library the app in front of it actually has installed.
 
+I ran into this with [Luan UI](https://github.com/benebene84/luan-ui), a React 19 library built on Base UI and Tailwind. Agents would write `as="a"` because that is what they have seen on every other Button, when the real API is `render={<a href="/contact" />}`. They would pass `size="lg"` when the union is `"small" | "medium" | "large"` and also accepts a breakpoint map. They would drop an `Input` on the page without wrapping it in `FormField` with a `Label`, so required and error state never reached the control. Types would have caught some of that. They would not have caught the rest.
+
 It is worth being precise about how far your existing types already get you here, because they get you surprisingly far. The `.d.ts` files shipped in `node_modules` are, after all, a machine-readable description of your API — an agent that reads them can often get prop names right, respect a `variant` union, and know which props are required. Types are the cheapest, most accurate contract you have, and a lot of "the agent wrote wrong props" problems are really "the agent never looked at the types" problems. If you do nothing else, good types pull a lot of weight.
 
-But types can only take you so far. They describe the *shape* of a component, not how to *use* it. A type cannot tell an agent when to reach for a `Dialog` versus a `Popover`, that a `DatePicker` must be wrapped in a `Field` for its label to be announced, which of two visually similar buttons is the idiomatic choice, or what a real, compilable example looks like. That knowledge lives in your docs — the "when to use", the "do & don't", the worked examples — and none of it survives the trip into a `.d.ts`. If you want an agent to produce *idiomatic* UI and not just type-checking UI, you need to get that prose and those examples in front of it too.
+But types can only take you so far. They describe the *shape* of a component, not how to *use* it. A type cannot tell an agent when to reach for a `Dialog` versus a `Popover`, that an `Input` must sit inside a `FormField` with a `Label` for required and error to wire up, that overlays inherit `data-theme` from `<html>` because they render in a portal, or what a real, compilable example looks like. That knowledge lives in your docs — the "when to use", the anatomy, the worked examples — and none of it survives the trip into a `.d.ts`. If you want an agent to produce *idiomatic* UI and not just type-checking UI, you need to get that prose and those examples in front of it too.
 
 You can paste your docs into a rules file, but that copy goes stale the moment you ship a release, and it balloons the context on every request whether the agent needs Button or not. What you actually want is for the agent to *ask* — "what components exist?", "how do I use the Dialog?" — and get back structured, accurate answers pulled from the exact version of the package the project depends on.
 
-That is precisely what the [Model Context Protocol](https://modelcontextprotocol.io) (MCP) is for. MCP is a small standard that lets an agent talk to an external process over JSON-RPC and call *tools* it exposes. The process can run locally over stdio (standard in/out), which is how editors like Cursor and Claude Code launch MCP servers today. So the plan is: ship a tiny MCP server *inside your design-system package* that serves your component docs. When someone runs `pnpm add @acme/design-system`, they get the server for free, and it always describes the version they installed.
+That is precisely what the [Model Context Protocol](https://modelcontextprotocol.io) (MCP) is for. MCP is a small standard that lets an agent talk to an external process over JSON-RPC and call *tools* it exposes. The process can run locally over stdio (standard in/out), which is how editors like Cursor and Claude Code launch MCP servers today. So the plan is: ship a tiny MCP server *inside your design-system package* that serves your component docs. When someone runs `pnpm add luan-ui`, they get the server for free, and it always describes the version they installed.
 
-This post walks through the whole thing generically — the "why", building a JSON index from the docs you already have, the server and its tools, and finally bundling and shipping it as part of the npm package so it costs consumers nothing.
+This post walks through how Luan UI does it — the "why", building a JSON index from the Storybook docs we already have, the server and its tools, and finally bundling and shipping it as part of the npm package so it costs consumers nothing. The same shape works for any component library.
 
 ## Why ship it inside the package
 
@@ -47,13 +50,13 @@ The rest of the design falls out of this decision. There are three layers, and o
 The indexer is where all the work is; the server is deliberately dumb. That split matters because the hard part — turning source and prose into structured data — is the same whether you later serve it over stdio, over HTTP, or bake it into a rules file. Get the index right and everything downstream is easy.
 
 ```
-components/*, *.model.ts, docs/*.mdx
+stories/**/*.mdx, src/components/**/*.tsx, src/index.ts
              │  (indexer, build time)
              ▼
    dist/mcp/index.json   ── bundled into the npm package
              │  (server, runtime, stdio)
              ▼
-   Cursor / Claude Code  ── npx @acme/design-system-mcp
+   Cursor / Claude Code  ── npx luan-mcp
 ```
 
 ## Building the index
@@ -69,51 +72,71 @@ export type McpIndex = {
 }
 
 export type ComponentDoc = {
-  name: string           // dir name, e.g. "button"
+  name: string           // file stem, e.g. "button" or "form-field"
   displayName: string    // "Button"
   exportName: string     // named export, e.g. "Button"
-  importPath: string     // "@acme/design-system"
+  exports: string[]      // Dialog also ships DialogTrigger, DialogContent, ...
+  importPath: string     // "luan-ui"
   description: string    // first paragraph of the docs
   props: PropDoc[]
   variants: Record<string, string[]>  // { variant: [...], size: [...] }
-  sections: DocSection[] // "## When to use", "## Do & don't", ...
+  sections: DocSection[] // "## Usage", "## Anatomy", ...
   examples: CodeExample[]
 }
 
 export type PropDoc = {
   name: string
-  type: string           
+  type: string
   required: boolean
   options?: string[]      // enumerated values for small string-literal unions
+  defaultValue?: string
+  description?: string
+  group?: string          // "Button", "DialogContent", ...
 }
 
 export type DocSection = { heading: string; markdown: string }
 export type CodeExample = { title: string; language: string; code: string }
 ```
 
-The important realization is that you are almost certainly not writing new documentation. A mature design system already has most of this lying around — you are just *structuring what exists*. Here is where each field tends to come from:
+The important realization is that you are almost certainly not writing new documentation. A mature design system already has most of this lying around — you are just *structuring what exists*. In Luan UI each field comes from somewhere we already maintained:
 
-- **`name` / `exportName` / `importPath`** — the component directory and its `index.ts` barrel (`export { default as Button }`).
-- **`description` / `sections` / `examples`** — your existing docs. If you write component docs in MDX (Storybook, a docs site, or plain files), the first paragraph is the description, each `## ` heading becomes a section, and every fenced code block is an example. "When to use", "Do & don't", and "Accessibility" sections are already written like agent guidance — they just need to be parsed, not authored.
-- **`props` / `variants`** — the types. This is the one part that benefits from real tooling: use the TypeScript compiler API to resolve your public `*Props` type and read the props off it, and collect variant maps from your `as const` style objects.
+- **`name` / `exportName` / `exports` / `importPath`** — the Storybook MDX filename (`stories/button/button.mdx` → `"button"`), plus the public barrel in `src/index.ts` (`export { Button } from "@components/button/button"`). Compound components like Dialog contribute every named export, not just the root.
+- **`description` / `sections` / `examples`** — the MDX we already write next to the stories. The first paragraph is the description, each `## ` heading becomes a section, and every fenced code block is an example. Usage, anatomy, and conventions pages are already written like agent guidance — they just need to be parsed, not authored.
+- **`props` / `variants`** — two sources, merged. Prop tables in the MDX (`<PropsTable rows={[...]} />`) carry descriptions and defaults. The TypeScript compiler API then walks each public `*Props` type for owned members and options, and collects variant maps from `getVariants({ variants: { ... } })` calls in the source.
 
-A couple of decisions pay off here. First, only include **props you own**. A component that wraps a headless primitive can inherit dozens of props from it; surfacing all of them buries the handful your team actually designed. Filter to members declared under your own source tree. Second, take each prop's type from the **source annotation** rather than the checker's fully-expanded type. For small unions (say, ≤ 24 members) it *is* useful to enumerate the options, so the agent knows `variant` can be `"primary" | "secondary" | "destructive"`.
+Button is a good picture of what that last part is extracting. The public type and the variant config already say everything an agent needs about the visual API:
 
-The indexer itself is then mostly glue: glob the components, run each source through the extractors, and write the result. Read your compiler options from the repo's real `tsconfig.json` so path aliases and JSX settings match the actual build instead of being duplicated.
+```ts
+export type ButtonProps = useRender.ComponentProps<'button'> & {
+  variant?: 'primary' | 'secondary' | 'destructive'
+  size?: ResponsiveValue<'small' | 'medium' | 'large'>
+  className?: string
+}
+
+const buttonStyles = getVariants({
+  variants: {
+    variant: { primary: '...', secondary: '...', destructive: '...' },
+    size: { small: '...', medium: '...', large: '...' },
+  },
+})
+```
+
+A couple of decisions pay off here. First, only include **props you own**. A component that wraps a Base UI primitive inherits dozens of props from it; surfacing all of them buries the handful your team actually designed. Filter to members declared under `src/`. Second, take each prop's type from the **source annotation** rather than the checker's fully-expanded type. For small unions (say, ≤ 24 members) it *is* useful to enumerate the options, so the agent knows `variant` can be `"primary" | "secondary" | "destructive"`. Unwrap `ResponsiveValue<T>` while you are at it, or the agent will never see that `size` accepts `"small"` *and* `{ initial: 'small', md: 'large' }`.
+
+The indexer itself is then mostly glue: glob the MDX, run each source through the extractors, and write the result. Read your compiler options from the repo's real `tsconfig.json` so path aliases and JSX settings match the actual build instead of being duplicated.
 
 ```ts
 // scripts/generate-mcp-index.ts
-import { mkdirSync, writeFileSync } from 'node:fs'
-import { readPackageJson } from './pkg'
-import { collectComponents } from './collect'
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { collectComponents } from './mcp-collect'
 import type { McpIndex } from './mcp-index.types'
 
-const pkg = readPackageJson()
+const pkg = JSON.parse(readFileSync('package.json', 'utf8')) as { version: string }
 
 const index: McpIndex = {
   version: pkg.version,
   generatedFrom: process.env.GITHUB_SHA ?? 'local',
-  components: collectComponents(), // globs sources + docs, runs the extractors
+  components: collectComponents(process.cwd()),
 }
 
 mkdirSync('dist/mcp', { recursive: true })
@@ -121,7 +144,9 @@ writeFileSync('dist/mcp/index.json', JSON.stringify(index))
 console.log(`Indexed ${index.components.length} components (v${index.version})`)
 ```
 
-The output is a few hundred kilobytes of JSON that fully describes your public API. That file is the entire knowledge base — everything else just reads it.
+One compiler-API gotcha that bit us: the library compiles with TypeScript 7, which no longer exports `createProgram`. The indexer therefore depends on `typescript-6` (aliased from `typescript@6`) just to walk the types. The published components are unaffected.
+
+The output is a few hundred kilobytes of JSON that fully describes the public API. That file is the entire knowledge base — everything else just reads it. We also index a `conventions` page alongside the components, covering shared patterns that do not belong to any one of them: the `render` prop, responsive values, form context, and portals.
 
 ## The server and its tools
 
@@ -131,14 +156,16 @@ Two small but important details. Locate the index relative to the module (`impor
 
 ```ts
 // mcp/server.ts
-#!/usr/bin/env node
 import { existsSync, readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { z } from 'zod'
-import type { ComponentDoc, McpIndex } from './mcp-index.types'
+import type { ComponentDoc, McpIndex } from '../scripts/mcp-index.types'
+import { renderComponent } from './render'
+
+const PACKAGE_NAME = 'luan-ui'
 
 function loadIndex(): McpIndex {
   const here = dirname(fileURLToPath(import.meta.url))
@@ -152,12 +179,37 @@ function loadIndex(): McpIndex {
   return JSON.parse(readFileSync(found, 'utf8')) as McpIndex
 }
 
-const index = loadIndex()
-const byName = new Map(index.components.map((c) => [c.name.toLowerCase(), c]))
+function loadPackageVersion(fallback: string): string {
+  const here = dirname(fileURLToPath(import.meta.url))
+  for (const candidate of [
+    join(here, '..', '..', 'package.json'),
+    join(here, '..', 'package.json'),
+  ]) {
+    if (!existsSync(candidate)) continue
+    const pkg = JSON.parse(readFileSync(candidate, 'utf8')) as {
+      name?: string
+      version?: string
+    }
+    if (pkg.name === PACKAGE_NAME && pkg.version) return pkg.version
+  }
+  return fallback
+}
 
-const server = new McpServer({ name: 'acme-design-system', version: index.version })
+const index = loadIndex()
+const version = loadPackageVersion(index.version)
+const byName = new Map<string, ComponentDoc>()
+
+for (const component of index.components) {
+  for (const key of [component.name, component.displayName, component.exportName, ...component.exports]) {
+    if (key) byName.set(key.toLowerCase().replace(/[-_\s]/g, ''), component)
+  }
+}
+
+const server = new McpServer({ name: PACKAGE_NAME, version })
 const text = (body: string) => ({ content: [{ type: 'text' as const, text: body }] })
 ```
+
+Lookup is normalized so `get_component("form-field")`, `"FormField"`, and `"form field"` all hit the same entry. Compound exports work the same way: asking for `"DialogTrigger"` returns the Dialog docs.
 
 The tools are where the design thinking goes. The pattern that works well is **discovery first, detail second**: one cheap tool to enumerate what exists, and one to pull the full docs for a single component. This mirrors how a developer explores an unfamiliar library, and it keeps each response small enough that the agent is not drowning in context it did not ask for.
 
@@ -167,14 +219,16 @@ server.registerTool(
   {
     title: 'List components',
     description:
-      'List all design-system components with a one-line description. Call this first to discover what is available.',
-    inputSchema: {},
+      'List all luan-ui components with a one-line description. Call this first to discover what is available. Also includes Conventions for shared patterns (responsive values, form context, portals, render prop).',
+    inputSchema: z.object({}),
   },
-  async () => {
+  () => {
     const items = index.components.map(
       (c) => `- **${c.displayName}** (\`${c.name}\`) — ${c.description || 'No description.'}`,
     )
-    return text(`${items.length} components:\n\n${items.join('\n')}`)
+    return text(
+      `${items.length} luan-ui entries (v${version}). Call get_component before writing UI. Use \`conventions\` for shared patterns.\n\n${items.join('\n')}`,
+    )
   },
 )
 
@@ -183,11 +237,13 @@ server.registerTool(
   {
     title: 'Get component docs',
     description:
-      "Get full docs for one component: import, props, variants, when-to-use, do & don't, examples. Use before writing UI with a component.",
-    inputSchema: { name: z.string().describe('Component name, e.g. "button" or "Button".') },
+      'Get full docs for one luan-ui component: import, props, variants, usage, and examples. Use before writing UI with a component. Pass a name like "button", "Button", or "conventions".',
+    inputSchema: z.object({
+      name: z.string().describe('Component name, e.g. "button", "Button", or "conventions".'),
+    }),
   },
-  async ({ name }) => {
-    const c = byName.get(name.toLowerCase())
+  ({ name }) => {
+    const c = byName.get(name.toLowerCase().replace(/[-_\s]/g, ''))
     if (!c) {
       const names = index.components.map((x) => x.name).join(', ')
       return { ...text(`Unknown component "${name}". Available: ${names}`), isError: true }
@@ -197,12 +253,13 @@ server.registerTool(
 )
 ```
 
-Notice that both tools return **markdown**, not raw JSON. The consumer of these responses is a language model about to write code, and it does better with a rendered doc — an import line, a props table, the "when to use" prose, a couple of examples — than with a nested object it has to interpret. The `renderComponent` helper is just string assembly over the `ComponentDoc`:
+Notice that both tools return **markdown**, not raw JSON. The consumer of these responses is a language model about to write code, and it does better with a rendered doc — an import line, a props table, the usage prose, a couple of examples — than with a nested object it has to interpret. The `renderComponent` helper is just string assembly over the `ComponentDoc`:
 
 ```ts
 function renderComponent(c: ComponentDoc): string {
   const out = [`# ${c.displayName}`, '', c.description, '']
-  out.push('## Import', '', '```tsx', `import { ${c.exportName} } from '${c.importPath}'`, '```', '')
+  const names = c.exports.length > 0 ? c.exports : [c.exportName]
+  out.push('## Import', '', '```tsx', `import { ${names.join(', ')} } from '${c.importPath}'`, '```', '')
 
   if (c.props.length > 0) {
     out.push('## Props', '', '| Prop | Type | Required | Options |', '| --- | --- | --- | --- |')
@@ -217,9 +274,34 @@ function renderComponent(c: ComponentDoc): string {
     out.push(`- **${key}**: ${values.map((v) => `\`${v}\``).join(', ')}`)
   }
   for (const s of c.sections) out.push(`## ${s.heading}`, '', s.markdown, '')
+  for (const example of c.examples) {
+    out.push(`### ${example.title}`, '', `\`\`\`${example.language}`, example.code, '```', '')
+  }
 
   return out.join('\n').trim()
 }
+```
+
+For Button, that is how the agent learns to write this instead of inventing an `as` prop:
+
+```tsx
+import { Button } from 'luan-ui'
+
+<Button variant="destructive">Delete</Button>
+<Button render={<a href="/contact" />}>Contact us</Button>
+<Button size={{ initial: 'small', md: 'large' }}>Responsive</Button>
+```
+
+And for a form field, the example in the docs is the contract the agent should copy:
+
+```tsx
+import { FormField, FormHelper, Input, Label } from 'luan-ui'
+
+<FormField required error>
+  <Label htmlFor="email">Email</Label>
+  <Input id="email" type="email" />
+  <FormHelper>There was an error on this field.</FormHelper>
+</FormField>
 ```
 
 Finally, connect the transport. One gotcha worth internalizing: over stdio, **stdout is reserved for the JSON-RPC protocol**. Any logging must go to stderr, or you will corrupt the message stream and the client will fail to connect.
@@ -227,7 +309,7 @@ Finally, connect the transport. One gotcha worth internalizing: over stdio, **st
 ```ts
 const transport = new StdioServerTransport()
 await server.connect(transport)
-console.error(`acme-mcp ready — v${index.version}, ${index.components.length} components`)
+console.error(`luan-mcp ready — v${version}, ${index.components.length} components`)
 ```
 
 That is a complete, useful server. Once it works, obvious extensions suggest themselves — a `search` tool over all the docs, a `get_examples` tool, a `list_icons` or `get_tokens` tool so the agent stops inventing icon names and colors, or even a `validate_usage` tool that checks generated JSX against the real API. All of them are just more read queries against the same index.
@@ -238,18 +320,39 @@ This is the part that turns a script into a releasable feature. Three additions 
 
 ```jsonc
 {
-  "bin": { "acme-mcp": "dist/mcp/server.js" },
+  "name": "luan-ui",
+  "bin": { "luan-mcp": "dist/mcp/server.js" },
   "files": ["dist"], // dist/mcp rides along in the published tarball
   "scripts": {
     "generate:mcp": "node --experimental-strip-types scripts/generate-mcp-index.ts",
-    "build:mcp": "pnpm generate:mcp && esbuild mcp/server.ts --bundle --platform=node --format=esm --outfile=dist/mcp/server.js --banner:js='#!/usr/bin/env node' && chmod +x dist/mcp/server.js"
+    "build:mcp": "node --experimental-strip-types scripts/build-mcp.ts"
   }
 }
 ```
 
-The `bin` entry gives every consumer a `node_modules/.bin/acme-mcp` shim, which is what makes `npx acme-mcp` resolve to *their* installed copy. Since `dist` is already in `files`, `npm publish` includes the server and index automatically — no packaging changes needed.
+The `bin` entry gives every consumer a `node_modules/.bin/luan-mcp` shim, which is what makes `npx luan-mcp` resolve to *their* installed copy. Since `dist` is already in `files`, `npm publish` includes the server and index automatically — no packaging changes needed.
 
-The one non-obvious choice is **bundling the server with esbuild rather than just transpiling it with `tsc`**. If you transpile `server.ts` one-to-one, its `import ... from '@modelcontextprotocol/sdk'` stays a bare specifier resolved at runtime — which forces the SDK to be a runtime `dependency` of your package. That SDK pulls in a large transitive tree (it ships HTTP, SSE, and OAuth transports you are not using), and all of it would land in every consumer's install and audit for a tool most of them never run. Bundling inlines only the stdio-reachable slice into a single self-contained file and tree-shakes the rest away. Keep the SDK, esbuild, and zod as **devDependencies**; nothing extra reaches your consumers. The shebang banner plus `chmod +x` make the output directly executable by `npx`.
+The one non-obvious choice is **bundling the server with esbuild rather than just transpiling it with `tsc`**. If you transpile `server.ts` one-to-one, its `import ... from '@modelcontextprotocol/sdk'` stays a bare specifier resolved at runtime — which forces the SDK to be a runtime `dependency` of your package. That SDK pulls in a large transitive tree (it ships HTTP, SSE, and OAuth transports you are not using), and all of it would land in every consumer's install and audit for a tool most of them never run. Bundling inlines only the stdio-reachable slice into a single self-contained file and tree-shakes the rest away. Keep the SDK, esbuild, and zod as **devDependencies**; nothing extra reaches your consumers. The shebang banner plus `chmod` make the output directly executable by `npx`.
+
+```ts
+// scripts/build-mcp.ts
+import { execSync } from 'node:child_process'
+import { chmodSync } from 'node:fs'
+import * as esbuild from 'esbuild'
+
+execSync('pnpm generate:mcp', { stdio: 'inherit' })
+
+await esbuild.build({
+  entryPoints: ['mcp/server.ts'],
+  bundle: true,
+  platform: 'node',
+  format: 'esm',
+  outfile: 'dist/mcp/server.js',
+  banner: { js: '#!/usr/bin/env node' },
+})
+
+chmodSync('dist/mcp/server.js', 0o755)
+```
 
 Then hook `build:mcp` into your normal package build so the server and index are rebuilt on every release, and CI needs no changes — if it already runs `pnpm build` and publishes `dist`, it now publishes the MCP server too.
 
@@ -278,16 +381,20 @@ Consumers opt in with a small config committed to their repo, so the whole team 
 ```json
 {
   "mcpServers": {
-    "acme": { "command": "npx", "args": ["-y", "acme-mcp"] }
+    "luan-ui": {
+      "command": "npx",
+      "args": ["-y", "luan-mcp"]
+    }
   }
 }
 ```
 
-Claude Code uses the same shape in `.mcp.json` at the repo root. Because `npx acme-mcp` resolves the locally installed `@acme/design-system` bin, the served docs always match the version in that project's lockfile — upgrade the package and the agent's knowledge upgrades with it, automatically. 
-It is worth adding a one-line nudge to the app's agent rules too: *"Use the `acme` MCP tools (`list_components`, `get_component`) before writing UI with the design system."*
+Claude Code uses the same shape in `.mcp.json` at the repo root. Because `npx luan-mcp` resolves the locally installed `luan-ui` bin, the served docs always match the version in that project's lockfile — upgrade the package and the agent's knowledge upgrades with it, automatically.
+
+It is worth adding a one-line nudge to the app's agent rules too: *"Use the `luan-ui` MCP tools (`list_components`, `get_component`) before writing UI with Luan UI. Pass `"conventions"` to `get_component` for shared patterns."*
 
 ## Conclusion
 
 Shipping an MCP server inside your design system turns "the AI keeps writing components wrong" into a solved problem, and it does so with remarkably little machinery: a build-time indexer that structures docs you already have, a thin stdio server exposing a couple of read tools, and a bundling step that keeps the whole thing off your consumers' dependency graph. Agents get version-correct, on-standard knowledge of your components; you host nothing and maintain no second copy of the docs.
 
-Start with the two tools here — discovery and detail — because they deliver most of the value on their own. Once that is in the hands of your consumers, the roadmap is just more queries over the same index: search, examples, design tokens, icon catalogs, and eventually active validation of generated code. The index is the asset; everything else is a thin layer on top of it.
+The [Luan UI](https://github.com/benebene84/luan-ui) implementation is the one this post describes. Start with the two tools here — discovery and detail — because they deliver most of the value on their own. Once that is in the hands of your consumers, the roadmap is just more queries over the same index: search, examples, design tokens, icon catalogs, and eventually active validation of generated code. The index is the asset; everything else is a thin layer on top of it.
